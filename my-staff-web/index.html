@@ -60,32 +60,24 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                     </svg>
                 </div>
-                <h2 class="text-xl font-bold text-slate-100">เข้าสู่ระบบจัดการตารางงาน</h2>
-                <p class="text-xs text-slate-400">หัวหน้าแต่ละทีมจะแก้ไขได้เฉพาะพนักงานในทีมตัวเอง</p>
+                <h2 class="text-xl font-bold text-slate-100">เข้าสู่ระบบ</h2>
+                <p class="text-xs text-slate-400">กรุณากรอกรหัสเพื่อเข้าสู่ระบบ</p>
             </div>
 
             <div class="space-y-3">
                 <div>
-                    <label class="text-xs text-slate-400 font-medium">Username</label>
-                    <input id="login-username" type="text" placeholder="admin / win1 / win2 / win3" class="w-full mt-1 bg-slate-950 border border-slate-800 focus:border-indigo-500 text-slate-200 px-3 py-2 rounded-xl text-sm outline-none">
+                    <label class="text-xs text-slate-400 font-medium">รหัสเข้าสู่ระบบ</label>
+                    <input id="login-code" type="text" placeholder="กรอกรหัสเข้าสู่ระบบ" class="w-full mt-1 bg-slate-950 border border-slate-800 focus:border-indigo-500 text-slate-200 px-3 py-2 rounded-xl text-sm outline-none uppercase">
                 </div>
-                <div>
-                    <label class="text-xs text-slate-400 font-medium">Password</label>
-                    <input id="login-password" type="password" placeholder="กรอกรหัสผ่าน" class="w-full mt-1 bg-slate-950 border border-slate-800 focus:border-indigo-500 text-slate-200 px-3 py-2 rounded-xl text-sm outline-none">
-                </div>
-                <p id="login-error" class="hidden text-xs text-rose-400">Username หรือ Password ไม่ถูกต้อง</p>
+                <p id="login-error" class="hidden text-xs text-rose-400">รหัสไม่ถูกต้อง</p>
             </div>
 
             <button onclick="loginUser()" class="w-full px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm rounded-xl transition-all">
                 เข้าสู่ระบบ
             </button>
 
-            <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-[11px] text-slate-400 leading-5">
-                <b class="text-slate-300">บัญชีตัวอย่าง</b><br>
-                admin / 1234 = เห็นและแก้ได้ทุกทีม<br>
-                win1 / 1111 = เห็นและแก้ได้เฉพาะ WIN1<br>
-                win2 / 2222 = เห็นและแก้ได้เฉพาะ WIN2<br>
-                win3 / 3333 = เห็นและแก้ได้เฉพาะ WIN3
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-[11px] text-slate-500 leading-5 text-center">
+                กรุณาใช้รหัสที่ได้รับอนุญาตเท่านั้น
             </div>
         </div>
     </div>
@@ -432,24 +424,61 @@
 
         window.currentStaffList = JSON.parse(JSON.stringify(defaultStaff));
         window.shiftTimes = JSON.parse(JSON.stringify(defaultShiftTimes));
+
         // ==========================================
-        // ระบบ Login และสิทธิ์การแก้ไขตามทีม
+        // ระบบ Login ด้วยรหัสพนักงาน / Admin
         // ==========================================
-        const LOGIN_USERS = {
-            "admin": { password: "1234", role: "ADMIN", team: "ALL", label: "Admin" },
-            "win1":  { password: "1111", role: "LEADER", team: "WIN1", label: "หัวหน้า WIN1" },
-            "win2":  { password: "2222", role: "LEADER", team: "WIN2", label: "หัวหน้า WIN2" },
-            "win3":  { password: "3333", role: "LEADER", team: "WIN3", label: "หัวหน้า WIN3" }
-        };
+        const ADMIN_CODE = atob("QlJJR0hUT04=");
 
         window.currentUser = JSON.parse(sessionStorage.getItem("schedule_current_user") || "null");
+
+        function normalizeCode(code) {
+            return String(code || "").trim().toUpperCase();
+        }
+
+        function findEmployeeByCode(code) {
+            const target = normalizeCode(code);
+            return window.currentStaffList.find(p => normalizeCode(p.code) === target) || null;
+        }
 
         function getAllowedTeam() {
             return window.currentUser?.team || null;
         }
 
+        function canViewTeam(team) {
+            if (!window.currentUser) return false;
+            return window.currentUser.team === "ALL" || window.currentUser.team === team;
+        }
+
         function canEditTeam(team) {
-            return window.currentUser && (window.currentUser.team === "ALL" || window.currentUser.team === team);
+            if (!window.currentUser) return false;
+            if (window.currentUser.team === "ALL") return true;
+            return window.currentUser.rank === "S4" && window.currentUser.team === team;
+        }
+
+        function getUserEditTeams() {
+            if (!window.currentUser) return [];
+            if (window.currentUser.team === "ALL") return ["WIN1", "WIN2", "WIN3"];
+            if (window.currentUser.rank === "S4") return [window.currentUser.team];
+            return [];
+        }
+
+
+        function refreshCurrentUserFromStaff() {
+            if (!window.currentUser || window.currentUser.team === "ALL") return;
+            const emp = findEmployeeByCode(window.currentUser.code);
+            if (!emp) {
+                sessionStorage.removeItem("schedule_current_user");
+                window.currentUser = null;
+                refreshLoginUI();
+                return;
+            }
+            window.currentUser.name = emp.name;
+            window.currentUser.team = emp.team;
+            window.currentUser.rank = emp.rank || "S2";
+            window.currentUser.role = window.currentUser.rank === "S4" ? "LEADER" : "STAFF";
+            window.currentUser.editableTeams = window.currentUser.rank === "S4" ? [emp.team] : [];
+            sessionStorage.setItem("schedule_current_user", JSON.stringify(window.currentUser));
         }
 
         function refreshLoginUI() {
@@ -469,7 +498,14 @@
             modal?.classList.add("hidden");
             modal?.classList.remove("flex");
             bar?.classList.remove("hidden");
-            if (textEl) textEl.innerText = `ผู้ใช้งาน: ${window.currentUser.label} | สิทธิ์: ${window.currentUser.team === "ALL" ? "ทุกทีม" : window.currentUser.team}`;
+
+            const editTeams = getUserEditTeams();
+            const editText = editTeams.length ? editTeams.join(", ") : "ดูอย่างเดียว";
+            if (textEl) {
+                textEl.innerText = window.currentUser.team === "ALL"
+                    ? `👤 ${window.currentUser.name} | FULL ACCESS`
+                    : `👤 ${window.currentUser.name} | ${window.currentUser.team} | ${window.currentUser.rank}`;
+            }
 
             if (teamFilter) {
                 if (window.currentUser.team !== "ALL") {
@@ -491,22 +527,56 @@
         }
 
         window.loginUser = function() {
-            const username = document.getElementById("login-username").value.trim().toLowerCase();
-            const password = document.getElementById("login-password").value.trim();
+            const codeInput = document.getElementById("login-code");
+            const code = normalizeCode(codeInput?.value);
             const error = document.getElementById("login-error");
-            const user = LOGIN_USERS[username];
 
-            if (!user || user.password !== password) {
+            if (!code) {
+                error.innerText = "กรุณากรอกรหัสเข้าสู่ระบบ";
                 error?.classList.remove("hidden");
                 return;
             }
 
-            window.currentUser = { username, role: user.role, team: user.team, label: user.label };
+            if (code === ADMIN_CODE) {
+                window.currentUser = {
+                    code: ADMIN_CODE,
+                    name: "ADMIN",
+                    role: "ADMIN",
+                    rank: "ADMIN",
+                    team: "ALL",
+                    editableTeams: ["WIN1", "WIN2", "WIN3"]
+                };
+                sessionStorage.setItem("schedule_current_user", JSON.stringify(window.currentUser));
+                error?.classList.add("hidden");
+                refreshLoginUI();
+                updateDynamicUI();
+                showToast("เข้าสู่ระบบสำเร็จ");
+                return;
+            }
+
+            const emp = findEmployeeByCode(code);
+            if (!emp) {
+                error.innerText = "รหัสไม่ถูกต้อง";
+                error?.classList.remove("hidden");
+                return;
+            }
+
+            const rank = emp.rank || "S2";
+            window.currentUser = {
+                code: emp.code,
+                name: emp.name,
+                role: rank === "S4" ? "LEADER" : "STAFF",
+                rank,
+                team: emp.team,
+                editableTeams: rank === "S4" ? [emp.team] : []
+            };
+
             sessionStorage.setItem("schedule_current_user", JSON.stringify(window.currentUser));
             error?.classList.add("hidden");
             refreshLoginUI();
             updateDynamicUI();
-            showToast(`เข้าสู่ระบบสำเร็จ: ${user.label}`);
+
+            showToast(`เข้าสู่ระบบสำเร็จ: ${emp.name}`);
         };
 
         window.logoutUser = function() {
@@ -521,16 +591,25 @@
         };
 
         document.addEventListener("keydown", function(e) {
-            if (e.key === "Enter" && document.getElementById("login-modal") && !document.getElementById("login-modal").classList.contains("hidden")) {
+            const modal = document.getElementById("login-modal");
+            if (e.key === "Enter" && modal && !modal.classList.contains("hidden")) {
                 window.loginUser();
             }
         });
+
 
         // Global Window Methods
         window.autoSort = autoSort; window.exportData = exportData; window.resetToDefault = resetToDefault; window.reloadFromCloud = window.reloadFromCloud || (() => location.reload());
         window.applyFilters = applyFilters; window.closeExportModal = closeExportModal; window.copyExportText = copyExportText;
         window.changeShift = changeShift; window.editName = editName; window.toggleDayOff = toggleDayOff; window.deleteSelectedEmployee = deleteSelectedEmployee;
-        window.openAddEmployeeModal = () => { updateShiftSelects(); updateEmployeeDeleteSelect(); document.getElementById('add-employee-modal').classList.remove('hidden'); };
+        window.openAddEmployeeModal = () => {
+            if (!window.currentUser) return alert("กรุณาเข้าสู่ระบบก่อน");
+            if (getUserEditTeams().length === 0) return alert("บัญชีนี้ไม่มีสิทธิ์เพิ่ม/ลบข้อมูล");
+            updateShiftSelects();
+            updateDeleteEmployeeSelect();
+            refreshLoginUI();
+            document.getElementById('add-employee-modal').classList.remove('hidden');
+        };
         window.closeAddEmployeeModal = () => document.getElementById('add-employee-modal').classList.add('hidden');
         window.openAddShiftModal = () => document.getElementById('add-shift-modal').classList.remove('hidden');
         window.closeAddShiftModal = () => document.getElementById('add-shift-modal').classList.add('hidden');
@@ -540,7 +619,7 @@
             const code = document.getElementById('new-emp-code').value.trim();
             let team = document.getElementById('new-emp-team').value;
             if (window.currentUser && window.currentUser.team !== "ALL") team = window.currentUser.team;
-            if (!canEditTeam(team)) return alert("คุณไม่มีสิทธิ์เพิ่มพนักงานในทีมนี้");
+            if (!canEditTeam(team)) return alert("คุณไม่มีสิทธิ์เพิ่มพนักงานในทีมนี้ หรือบัญชีของคุณเป็น S2 ดูได้อย่างเดียว");
             const shift = document.getElementById('new-emp-shift').value;
             const type = document.getElementById('new-emp-type').value;
             const rank = document.getElementById('new-emp-rank')?.value || "S2";
@@ -695,7 +774,7 @@
             if (idx === -1) return alert("ไม่พบข้อมูลพนักงาน");
 
             const p = window.currentStaffList[idx];
-            if (!canEditTeam(p.team)) return alert("คุณไม่มีสิทธิ์ลบพนักงานทีมนี้");
+            if (!canEditTeam(p.team)) return alert("คุณไม่มีสิทธิ์ลบพนักงานทีมนี้ หรือบัญชีของคุณเป็น S2 ดูได้อย่างเดียว");
 
             if (!confirm(`ยืนยันลบพนักงาน ${p.name} (${p.team}) ออกจากระบบ?`)) return;
 
@@ -704,7 +783,7 @@
             showToast("ลบพนักงานเรียบร้อย");
         };
 
-        function updateDynamicUI() { updateShiftSelects(); updateDeleteEmployeeSelect(); refreshLoginUI(); renderTable(); updateStats(); }
+        function updateDynamicUI() { updateShiftSelects(); updateDeleteEmployeeSelect(); refreshCurrentUserFromStaff(); refreshLoginUI(); renderTable(); updateStats(); }
 
 
         function getRankLabel(rank) {
@@ -743,7 +822,7 @@
             sortedStaffForRender.forEach((p, i) => {
                 const allowedTeam = getAllowedTeam();
                 if (!allowedTeam) return;
-                if (allowedTeam !== "ALL" && p.team !== allowedTeam) return;
+                if (!canViewTeam(p.team)) return;
                 if (fTeam !== "ALL" && p.team !== fTeam) return;
                 if (fShift !== "ALL" && p.shift !== fShift) return;
                 if (sName !== "" && !p.name.toLowerCase().includes(sName) && !p.code.includes(sName)) return;
@@ -821,7 +900,7 @@
 
         function updateStats() {
             const allowedTeam = getAllowedTeam();
-            const statList = window.currentStaffList.filter(p => allowedTeam === "ALL" || p.team === allowedTeam);
+            const statList = window.currentStaffList.filter(p => window.currentUser && (window.currentUser.team === "ALL" || p.team === window.currentUser.team));
             document.getElementById("stat-total").innerText = `${statList.length} คน`;
             document.getElementById("stat-sub-types").innerText = `Office: ${statList.filter(p=>p.type==="Office").length} | WFH: ${statList.filter(p=>p.type==="WFH").length}`;
             const cont = document.getElementById("dashboard-widgets"); while(cont.children.length > 1) cont.removeChild(cont.lastChild);
@@ -835,7 +914,7 @@
 
         function editName(id, el) {
             const person = window.currentStaffList.find(p => p.id === id);
-            if (!person || !canEditTeam(person.team)) return alert("คุณไม่มีสิทธิ์แก้ไขพนักงานทีมนี้");
+            if (!person || !canEditTeam(person.team)) return alert("คุณไม่มีสิทธิ์แก้ไขข้อมูลทีมนี้ หรือบัญชีของคุณเป็น S2 ดูได้อย่างเดียว");
             const old = el.innerText; const inp = document.createElement("input"); inp.value = old; inp.className = "bg-slate-950 border border-indigo-500 text-slate-200 px-1 py-0.5 rounded text-sm w-32 outline-none";
             el.parentNode.replaceChild(inp, el); inp.focus();
             const save = () => {
@@ -849,7 +928,7 @@
         function changeRank(id, val) {
             const idx = window.currentStaffList.findIndex(p=>p.id===id);
             if(idx!==-1) {
-                if(!canEditTeam(window.currentStaffList[idx].team)) return alert("คุณไม่มีสิทธิ์แก้ไขพนักงานทีมนี้");
+                if(!canEditTeam(window.currentStaffList[idx].team)) return alert("คุณไม่มีสิทธิ์แก้ไขข้อมูลทีมนี้ หรือบัญชีของคุณเป็น S2 ดูได้อย่างเดียว");
                 window.currentStaffList[idx].rank = val;
                 commitData();
                 showToast("อัปเดตยศเรียบร้อย");
@@ -857,11 +936,11 @@
         }
         window.changeRank = changeRank;
 
-        function changeShift(id, val) { const idx = window.currentStaffList.findIndex(p=>p.id===id); if(idx!==-1) { if(!canEditTeam(window.currentStaffList[idx].team)) return alert("คุณไม่มีสิทธิ์แก้ไขพนักงานทีมนี้"); window.currentStaffList[idx].shift = val; commitData(); showToast("อัปเดตเรียบร้อย"); } }
+        function changeShift(id, val) { const idx = window.currentStaffList.findIndex(p=>p.id===id); if(idx!==-1) { if(!canEditTeam(window.currentStaffList[idx].team)) return alert("คุณไม่มีสิทธิ์แก้ไขข้อมูลทีมนี้ หรือบัญชีของคุณเป็น S2 ดูได้อย่างเดียว"); window.currentStaffList[idx].shift = val; commitData(); showToast("อัปเดตเรียบร้อย"); } }
         function toggleDayOff(id, d) {
             const idx = window.currentStaffList.findIndex(p=>p.id===id);
             if(idx!==-1) {
-                const p = window.currentStaffList[idx]; if(!canEditTeam(p.team)) return alert("คุณไม่มีสิทธิ์แก้ไขพนักงานทีมนี้"); if(!p.offs) p.offs=[]; if(!p.leaves) p.leaves=[];
+                const p = window.currentStaffList[idx]; if(!canEditTeam(p.team)) return alert("คุณไม่มีสิทธิ์แก้ไขข้อมูลทีมนี้ หรือบัญชีของคุณเป็น S2 ดูได้อย่างเดียว"); if(!p.offs) p.offs=[]; if(!p.leaves) p.leaves=[];
                 const io = p.offs.indexOf(d); const il = p.leaves.indexOf(d);
                 if(io===-1 && il===-1) { p.offs.push(d); p.offs.sort((a,b)=>a-b); } else if(io!==-1) { p.offs.splice(io, 1); p.leaves.push(d); p.leaves.sort((a,b)=>a-b); } else { p.leaves.splice(il, 1); }
                 commitData();
@@ -881,7 +960,13 @@
             });
             commitData(); showToast("เรียงเรียบร้อย");
         }
-        function resetToDefault() { if(!window.currentUser || window.currentUser.team !== "ALL") return alert("รีเซ็ตข้อมูลได้เฉพาะ Admin เท่านั้น"); if(confirm("ข้อมูลในเซิร์ฟเวอร์จะถูกรีเซ็ตทั้งหมด ยืนยันการรีเซ็ตเป็นค่าเริ่มต้น?")){ window.currentStaffList = JSON.parse(JSON.stringify(defaultStaff)); commitData(); } }
+        function resetToDefault() {
+            if(!window.currentUser || window.currentUser.team !== "ALL") return alert("รีเซ็ตข้อมูลได้เฉพาะ Admin เท่านั้น");
+            if(confirm("ข้อมูลในเซิร์ฟเวอร์จะถูกรีเซ็ตทั้งหมด ยืนยันการรีเซ็ตเป็นค่าเริ่มต้น?")){
+                window.currentStaffList = JSON.parse(JSON.stringify(defaultStaff));
+                commitData();
+            }
+        }
         function applyFilters() { renderTable(); }
         function showToast(msg) { const t = document.getElementById("toast"); document.getElementById("toast-text").innerText = msg; t.classList.replace("translate-y-[-100px]", "translate-y-0"); t.classList.replace("opacity-0", "opacity-100"); setTimeout(() => { t.classList.replace("translate-y-0", "translate-y-[-100px]"); t.classList.replace("opacity-100", "opacity-0"); }, 3000); }
         function exportData() {
