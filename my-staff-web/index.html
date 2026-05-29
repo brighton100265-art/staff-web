@@ -2423,6 +2423,43 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
             return Array.isArray(p.offs) && p.offs.includes(day);
         }
 
+
+        function getWFHReportShiftLabel(shift, login) {
+            const s = String(shift || "").toUpperCase();
+            const t = `${s} ${login || ""}`;
+            if (s === "S9" || t.includes("09.30") || t.includes("09:30")) return "เช้า (09:30–18:30)";
+            if (s === "S12" || t.includes("12.30") || t.includes("12:30")) return "บ่าย (12:30–21:30)";
+            if (s === "S21" || t.includes("21.00") || t.includes("21:00")) return "ดึก (21:00–05:00)";
+            return `${shift || "ไม่ระบุกะ"} (${login || "ไม่ระบุเวลา"})`;
+        }
+
+        function getWFHReportShiftLabels() {
+            const fixed = ["เช้า (09:30–18:30)", "บ่าย (12:30–21:30)", "ดึก (21:00–05:00)"];
+            const extra = [];
+
+            if (typeof getSortedShiftKeys === "function") {
+                getSortedShiftKeys().forEach(shift => {
+                    const times = window.shiftTimes[shift] || {};
+                    const label = getWFHReportShiftLabel(shift, times.login);
+                    if (!fixed.includes(label) && !extra.includes(label)) extra.push(label);
+                });
+            }
+
+            return [...fixed, ...extra];
+        }
+
+        function isWFHForReport(p) {
+            return String(p.type || "").trim().toUpperCase() === "WFH";
+        }
+
+        function isOffForReport(p, day) {
+            return Array.isArray(p.offs) && p.offs.includes(day);
+        }
+
+        function sortNamesForReport(names) {
+            return [...names].sort((a, b) => String(a).localeCompare(String(b), "en"));
+        }
+
 window.generateWFHOffReport = function() {
             const dayInput = document.getElementById("wfh-report-day");
             const out = document.getElementById("wfh-report-output");
@@ -2439,7 +2476,7 @@ window.generateWFHOffReport = function() {
             const teamIcon = { WIN1: "🔵", WIN2: "🟢", WIN3: "🟧" };
             const shiftLabels = getWFHReportShiftLabels();
 
-            const sortFn = typeof sortedStaffStable === "function"
+            const sortStaff = typeof sortedStaffStable === "function"
                 ? sortedStaffStable
                 : (arr) => [...arr];
 
@@ -2447,14 +2484,14 @@ window.generateWFHOffReport = function() {
             lines.push(`🗓️ พนักงาน WFH หยุดประจำวันที่ ${day}`);
             lines.push("");
 
-            teams.forEach(team => {
+            teams.forEach((team, teamIndex) => {
                 const canSee = !window.currentUser || window.currentUser.team === "ALL" || window.currentUser.team === team;
                 if (!canSee) return;
 
                 lines.push(`${teamIcon[team] || "▪️"} ${team}`);
                 lines.push("");
 
-                const people = sortFn(window.currentStaffList)
+                const wfhOffPeople = sortStaff(window.currentStaffList)
                     .filter(p => p.team === team)
                     .filter(p => isWFHForReport(p))
                     .filter(p => isOffForReport(p, day));
@@ -2462,7 +2499,7 @@ window.generateWFHOffReport = function() {
                 const shiftMap = {};
                 shiftLabels.forEach(label => shiftMap[label] = []);
 
-                people.forEach(p => {
+                wfhOffPeople.forEach(p => {
                     const times = window.shiftTimes[p.shift] || {};
                     const label = getWFHReportShiftLabel(p.shift, times.login);
                     if (!shiftMap[label]) shiftMap[label] = [];
@@ -2470,17 +2507,24 @@ window.generateWFHOffReport = function() {
                 });
 
                 shiftLabels.forEach(label => {
+                    const names = sortNamesForReport(shiftMap[label] || []);
                     lines.push(label);
-                    if (shiftMap[label] && shiftMap[label].length) {
-                        shiftMap[label].forEach(name => lines.push(`- ${name}`));
+
+                    if (names.length) {
+                        names.forEach(name => lines.push(`- ${name}`));
                     } else {
                         lines.push("• ไม่มีพนักงาน WFH หยุด");
                     }
+
                     lines.push("");
                 });
+
+                if (teamIndex < teams.length - 1) {
+                    lines.push("");
+                }
             });
 
-            out.value = lines.join("\\n").trim();
+            out.value = lines.join("\n").replace(/\n{4,}/g, "\n\n\n").trim();
             showToast("สร้างรายงาน WFH แล้ว");
         };
 
@@ -2496,10 +2540,13 @@ window.generateWFHOffReport = function() {
         window.copyWFHOffReport = function() {
             const out = document.getElementById("wfh-report-output");
             if (!out) return;
+
             if (!out.value.trim()) {
                 generateWFHOffReport();
             }
+
             out.select();
+            out.setSelectionRange(0, 999999);
             document.execCommand("copy");
             showToast("คัดลอกรายงานแล้ว");
         };
