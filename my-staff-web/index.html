@@ -99,9 +99,7 @@
             </div>
 
             <div class="flex flex-wrap gap-2">
-                <button onclick="openAddEmployeeModal()" class="px-4 py-2 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/30 font-medium text-sm rounded-xl transition-all flex items-center gap-2">+ เพิ่ม/ลบพนักงาน</button>
-                <button onclick="openAddShiftModal()" class="px-4 py-2 bg-amber-600/20 hover:bg-amber-600/40 text-amber-400 border border-amber-500/30 font-medium text-sm rounded-xl transition-all">เพิ่มกะ</button>
-                <button onclick="autoSort()" class="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-medium text-sm rounded-xl shadow-lg shadow-indigo-500/20 transition-all">Auto-Sort</button>
+<button onclick="autoSort()" class="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-medium text-sm rounded-xl shadow-lg shadow-indigo-500/20 transition-all">Auto-Sort</button>
                 <button onclick="forceSaveCloud()" class="px-4 py-2 bg-emerald-950/40 hover:bg-emerald-900/40 text-emerald-400 border border-emerald-900/30 font-medium text-sm rounded-xl transition-all">บันทึก Cloud</button>
                 <button onclick="reloadFromCloud()" class="px-4 py-2 bg-sky-950/40 hover:bg-sky-900/40 text-sky-400 border border-sky-900/30 font-medium text-sm rounded-xl transition-all">รีโหลด</button>
                 <button onclick="exportData()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium text-sm rounded-xl transition-all">Export</button>
@@ -124,7 +122,7 @@
             </div>
         </div>
 
-        <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-lg flex flex-col xl:flex-row xl:items-start justify-between gap-4">
             <div class="flex flex-wrap items-center gap-3">
                 <div class="flex flex-col gap-1.5">
                     <label class="text-xs text-slate-400 font-medium">คัดกรองเฉพาะทีม</label>
@@ -142,6 +140,40 @@
                     </select>
                 </div>
             </div>
+
+            <div class="flex-1 min-w-[420px] bg-slate-950/50 border border-slate-800 rounded-2xl p-4 space-y-3">
+                <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-3">
+                    <div>
+                        <div class="text-sm font-bold text-slate-200 flex items-center gap-2">
+                            📥 นำเข้าวันหยุดแบบเร็ว
+                            <span class="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">รองรับข้อมูลจาก Excel</span>
+                        </div>
+                        <p class="text-[11px] text-slate-500 mt-1">รูปแบบ: ชื่อพนักงาน ตามด้วยวันที่ เช่น NOAH 1 7 21 หรือวางจาก Excel ได้เลย</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="processBulkOffs()" class="px-3 py-2 bg-blue-600/20 hover:bg-blue-600/35 text-blue-400 border border-blue-500/30 font-semibold text-xs rounded-xl transition-all">
+                            ประมวลผลวันหยุด
+                        </button>
+                        <button onclick="clearBulkOffs()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-semibold text-xs rounded-xl transition-all">
+                            ล้างช่อง
+                        </button>
+                        <button onclick="openAddEmployeeModal()" class="px-3 py-2 bg-emerald-600/20 hover:bg-emerald-600/35 text-emerald-400 border border-emerald-500/30 font-semibold text-xs rounded-xl transition-all">
+                            + เพิ่ม/ลบพนักงาน
+                        </button>
+                        <button onclick="openAddShiftModal()" class="px-3 py-2 bg-amber-600/20 hover:bg-amber-600/35 text-amber-400 border border-amber-500/30 font-semibold text-xs rounded-xl transition-all">
+                            เพิ่มกะ
+                        </button>
+                    </div>
+                </div>
+                <textarea id="bulk-offs-textarea" placeholder="ตัวอย่าง:
+NOAH 1 7 21
+NADIR 1 7 15 25
+ALPHA 1 7 15 25
+BIRD 4 11 19 24" class="w-full h-24 bg-slate-950 border border-slate-800 focus:border-blue-500 text-slate-200 px-3 py-2 rounded-xl text-xs outline-none resize-y placeholder:text-slate-600 font-mono"></textarea>
+                <div id="bulk-offs-result" class="hidden text-[11px] leading-5 rounded-xl border px-3 py-2"></div>
+            </div>
+
+
             <div class="flex flex-col gap-1.5 md:w-80">
                 <label class="text-xs text-slate-400 font-medium">ค้นหาชื่อพนักงาน / รหัส</label>
                 <input type="text" id="search-name" oninput="applyFilters()" placeholder="พิมพ์ชื่อหรือรหัส..." class="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 text-slate-200 px-4 py-2 rounded-xl text-sm outline-none transition-all placeholder:text-slate-600">
@@ -1747,6 +1779,116 @@
             document.execCommand("copy");
             closeExportModal();
             showToast("คัดลอกแล้ว");
+        };
+
+
+        function parseBulkOffsText(raw) {
+            const rows = String(raw || "").split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+            const parsed = [];
+            const invalid = [];
+
+            rows.forEach((line, lineIndex) => {
+                const parts = line.split(/[\t,\s]+/).map(x => x.trim()).filter(Boolean);
+                if (parts.length < 2) {
+                    invalid.push(`บรรทัด ${lineIndex + 1}: ข้อมูลไม่ครบ`);
+                    return;
+                }
+
+                const name = normalizeCode(parts[0]);
+                const days = [];
+                const badTokens = [];
+
+                parts.slice(1).forEach(token => {
+                    const n = Number(String(token).replace(/[^\d]/g, ""));
+                    if (Number.isInteger(n) && n >= 1 && n <= 31) {
+                        if (!days.includes(n)) days.push(n);
+                    } else {
+                        badTokens.push(token);
+                    }
+                });
+
+                if (!name || days.length === 0) {
+                    invalid.push(`${parts[0]}: ไม่พบวันที่ที่ถูกต้อง`);
+                    return;
+                }
+
+                if (badTokens.length) {
+                    invalid.push(`${name}: ข้ามค่าที่ไม่ใช่วันที่ (${badTokens.join(", ")})`);
+                }
+
+                days.sort((a,b) => a-b);
+                parsed.push({ name, days });
+            });
+
+            return { parsed, invalid };
+        }
+
+        window.clearBulkOffs = function() {
+            const ta = document.getElementById("bulk-offs-textarea");
+            const result = document.getElementById("bulk-offs-result");
+            if (ta) ta.value = "";
+            if (result) {
+                result.className = "hidden text-[11px] leading-5 rounded-xl border px-3 py-2";
+                result.innerHTML = "";
+            }
+        };
+
+        window.processBulkOffs = async function() {
+            const ta = document.getElementById("bulk-offs-textarea");
+            const result = document.getElementById("bulk-offs-result");
+            const raw = ta ? ta.value : "";
+
+            if (!window.currentUser) return alert("กรุณาเข้าสู่ระบบก่อน");
+            if (!raw.trim()) return alert("กรุณาวางข้อมูลวันหยุดก่อน");
+
+            const { parsed, invalid } = parseBulkOffsText(raw);
+            if (!parsed.length) {
+                result.className = "text-[11px] leading-5 rounded-xl border px-3 py-2 bg-rose-950/20 border-rose-500/30 text-rose-300";
+                result.innerHTML = "ไม่พบข้อมูลที่นำเข้าได้";
+                result.classList.remove("hidden");
+                return;
+            }
+
+            const success = [];
+            const notFound = [];
+            const noPermission = [];
+
+            parsed.forEach(item => {
+                const matches = window.currentStaffList.filter(p => normalizeCode(p.name) === item.name);
+                if (!matches.length) {
+                    notFound.push(item.name);
+                    return;
+                }
+
+                matches.forEach(p => {
+                    if (!canEditTeam(p.team)) {
+                        noPermission.push(`${p.name} (${p.team})`);
+                        return;
+                    }
+
+                    p.offs = [...item.days].sort((a,b)=>a-b);
+                    p.leaves = (Array.isArray(p.leaves) ? p.leaves : []).filter(d => !p.offs.includes(d)).sort((a,b)=>a-b);
+                    success.push(`${p.name} (${p.team}): ${p.offs.join(", ")}`);
+                });
+            });
+
+            if (success.length) {
+                await commitData();
+            }
+
+            const parts = [];
+            if (success.length) parts.push(`<div class="text-emerald-300 font-semibold">สำเร็จ ${success.length} รายการ</div><div class="mt-1 max-h-24 overflow-y-auto">${success.map(x => `✅ ${x}`).join("<br>")}</div>`);
+            if (notFound.length) parts.push(`<div class="mt-2 text-amber-300 font-semibold">ไม่พบชื่อ ${notFound.length} รายการ</div><div>${notFound.map(x => `⚠️ ${x}`).join("<br>")}</div>`);
+            if (noPermission.length) parts.push(`<div class="mt-2 text-rose-300 font-semibold">ไม่มีสิทธิ์แก้ไข ${noPermission.length} รายการ</div><div>${noPermission.map(x => `⛔ ${x}`).join("<br>")}</div>`);
+            if (invalid.length) parts.push(`<div class="mt-2 text-slate-400 font-semibold">หมายเหตุ</div><div>${invalid.map(x => `• ${x}`).join("<br>")}</div>`);
+
+            result.className = success.length
+                ? "text-[11px] leading-5 rounded-xl border px-3 py-2 bg-emerald-950/15 border-emerald-500/25 text-slate-300"
+                : "text-[11px] leading-5 rounded-xl border px-3 py-2 bg-amber-950/15 border-amber-500/25 text-slate-300";
+            result.innerHTML = parts.join("");
+            result.classList.remove("hidden");
+
+            if (success.length) showToast(`นำเข้าวันหยุดสำเร็จ ${success.length} รายการ`);
         };
 
         function showToast(msg) {
