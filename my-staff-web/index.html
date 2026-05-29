@@ -2384,7 +2384,6 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
         };
 
 
-        
         function getShiftGroupLabel(shift, login) {
             const text = `${shift || ""} ${login || ""}`;
             if (text.includes("09.30") || text.includes("09:30")) return "เช้า (09:30–18:30)";
@@ -2393,27 +2392,43 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
             return `${shift || "ไม่ระบุกะ"} (${login || "ไม่ระบุเวลา"})`;
         }
 
-        function getReportShiftLabels() {
-            const labels = [];
-            const preferred = ["เช้า (09:30–18:30)", "บ่าย (12:30–21:30)", "ดึก (21:00–05:00)"];
-
-            getSortedShiftKeys().forEach(shift => {
-                const times = window.shiftTimes[shift] || {};
-                const label = getShiftGroupLabel(shift, times.login);
-                if (!labels.includes(label)) labels.push(label);
-            });
-
-            // ให้เช้า/บ่าย/ดึก เรียงตามนี้เสมอ และถ้ามีกะอื่นค่อยต่อท้าย
-            return [
-                ...preferred.filter(x => labels.includes(x)),
-                ...labels.filter(x => !preferred.includes(x))
-            ];
+        
+        function getWFHReportShiftLabel(shift, login) {
+            const s = String(shift || "").toUpperCase();
+            const t = `${s} ${login || ""}`;
+            if (s === "S9" || t.includes("09.30") || t.includes("09:30")) return "เช้า (09:30–18:30)";
+            if (s === "S12" || t.includes("12.30") || t.includes("12:30")) return "บ่าย (12:30–21:30)";
+            if (s === "S21" || t.includes("21.00") || t.includes("21:00")) return "ดึก (21:00–05:00)";
+            return `${shift || "ไม่ระบุกะ"} (${login || "ไม่ระบุเวลา"})`;
         }
 
-        window.generateWFHOffReport = function() {
+        function getWFHReportShiftLabels() {
+            const fixed = ["เช้า (09:30–18:30)", "บ่าย (12:30–21:30)", "ดึก (21:00–05:00)"];
+            const extra = [];
+            if (typeof getSortedShiftKeys === "function") {
+                getSortedShiftKeys().forEach(shift => {
+                    const times = window.shiftTimes[shift] || {};
+                    const label = getWFHReportShiftLabel(shift, times.login);
+                    if (!fixed.includes(label) && !extra.includes(label)) extra.push(label);
+                });
+            }
+            return [...fixed, ...extra];
+        }
+
+        function isWFHForReport(p) {
+            return String(p.type || "").trim().toUpperCase() === "WFH";
+        }
+
+        function isOffForReport(p, day) {
+            return Array.isArray(p.offs) && p.offs.includes(day);
+        }
+
+window.generateWFHOffReport = function() {
             const dayInput = document.getElementById("wfh-report-day");
             const out = document.getElementById("wfh-report-output");
             const day = Number(dayInput?.value);
+
+            if (!out) return;
 
             if (!Number.isInteger(day) || day < 1 || day > 31) {
                 alert("กรุณากรอกวันที่ 1-31");
@@ -2422,9 +2437,13 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
 
             const teams = ["WIN1", "WIN2", "WIN3"];
             const teamIcon = { WIN1: "🔵", WIN2: "🟢", WIN3: "🟧" };
-            const shiftLabels = getReportShiftLabels();
+            const shiftLabels = getWFHReportShiftLabels();
 
-            let lines = [];
+            const sortFn = typeof sortedStaffStable === "function"
+                ? sortedStaffStable
+                : (arr) => [...arr];
+
+            const lines = [];
             lines.push(`🗓️ พนักงาน WFH หยุดประจำวันที่ ${day}`);
             lines.push("");
 
@@ -2435,40 +2454,33 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                 lines.push(`${teamIcon[team] || "▪️"} ${team}`);
                 lines.push("");
 
-                const teamWFHOff = sortedStaffStable(window.currentStaffList)
-                    .filter(p =>
-                        p.team === team &&
-                        p.type === "WFH" &&
-                        Array.isArray(p.offs) &&
-                        p.offs.includes(day)
-                    );
+                const people = sortFn(window.currentStaffList)
+                    .filter(p => p.team === team)
+                    .filter(p => isWFHForReport(p))
+                    .filter(p => isOffForReport(p, day));
 
                 const shiftMap = {};
                 shiftLabels.forEach(label => shiftMap[label] = []);
 
-                teamWFHOff.forEach(p => {
+                people.forEach(p => {
                     const times = window.shiftTimes[p.shift] || {};
-                    const label = getShiftGroupLabel(p.shift, times.login);
+                    const label = getWFHReportShiftLabel(p.shift, times.login);
                     if (!shiftMap[label]) shiftMap[label] = [];
                     shiftMap[label].push(p.name);
                 });
 
-                // สำคัญ: โชว์ทุกกะ แม้ไม่มีคนหยุด
                 shiftLabels.forEach(label => {
                     lines.push(label);
-
                     if (shiftMap[label] && shiftMap[label].length) {
                         shiftMap[label].forEach(name => lines.push(`- ${name}`));
                     } else {
                         lines.push("• ไม่มีพนักงาน WFH หยุด");
                     }
-
                     lines.push("");
                 });
             });
 
-            out.value = lines.join("
-").trim();
+            out.value = lines.join("\\n").trim();
             showToast("สร้างรายงาน WFH แล้ว");
         };
 
@@ -2483,14 +2495,14 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
 
         window.copyWFHOffReport = function() {
             const out = document.getElementById("wfh-report-output");
-            if (!out || !out.value.trim()) {
+            if (!out) return;
+            if (!out.value.trim()) {
                 generateWFHOffReport();
             }
             out.select();
             document.execCommand("copy");
             showToast("คัดลอกรายงานแล้ว");
         };
-
 
         function showToast(msg) {
             const t = document.getElementById("toast");
