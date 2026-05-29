@@ -95,6 +95,33 @@
                         </div>
                     </div>
                     <p class="text-xs md:text-sm text-slate-400 mt-1">จัดการกะ วันหยุด/วันลา ยศพนักงาน และสิทธิ์หัวหน้าทีมแบบเรียลไทม์</p>
+
+                <div class="flex flex-wrap items-center gap-2 mt-3">
+                    <div class="flex items-center gap-2 bg-slate-950/50 border border-slate-800 rounded-xl px-3 py-2">
+                        <span class="text-xs text-slate-400">เดือน</span>
+                        <select id="month-select" onchange="changeScheduleMonth()" class="bg-slate-950 border border-slate-800 text-slate-200 px-2 py-1 rounded-lg text-xs outline-none">
+                            <option value="1">มกราคม</option>
+                            <option value="2">กุมภาพันธ์</option>
+                            <option value="3">มีนาคม</option>
+                            <option value="4">เมษายน</option>
+                            <option value="5">พฤษภาคม</option>
+                            <option value="6">มิถุนายน</option>
+                            <option value="7">กรกฎาคม</option>
+                            <option value="8">สิงหาคม</option>
+                            <option value="9">กันยายน</option>
+                            <option value="10">ตุลาคม</option>
+                            <option value="11">พฤศจิกายน</option>
+                            <option value="12">ธันวาคม</option>
+                        </select>
+                        <span class="text-xs text-slate-400">ปี</span>
+                        <select id="year-select" onchange="changeScheduleMonth()" class="bg-slate-950 border border-slate-800 text-slate-200 px-2 py-1 rounded-lg text-xs outline-none"></select>
+                    </div>
+                    <button onclick="copyFromPreviousMonth()" class="admin-only px-3 py-2 bg-cyan-600/20 hover:bg-cyan-600/35 text-cyan-400 border border-cyan-500/30 font-semibold text-xs rounded-xl transition-all">
+                        คัดลอกจากเดือนก่อน
+                    </button>
+                    <span id="month-status" class="text-[11px] text-slate-500"></span>
+                </div>
+
                 </div>
             </div>
 
@@ -215,7 +242,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
         <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-800 bg-slate-900/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div class="flex items-center gap-2 text-indigo-400">
-                    <span class="font-semibold text-sm text-slate-200">แผ่นงานตารางเวรพนักงานแนวตั้ง (วันทำงาน → วันหยุด O → วันลา L)</span>
+                    <span class="font-semibold text-sm text-slate-200">แผ่นงานตารางเวรพนักงานแนวตั้ง <span id="current-month-label" class="text-indigo-300"></span> (วันทำงาน → วันหยุด O → วันลา L)</span>
                 </div>
                 <div class="flex gap-4 text-xs">
                     <span class="text-blue-400">● วันทำงาน</span>
@@ -1278,7 +1305,50 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
         window.shiftTimes = JSON.parse(JSON.stringify(defaultShiftTimes));
         window.currentUser = JSON.parse(sessionStorage.getItem("schedule_current_user") || "null");
 
-        const cloudDocId = "company_schedule_v2_clean";
+        const monthNamesTH = ["", "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+        const todayForSchedule = new Date();
+        window.selectedMonth = Number(localStorage.getItem("selected_schedule_month") || (todayForSchedule.getMonth() + 1));
+        window.selectedYear = Number(localStorage.getItem("selected_schedule_year") || todayForSchedule.getFullYear());
+
+        function pad2(n) {
+            return String(n).padStart(2, "0");
+        }
+
+        function getScheduleDocId(year = window.selectedYear, month = window.selectedMonth) {
+            return `schedule_${year}_${pad2(month)}`;
+        }
+
+        function getPreviousMonthYear() {
+            let m = window.selectedMonth - 1;
+            let y = window.selectedYear;
+            if (m < 1) {
+                m = 12;
+                y--;
+            }
+            return { year: y, month: m };
+        }
+
+        function updateMonthUI() {
+            const m = document.getElementById("month-select");
+            const y = document.getElementById("year-select");
+            const label = document.getElementById("current-month-label");
+            const status = document.getElementById("month-status");
+
+            if (y && y.options.length === 0) {
+                const currentYear = new Date().getFullYear();
+                for (let yy = currentYear - 2; yy <= currentYear + 3; yy++) {
+                    y.innerHTML += `<option value="${yy}">${yy}</option>`;
+                }
+            }
+
+            if (m) m.value = String(window.selectedMonth);
+            if (y) y.value = String(window.selectedYear);
+            if (label) label.innerText = `(${monthNamesTH[window.selectedMonth]} ${window.selectedYear})`;
+            if (status) status.innerText = `กำลังใช้งาน: ${monthNamesTH[window.selectedMonth]} ${window.selectedYear}`;
+        }
+
+
+        let cloudDocId = getScheduleDocId();
         let db = null, auth = null, isCloudMode = false, isApplyingSnapshot = false;
 
         function normalizeCode(code) { return String(code || "").trim().toUpperCase(); }
@@ -1325,12 +1395,12 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
         }
 
         function saveLocalBackup() {
-            localStorage.setItem("staff_v2_clean", JSON.stringify(window.currentStaffList));
-            localStorage.setItem("shift_v2_clean", JSON.stringify(window.shiftTimes));
+            localStorage.setItem(`staff_${getScheduleDocId()}`, JSON.stringify(window.currentStaffList));
+            localStorage.setItem(`shift_${getScheduleDocId()}`, JSON.stringify(window.shiftTimes));
         }
         function loadLocalBackup() {
-            const s1 = localStorage.getItem("staff_v2_clean");
-            const s2 = localStorage.getItem("shift_v2_clean");
+            const s1 = localStorage.getItem(`staff_${getScheduleDocId()}`);
+            const s2 = localStorage.getItem(`shift_${getScheduleDocId()}`);
             if (s1) {
                 const parsed = ensureStaffShape(JSON.parse(s1));
                 if (parsed.length) window.currentStaffList = parsed;
@@ -1456,6 +1526,78 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
             updateDynamicUI();
         };
 
+
+        async function loadScheduleFromCloudOrCreate() {
+            cloudDocId = getScheduleDocId();
+            const ref = doc(db, "schedule_db", cloudDocId);
+            const snap = await getDoc(ref);
+
+            if (snap.exists()) {
+                const data = snap.data();
+                if (Array.isArray(data.staffList) && data.staffList.length) {
+                    window.currentStaffList = ensureStaffShape(data.staffList);
+                } else {
+                    window.currentStaffList = ensureStaffShape(defaultStaff);
+                }
+
+                if (data.shiftTimes && Object.keys(data.shiftTimes).length) {
+                    window.shiftTimes = data.shiftTimes;
+                } else {
+                    window.shiftTimes = JSON.parse(JSON.stringify(defaultShiftTimes));
+                }
+            } else {
+                window.currentStaffList = ensureStaffShape(defaultStaff);
+                window.shiftTimes = JSON.parse(JSON.stringify(defaultShiftTimes));
+                await setDoc(ref, {
+                    staffList: window.currentStaffList,
+                    shiftTimes: window.shiftTimes,
+                    month: window.selectedMonth,
+                    year: window.selectedYear,
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp()
+                }, { merge: true });
+            }
+
+            ensureStaffPositions();
+            saveLocalBackup();
+        }
+
+        let unsubscribeSchedule = null;
+
+        function startScheduleListener() {
+            if (!db) return;
+            if (unsubscribeSchedule) unsubscribeSchedule();
+
+            cloudDocId = getScheduleDocId();
+            const ref = doc(db, "schedule_db", cloudDocId);
+
+            unsubscribeSchedule = onSnapshot(ref, (docSnap) => {
+                if (!docSnap.exists()) return;
+                const data = docSnap.data();
+                isApplyingSnapshot = true;
+
+                if (Array.isArray(data.staffList) && data.staffList.length) {
+                    window.currentStaffList = ensureStaffShape(data.staffList);
+                }
+                if (data.shiftTimes && Object.keys(data.shiftTimes).length) {
+                    window.shiftTimes = data.shiftTimes;
+                }
+
+                ensureStaffPositions();
+                saveLocalBackup();
+                updateDynamicUI();
+                setSyncStatus("online", "ออนไลน์: ซิงค์ล่าสุดแล้ว");
+
+                setTimeout(() => isApplyingSnapshot = false, 100);
+            }, (error) => {
+                console.error(error);
+                setSyncStatus("error", "ซิงค์ผิดพลาด: ใช้ข้อมูลสำรอง");
+                loadLocalBackup();
+                ensureStaffPositions();
+                updateDynamicUI();
+            });
+        }
+
         async function startCloudSync() {
             try {
                 const app = initializeApp(firebaseConfig);
@@ -1464,36 +1606,11 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                 isCloudMode = true;
                 setSyncStatus("loading", "กำลังเชื่อมต่อคลาวด์...");
                 await signInAnonymously(auth);
-                const ref = doc(db, "schedule_db", cloudDocId);
-                const snap = await getDoc(ref);
-                if (snap.exists()) {
-                    const data = snap.data();
-                    if (Array.isArray(data.staffList) && data.staffList.length) window.currentStaffList = ensureStaffShape(data.staffList);
-                    if (data.shiftTimes && Object.keys(data.shiftTimes).length) window.shiftTimes = data.shiftTimes;
-                } else {
-                    await setDoc(ref, { staffList: window.currentStaffList, shiftTimes: window.shiftTimes, updatedAt: serverTimestamp() }, { merge: true });
-                }
-                ensureStaffPositions();
-                saveLocalBackup();
+                await loadScheduleFromCloudOrCreate();
                 setSyncStatus("online", "ออนไลน์: ซิงค์ออโต้");
                 updateDynamicUI();
+                startScheduleListener();
 
-                onSnapshot(ref, (docSnap) => {
-                    if (!docSnap.exists()) return;
-                    const data = docSnap.data();
-                    isApplyingSnapshot = true;
-                    if (Array.isArray(data.staffList) && data.staffList.length) window.currentStaffList = ensureStaffShape(data.staffList);
-                    if (data.shiftTimes && Object.keys(data.shiftTimes).length) window.shiftTimes = data.shiftTimes;
-                    saveLocalBackup();
-                    updateDynamicUI();
-                    setSyncStatus("online", "ออนไลน์: ซิงค์ล่าสุดแล้ว");
-                    setTimeout(() => isApplyingSnapshot = false, 100);
-                }, (error) => {
-                    console.error(error);
-                    setSyncStatus("error", "ซิงค์ผิดพลาด: ใช้ข้อมูลสำรอง");
-                    loadLocalBackup();
-                    updateDynamicUI();
-                });
             } catch (e) {
                 console.error(e);
                 setSyncStatus("local", "โหลดคลาวด์ไม่ได้: ใช้ข้อมูลในเครื่อง");
@@ -1509,7 +1626,8 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
             if (!isApplyingSnapshot && isCloudMode && auth?.currentUser && db) {
                 try {
                     setSyncStatus("loading", "กำลังบันทึก...");
-                    await setDoc(doc(db, "schedule_db", cloudDocId), { staffList: window.currentStaffList, shiftTimes: window.shiftTimes, updatedAt: serverTimestamp() }, { merge: true });
+                    cloudDocId = getScheduleDocId();
+                    await setDoc(doc(db, "schedule_db", cloudDocId), { staffList: window.currentStaffList, shiftTimes: window.shiftTimes, month: window.selectedMonth, year: window.selectedYear, updatedAt: serverTimestamp() }, { merge: true });
                     setSyncStatus("online", "บันทึกและซิงค์แล้ว");
                 } catch (e) {
                     console.error(e);
@@ -1585,6 +1703,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
         }
 
         function updateDynamicUI() {
+            updateMonthUI();
             updateShiftSelects();
             refreshCurrentUserFromStaff();
             updateDeleteEmployeeSelect();
@@ -1811,6 +1930,78 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
             window.shiftTimes = JSON.parse(JSON.stringify(defaultShiftTimes));
             await commitData();
         };
+
+        window.changeScheduleMonth = async function() {
+            const m = Number(document.getElementById("month-select")?.value);
+            const y = Number(document.getElementById("year-select")?.value);
+
+            if (!Number.isInteger(m) || m < 1 || m > 12 || !Number.isInteger(y)) {
+                alert("กรุณาเลือกเดือน/ปีให้ถูกต้อง");
+                return;
+            }
+
+            window.selectedMonth = m;
+            window.selectedYear = y;
+            localStorage.setItem("selected_schedule_month", String(m));
+            localStorage.setItem("selected_schedule_year", String(y));
+            cloudDocId = getScheduleDocId();
+
+            setSyncStatus("loading", "กำลังโหลดข้อมูลเดือน...");
+            try {
+                if (isCloudMode && db) {
+                    await loadScheduleFromCloudOrCreate();
+                    startScheduleListener();
+                    setSyncStatus("online", "โหลดเดือนสำเร็จ");
+                } else {
+                    loadLocalBackup();
+                    setSyncStatus("local", "โหลดข้อมูลในเครื่อง");
+                }
+                updateDynamicUI();
+                showToast(`โหลด ${monthNamesTH[m]} ${y} แล้ว`);
+            } catch (e) {
+                console.error(e);
+                loadLocalBackup();
+                updateDynamicUI();
+                setSyncStatus("error", "โหลดเดือนไม่สำเร็จ");
+            }
+        };
+
+        window.copyFromPreviousMonth = async function() {
+            if (!isAdminUser()) return alert("คัดลอกจากเดือนก่อนได้เฉพาะ Admin");
+            const prev = getPreviousMonthYear();
+            if (!confirm(`คัดลอกข้อมูลจาก ${monthNamesTH[prev.month]} ${prev.year} มายัง ${monthNamesTH[window.selectedMonth]} ${window.selectedYear}?\\n\\nข้อมูลเดือนปัจจุบันจะถูกแทนที่ด้วยข้อมูลเดือนก่อน`)) return;
+
+            try {
+                setSyncStatus("loading", "กำลังคัดลอกจากเดือนก่อน...");
+                const prevRef = doc(db, "schedule_db", getScheduleDocId(prev.year, prev.month));
+                const prevSnap = await getDoc(prevRef);
+
+                if (!prevSnap.exists()) {
+                    alert("ไม่พบข้อมูลเดือนก่อน");
+                    setSyncStatus("online", "ออนไลน์: ซิงค์ล่าสุดแล้ว");
+                    return;
+                }
+
+                const prevData = prevSnap.data();
+                window.currentStaffList = ensureStaffShape(prevData.staffList || defaultStaff);
+                window.shiftTimes = prevData.shiftTimes && Object.keys(prevData.shiftTimes).length ? prevData.shiftTimes : JSON.parse(JSON.stringify(defaultShiftTimes));
+
+                // คัดลอกเฉพาะรายชื่อ/กะ/ยศ แต่ล้างวันหยุดและวันลา เพื่อเริ่มเดือนใหม่
+                window.currentStaffList = window.currentStaffList.map(p => ({
+                    ...p,
+                    offs: [],
+                    leaves: []
+                }));
+
+                await commitData();
+                showToast("คัดลอกจากเดือนก่อนเรียบร้อย");
+            } catch (e) {
+                console.error(e);
+                alert("คัดลอกไม่สำเร็จ กรุณาลองใหม่");
+                setSyncStatus("error", "คัดลอกไม่สำเร็จ");
+            }
+        };
+
         window.forceSaveCloud = async function() { await commitData(); };
         window.reloadFromCloud = function() { location.reload(); };
         window.applyFilters = function() { renderTable(); };
@@ -1829,7 +2020,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
         };
         window.closeAddShiftModal = function() { document.getElementById("add-shift-modal").classList.add("hidden"); };
         window.exportData = function() {
-            let txt = "ทีม\tยศ\tชื่อ\tรหัส\tลักษณะงาน\tกะ\tเวลา\n";
+            let txt = `ตารางงาน ${monthNamesTH[window.selectedMonth]} ${window.selectedYear}\nทีม\tยศ\tชื่อ\tรหัส\tลักษณะงาน\tกะ\tเวลา\n`;
             sortedStaffStable(window.currentStaffList).forEach(p => {
                 if (!canViewTeam(p.team)) return;
                 const t = window.shiftTimes[p.shift] || {};
