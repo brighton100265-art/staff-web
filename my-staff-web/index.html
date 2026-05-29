@@ -205,6 +205,7 @@
                         <tr class="bg-slate-950/80 text-xs text-slate-400 font-semibold tracking-wider border-b border-slate-800">
                             <th class="py-3 px-3 text-center w-12 sticky left-0 bg-slate-950 z-20">ลำดับ</th>
                             <th class="py-3 px-2 text-center w-16">ทีม</th>
+                            <th class="py-3 px-2 w-20 text-center">ยศ</th>
                             <th class="py-3 px-3 w-36">ชื่อพนักงาน</th>
                             <th class="py-3 px-3 w-24">รหัสพนักงาน</th>
                             <th class="py-3 px-2 w-24 text-center">ลักษณะงาน</th>
@@ -262,6 +263,12 @@
                 <div><label class="text-xs text-slate-400 font-medium">ลักษณะงาน</label>
                     <select id="new-emp-type" class="w-full mt-1 bg-slate-950 border border-slate-800 text-slate-200 px-3 py-2 rounded-xl text-sm">
                         <option value="Office">Office</option><option value="WFH">WFH</option>
+                    </select>
+                </div>
+                <div><label class="text-xs text-slate-400 font-medium">ยศ</label>
+                    <select id="new-emp-rank" class="w-full mt-1 bg-slate-950 border border-slate-800 text-slate-200 px-3 py-2 rounded-xl text-sm">
+                        <option value="S2">S2 - พนักงาน</option>
+                        <option value="S4">S4 - หัวหน้าทีม</option>
                     </select>
                 </div>
                 <div class="flex justify-end gap-2 pt-1">
@@ -328,93 +335,93 @@
 
         const defaultStaff = [
             // WIN1
-            { id: 1, team: "WIN1", name: "IMAGE", code: "251003601", type: "Office", shift: "S9", offs: [], leaves: [] },
-            { id: 2, team: "WIN1", name: "DARIN", code: "251015602", type: "Office", shift: "S9", offs: [], leaves: [] },
-            { id: 3, team: "WIN1", name: "SANDO", code: "260120607", type: "WFH", shift: "S9", offs: [], leaves: [] },
-            { id: 4, team: "WIN1", name: "TAXTAR", code: "260312602", type: "WFH", shift: "S9", offs: [], leaves: [] },
-            { id: 5, team: "WIN1", name: "PURE", code: "260321601", type: "WFH", shift: "S9", offs: [], leaves: [] },
-            { id: 6, team: "WIN1", name: "OLIVTTA", code: "251215601", type: "Office", shift: "S9", offs: [], leaves: [] },
-            { id: 7, team: "WIN1", name: "ETHAN", code: "251220601", type: "WFH", shift: "S9", offs: [], leaves: [] },
-            { id: 8, team: "WIN1", name: "SNACK", code: "260127603", type: "WFH", shift: "S9", offs: [], leaves: [] },
-            { id: 9, team: "WIN1", name: "CHARLOTTE", code: "260115601", type: "Office", shift: "S9", offs: [], leaves: [] },
-            { id: 10, team: "WIN1", name: "TAWAN", code: "251213601", type: "Office", shift: "S9", offs: [], leaves: [] },
-            { id: 11, team: "WIN1", name: "YUTA", code: "251218601", type: "WFH", shift: "S9", offs: [], leaves: [] },
-            { id: 12, team: "WIN1", name: "MIKEE", code: "260203605", type: "WFH", shift: "S9", offs: [], leaves: [] },
-            { id: 13, team: "WIN1", name: "BOONPERM", code: "260407602", type: "WFH", shift: "S9", offs: [], leaves: [] },
-            { id: 14, team: "WIN1", name: "FAREEN", code: "260507601", type: "WFH", shift: "S9", offs: [], leaves: [] },
-            { id: 15, team: "WIN1", name: "ARNOLD", code: "250711601", type: "Office", shift: "S12", offs: [], leaves: [] },
-            { id: 16, team: "WIN1", name: "NANNYS", code: "241030605", type: "Office", shift: "S12", offs: [], leaves: [] },
-            { id: 17, team: "WIN1", name: "NOVA", code: "251214601", type: "Office", shift: "S12", offs: [], leaves: [] },
-            { id: 18, team: "WIN1", name: "ALAN", code: "241030606", type: "Office", shift: "S12", offs: [], leaves: [] },
-            { id: 19, team: "WIN1", name: "AILEEN", code: "250225604", type: "Office", shift: "S12", offs: [], leaves: [] },
-            { id: 20, team: "WIN1", name: "TIGER", code: "250901601", type: "Office", shift: "S12", offs: [], leaves: [] },
-            { id: 21, team: "WIN1", name: "SLEEP", code: "251001601", type: "Office", shift: "S12", offs: [], leaves: [] },
-            { id: 22, team: "WIN1", name: "HANI", code: "250530601", type: "Office", shift: "S12", offs: [], leaves: [] },
-            { id: 23, team: "WIN1", name: "DARA", code: "260106603", type: "WFH", shift: "S12", offs: [], leaves: [] },
-            { id: 24, team: "WIN1", name: "LINMI", code: "251125601", type: "WFH", shift: "S12", offs: [], leaves: [] },
-            { id: 25, team: "WIN1", name: "DRAGON", code: "260102603", type: "Office", shift: "S12", offs: [], leaves: [] },
-            { id: 26, team: "WIN1", name: "MOON", code: "260127601", type: "Office", shift: "S12", offs: [], leaves: [] },
-            { id: 27, team: "WIN1", name: "JULLY", code: "260103601", type: "Office", shift: "S12", offs: [], leaves: [] },
+            { id: 1, team: "WIN1", name: "IMAGE", code: "251003601", type: "Office", shift: "S9", rank: "S2", offs: [], leaves: [] },
+            { id: 2, team: "WIN1", name: "DARIN", code: "251015602", type: "Office", shift: "S9", rank: "S2", offs: [], leaves: [] },
+            { id: 3, team: "WIN1", name: "SANDO", code: "260120607", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
+            { id: 4, team: "WIN1", name: "TAXTAR", code: "260312602", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
+            { id: 5, team: "WIN1", name: "PURE", code: "260321601", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
+            { id: 6, team: "WIN1", name: "OLIVTTA", code: "251215601", type: "Office", shift: "S9", rank: "S2", offs: [], leaves: [] },
+            { id: 7, team: "WIN1", name: "ETHAN", code: "251220601", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
+            { id: 8, team: "WIN1", name: "SNACK", code: "260127603", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
+            { id: 9, team: "WIN1", name: "CHARLOTTE", code: "260115601", type: "Office", shift: "S9", rank: "S2", offs: [], leaves: [] },
+            { id: 10, team: "WIN1", name: "TAWAN", code: "251213601", type: "Office", shift: "S9", rank: "S2", offs: [], leaves: [] },
+            { id: 11, team: "WIN1", name: "YUTA", code: "251218601", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
+            { id: 12, team: "WIN1", name: "MIKEE", code: "260203605", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
+            { id: 13, team: "WIN1", name: "BOONPERM", code: "260407602", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
+            { id: 14, team: "WIN1", name: "FAREEN", code: "260507601", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
+            { id: 15, team: "WIN1", name: "ARNOLD", code: "250711601", type: "Office", shift: "S12", rank: "S2", offs: [], leaves: [] },
+            { id: 16, team: "WIN1", name: "NANNYS", code: "241030605", type: "Office", shift: "S12", rank: "S2", offs: [], leaves: [] },
+            { id: 17, team: "WIN1", name: "NOVA", code: "251214601", type: "Office", shift: "S12", rank: "S2", offs: [], leaves: [] },
+            { id: 18, team: "WIN1", name: "ALAN", code: "241030606", type: "Office", shift: "S12", rank: "S2", offs: [], leaves: [] },
+            { id: 19, team: "WIN1", name: "AILEEN", code: "250225604", type: "Office", shift: "S12", rank: "S2", offs: [], leaves: [] },
+            { id: 20, team: "WIN1", name: "TIGER", code: "250901601", type: "Office", shift: "S12", rank: "S2", offs: [], leaves: [] },
+            { id: 21, team: "WIN1", name: "SLEEP", code: "251001601", type: "Office", shift: "S12", rank: "S2", offs: [], leaves: [] },
+            { id: 22, team: "WIN1", name: "HANI", code: "250530601", type: "Office", shift: "S12", rank: "S2", offs: [], leaves: [] },
+            { id: 23, team: "WIN1", name: "DARA", code: "260106603", type: "WFH", shift: "S12", rank: "S2", offs: [], leaves: [] },
+            { id: 24, team: "WIN1", name: "LINMI", code: "251125601", type: "WFH", shift: "S12", rank: "S2", offs: [], leaves: [] },
+            { id: 25, team: "WIN1", name: "DRAGON", code: "260102603", type: "Office", shift: "S12", rank: "S2", offs: [], leaves: [] },
+            { id: 26, team: "WIN1", name: "MOON", code: "260127601", type: "Office", shift: "S12", rank: "S2", offs: [], leaves: [] },
+            { id: 27, team: "WIN1", name: "JULLY", code: "260103601", type: "Office", shift: "S12", rank: "S2", offs: [], leaves: [] },
 
             // WIN2
-            { id: 28, team: "WIN2", name: "YADA", code: "251017603", type: "Office", shift: "S9", offs: [], leaves: [] },
-            { id: 29, team: "WIN2", name: "GIFTZII", code: "250425602", type: "Office", shift: "S9", offs: [], leaves: [] },
-            { id: 30, team: "WIN2", name: "MEME", code: "250425601", type: "Office", shift: "S9", offs: [], leaves: [] },
-            { id: 31, team: "WIN2", name: "NEW", code: "251001602", type: "Office", shift: "S9", offs: [], leaves: [] },
-            { id: 32, team: "WIN2", name: "ROSALIA", code: "251201602", type: "Office", shift: "S9", offs: [], leaves: [] },
-            { id: 33, team: "WIN2", name: "SHAWTY", code: "251114601", type: "Office", shift: "S9", offs: [], leaves: [] },
-            { id: 34, team: "WIN2", name: "TOP1", code: "250927602", type: "Office", shift: "S9", offs: [], leaves: [] },
-            { id: 35, team: "WIN2", name: "BAKA", code: "250922601", type: "WFH", shift: "S9", offs: [], leaves: [] },
-            { id: 36, team: "WIN2", name: "DINO", code: "251223604", type: "Office", shift: "S9", offs: [], leaves: [] },
-            { id: 37, team: "WIN2", name: "ISLA", code: "260120608", type: "WFH", shift: "S9", offs: [], leaves: [] },
-            { id: 38, team: "WIN2", name: "MIKEY", code: "251223603", type: "WFH", shift: "S9", offs: [], leaves: [] },
-            { id: 39, team: "WIN2", name: "PANDA", code: "260203608", type: "WFH", shift: "S9", offs: [], leaves: [] },
-            { id: 40, team: "WIN2", name: "PEE", code: "260108601", type: "WFH", shift: "S9", offs: [], leaves: [] },
-            { id: 41, team: "WIN2", name: "SEE", code: "260129602", type: "WFH", shift: "S9", offs: [], leaves: [] },
-            { id: 42, team: "WIN2", name: "SUN", code: "260129601", type: "WFH", shift: "S9", offs: [], leaves: [] },
-            { id: 43, team: "WIN2", name: "ZERO", code: "260210601", type: "WFH", shift: "S9", offs: [], leaves: [] },
-            { id: 44, team: "WIN2", name: "RUCHA", code: "240412602", type: "WFH", shift: "S9", offs: [], leaves: [] },
-            { id: 45, team: "WIN2", name: "JUJU", code: "260303602", type: "WFH", shift: "S9", offs: [], leaves: [] },
-            { id: 46, team: "WIN2", name: "BAOBEI", code: "260124601", type: "WFH", shift: "S9", offs: [], leaves: [] },
-            { id: 47, team: "WIN2", name: "BANK", code: "260303603", type: "WFH", shift: "S9", offs: [], leaves: [] },
-            { id: 48, team: "WIN2", name: "TONLIW", code: "251012602", type: "Office", shift: "S9", offs: [], leaves: [] },
-            { id: 49, team: "WIN2", name: "VESPER", code: "260228605", type: "WFH", shift: "S9", offs: [], leaves: [] },
-            { id: 50, team: "WIN2", name: "RJ", code: "260210603", type: "WFH", shift: "S9", offs: [], leaves: [] },
-            { id: 51, team: "WIN2", name: "DEEDO", code: "260221601", type: "WFH", shift: "S9", offs: [], leaves: [] },
-            { id: 52, team: "WIN2", name: "CAT", code: "251225602", type: "WFH", shift: "S9", offs: [], leaves: [] },
-            { id: 53, team: "WIN2", name: "CHERLYN", code: "260217601", type: "WFH", shift: "S9", offs: [], leaves: [] },
-            { id: 54, team: "WIN2", name: "MIND", code: "251014601", type: "WFH", shift: "S9", offs: [], leaves: [] },
-            { id: 55, team: "WIN2", name: "TIYA", code: "260228602", type: "WFH", shift: "S9", offs: [], leaves: [] },
-            { id: 56, team: "WIN2", name: "NOAH", code: "240412603", type: "Office", shift: "S12", offs: [], leaves: [] },
-            { id: 57, team: "WIN2", name: "NADIR", code: "250422604", type: "Office", shift: "S12", offs: [], leaves: [] },
-            { id: 58, team: "WIN2", name: "ALPHA", code: "250915602", type: "Office", shift: "S12", offs: [], leaves: [] },
-            { id: 59, team: "WIN2", name: "BIRD", code: "250916604", type: "Office", shift: "S12", offs: [], leaves: [] },
-            { id: 60, team: "WIN2", name: "LEMON", code: "260205602", type: "WFH", shift: "S12", offs: [], leaves: [] },
-            { id: 61, team: "WIN2", name: "PIM", code: "260112604", type: "WFH", shift: "S12", offs: [], leaves: [] },
-            { id: 62, team: "WIN2", name: "HUNNY", code: "251012603", type: "Office", shift: "S12", offs: [], leaves: [] },
-            { id: 63, team: "WIN2", name: "KIMMY", code: "250923602", type: "Office", shift: "S12", offs: [], leaves: [] },
-            { id: 64, team: "WIN2", name: "CHEKI", code: "251223602", type: "WFH", shift: "S12", offs: [], leaves: [] },
-            { id: 65, team: "WIN2", name: "IVY", code: "260203610", type: "WFH", shift: "S12", offs: [], leaves: [] },
-            { id: 66, team: "WIN2", name: "BB", code: "260310601", type: "WFH", shift: "S12", offs: [], leaves: [] },
-            { id: 67, team: "WIN2", name: "LUCY1", code: "260129603", type: "WFH", shift: "S12", offs: [], leaves: [] },
-            { id: 68, team: "WIN2", name: "CHEKI99", code: "251223602", type: "WFH", shift: "S12", offs: [], leaves: [] },
-            { id: 69, team: "WIN2", name: "LEGO", code: "250915601", type: "Office", shift: "S12", offs: [], leaves: [] },
-            { id: 70, team: "WIN2", name: "WHISKEY", code: "250923601", type: "Office", shift: "S12", offs: [], leaves: [] },
-            { id: 71, team: "WIN2", name: "RAY", code: "251125602", type: "Office", shift: "S12", offs: [], leaves: [] },
-            { id: 72, team: "WIN2", name: "JANE", code: "251213605", type: "Office", shift: "S12", offs: [], leaves: [] },
-            { id: 73, team: "WIN2", name: "POSH", code: "251210602", type: "WFH", shift: "S12", offs: [], leaves: [] },
-            { id: 74, team: "WIN2", name: "NYE", code: "251225601", type: "WFH", shift: "S12", offs: [], leaves: [] },
-            { id: 75, team: "WIN2", name: "NEKO", code: "260228604", type: "WFH", shift: "S12", offs: [], leaves: [] },
+            { id: 28, team: "WIN2", name: "YADA", code: "251017603", type: "Office", shift: "S9", rank: "S2", offs: [], leaves: [] },
+            { id: 29, team: "WIN2", name: "GIFTZII", code: "250425602", type: "Office", shift: "S9", rank: "S2", offs: [], leaves: [] },
+            { id: 30, team: "WIN2", name: "MEME", code: "250425601", type: "Office", shift: "S9", rank: "S2", offs: [], leaves: [] },
+            { id: 31, team: "WIN2", name: "NEW", code: "251001602", type: "Office", shift: "S9", rank: "S2", offs: [], leaves: [] },
+            { id: 32, team: "WIN2", name: "ROSALIA", code: "251201602", type: "Office", shift: "S9", rank: "S2", offs: [], leaves: [] },
+            { id: 33, team: "WIN2", name: "SHAWTY", code: "251114601", type: "Office", shift: "S9", rank: "S2", offs: [], leaves: [] },
+            { id: 34, team: "WIN2", name: "TOP1", code: "250927602", type: "Office", shift: "S9", rank: "S2", offs: [], leaves: [] },
+            { id: 35, team: "WIN2", name: "BAKA", code: "250922601", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
+            { id: 36, team: "WIN2", name: "DINO", code: "251223604", type: "Office", shift: "S9", rank: "S2", offs: [], leaves: [] },
+            { id: 37, team: "WIN2", name: "ISLA", code: "260120608", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
+            { id: 38, team: "WIN2", name: "MIKEY", code: "251223603", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
+            { id: 39, team: "WIN2", name: "PANDA", code: "260203608", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
+            { id: 40, team: "WIN2", name: "PEE", code: "260108601", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
+            { id: 41, team: "WIN2", name: "SEE", code: "260129602", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
+            { id: 42, team: "WIN2", name: "SUN", code: "260129601", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
+            { id: 43, team: "WIN2", name: "ZERO", code: "260210601", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
+            { id: 44, team: "WIN2", name: "RUCHA", code: "240412602", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
+            { id: 45, team: "WIN2", name: "JUJU", code: "260303602", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
+            { id: 46, team: "WIN2", name: "BAOBEI", code: "260124601", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
+            { id: 47, team: "WIN2", name: "BANK", code: "260303603", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
+            { id: 48, team: "WIN2", name: "TONLIW", code: "251012602", type: "Office", shift: "S9", rank: "S2", offs: [], leaves: [] },
+            { id: 49, team: "WIN2", name: "VESPER", code: "260228605", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
+            { id: 50, team: "WIN2", name: "RJ", code: "260210603", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
+            { id: 51, team: "WIN2", name: "DEEDO", code: "260221601", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
+            { id: 52, team: "WIN2", name: "CAT", code: "251225602", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
+            { id: 53, team: "WIN2", name: "CHERLYN", code: "260217601", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
+            { id: 54, team: "WIN2", name: "MIND", code: "251014601", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
+            { id: 55, team: "WIN2", name: "TIYA", code: "260228602", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
+            { id: 56, team: "WIN2", name: "NOAH", code: "240412603", type: "Office", shift: "S12", rank: "S2", offs: [], leaves: [] },
+            { id: 57, team: "WIN2", name: "NADIR", code: "250422604", type: "Office", shift: "S12", rank: "S2", offs: [], leaves: [] },
+            { id: 58, team: "WIN2", name: "ALPHA", code: "250915602", type: "Office", shift: "S12", rank: "S2", offs: [], leaves: [] },
+            { id: 59, team: "WIN2", name: "BIRD", code: "250916604", type: "Office", shift: "S12", rank: "S2", offs: [], leaves: [] },
+            { id: 60, team: "WIN2", name: "LEMON", code: "260205602", type: "WFH", shift: "S12", rank: "S2", offs: [], leaves: [] },
+            { id: 61, team: "WIN2", name: "PIM", code: "260112604", type: "WFH", shift: "S12", rank: "S2", offs: [], leaves: [] },
+            { id: 62, team: "WIN2", name: "HUNNY", code: "251012603", type: "Office", shift: "S12", rank: "S2", offs: [], leaves: [] },
+            { id: 63, team: "WIN2", name: "KIMMY", code: "250923602", type: "Office", shift: "S12", rank: "S2", offs: [], leaves: [] },
+            { id: 64, team: "WIN2", name: "CHEKI", code: "251223602", type: "WFH", shift: "S12", rank: "S2", offs: [], leaves: [] },
+            { id: 65, team: "WIN2", name: "IVY", code: "260203610", type: "WFH", shift: "S12", rank: "S2", offs: [], leaves: [] },
+            { id: 66, team: "WIN2", name: "BB", code: "260310601", type: "WFH", shift: "S12", rank: "S2", offs: [], leaves: [] },
+            { id: 67, team: "WIN2", name: "LUCY1", code: "260129603", type: "WFH", shift: "S12", rank: "S2", offs: [], leaves: [] },
+            { id: 68, team: "WIN2", name: "CHEKI99", code: "251223602", type: "WFH", shift: "S12", rank: "S2", offs: [], leaves: [] },
+            { id: 69, team: "WIN2", name: "LEGO", code: "250915601", type: "Office", shift: "S12", rank: "S2", offs: [], leaves: [] },
+            { id: 70, team: "WIN2", name: "WHISKEY", code: "250923601", type: "Office", shift: "S12", rank: "S2", offs: [], leaves: [] },
+            { id: 71, team: "WIN2", name: "RAY", code: "251125602", type: "Office", shift: "S12", rank: "S2", offs: [], leaves: [] },
+            { id: 72, team: "WIN2", name: "JANE", code: "251213605", type: "Office", shift: "S12", rank: "S2", offs: [], leaves: [] },
+            { id: 73, team: "WIN2", name: "POSH", code: "251210602", type: "WFH", shift: "S12", rank: "S2", offs: [], leaves: [] },
+            { id: 74, team: "WIN2", name: "NYE", code: "251225601", type: "WFH", shift: "S12", rank: "S2", offs: [], leaves: [] },
+            { id: 75, team: "WIN2", name: "NEKO", code: "260228604", type: "WFH", shift: "S12", rank: "S2", offs: [], leaves: [] },
 
             // WIN3
-            { id: 76, team: "WIN3", name: "MILLI", code: "250305604", type: "Office", shift: "S21", offs: [], leaves: [] },
-            { id: 77, team: "WIN3", name: "NAT", code: "250305603", type: "Office", shift: "S21", offs: [], leaves: [] },
-            { id: 78, team: "WIN3", name: "FENDI", code: "250620601", type: "Office", shift: "S21", offs: [], leaves: [] },
-            { id: 79, team: "WIN3", name: "FABIE", code: "240423601", type: "Office", shift: "S21", offs: [], leaves: [] },
-            { id: 80, team: "WIN3", name: "WIN", code: "260104604", type: "Office", shift: "S21", offs: [], leaves: [] },
-            { id: 81, team: "WIN3", name: "OSAMA", code: "251214602", type: "Office", shift: "S21", offs: [], leaves: [] },
-            { id: 82, team: "WIN3", name: "CHARLIE", code: "260117604", type: "Office", shift: "S9", offs: [], leaves: [] },
-            { id: 83, team: "WIN3", name: "ING", code: "260324601", type: "WFH", shift: "S12", offs: [], leaves: [] }
+            { id: 76, team: "WIN3", name: "MILLI", code: "250305604", type: "Office", shift: "S21", rank: "S2", offs: [], leaves: [] },
+            { id: 77, team: "WIN3", name: "NAT", code: "250305603", type: "Office", shift: "S21", rank: "S2", offs: [], leaves: [] },
+            { id: 78, team: "WIN3", name: "FENDI", code: "250620601", type: "Office", shift: "S21", rank: "S2", offs: [], leaves: [] },
+            { id: 79, team: "WIN3", name: "FABIE", code: "240423601", type: "Office", shift: "S21", rank: "S2", offs: [], leaves: [] },
+            { id: 80, team: "WIN3", name: "WIN", code: "260104604", type: "Office", shift: "S21", rank: "S2", offs: [], leaves: [] },
+            { id: 81, team: "WIN3", name: "OSAMA", code: "251214602", type: "Office", shift: "S21", rank: "S2", offs: [], leaves: [] },
+            { id: 82, team: "WIN3", name: "CHARLIE", code: "260117604", type: "Office", shift: "S9", rank: "S2", offs: [], leaves: [] },
+            { id: 83, team: "WIN3", name: "ING", code: "260324601", type: "WFH", shift: "S12", rank: "S2", offs: [], leaves: [] }
         ];
 
         const defaultShiftTimes = {
@@ -536,8 +543,9 @@
             if (!canEditTeam(team)) return alert("คุณไม่มีสิทธิ์เพิ่มพนักงานในทีมนี้");
             const shift = document.getElementById('new-emp-shift').value;
             const type = document.getElementById('new-emp-type').value;
+            const rank = document.getElementById('new-emp-rank')?.value || "S2";
             if(!name || !code) return alert("กรุณากรอกชื่อและรหัสพนักงาน");
-            window.currentStaffList.push({ id: new Date().getTime(), team, name, code, type, shift, offs: [], leaves: [] });
+            window.currentStaffList.push({ id: new Date().getTime(), team, name, code, type, shift, rank, offs: [], leaves: [] });
             document.getElementById('new-emp-name').value = '';
             document.getElementById('new-emp-code').value = '';
             commitData(); updateEmployeeDeleteSelect(); showToast("เพิ่มพนักงานสำเร็จ!");
@@ -575,7 +583,7 @@
                     onSnapshot(doc(db, 'schedule_db', cloudDocId), (docSnap) => {
                         if (docSnap.exists()) {
                             const data = docSnap.data();
-                            if (Array.isArray(data.staffList) && data.staffList.length > 0) window.currentStaffList = data.staffList; else window.currentStaffList = JSON.parse(JSON.stringify(defaultStaff));
+                            if (Array.isArray(data.staffList) && data.staffList.length > 0) window.currentStaffList = data.staffList.map(p => ({ rank: "S2", ...p })); else window.currentStaffList = JSON.parse(JSON.stringify(defaultStaff));
                             if (data.shiftTimes) window.shiftTimes = data.shiftTimes;
                             updateDynamicUI();
                         } else {
@@ -592,7 +600,7 @@
 
         function loadLocalData() {
             const s1 = localStorage.getItem("staff_v6"); const s2 = localStorage.getItem("shift_v6");
-            if(s1) { const parsedStaff = JSON.parse(s1); if (Array.isArray(parsedStaff) && parsedStaff.length > 0) window.currentStaffList = parsedStaff; }
+            if(s1) { const parsedStaff = JSON.parse(s1); if (Array.isArray(parsedStaff) && parsedStaff.length > 0) window.currentStaffList = parsedStaff.map(p => ({ rank: "S2", ...p })); }
             if(s2) window.shiftTimes = JSON.parse(s2);
             document.getElementById("sync-status").innerHTML = `<span class="px-2 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-lg text-xs font-semibold flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-400"></span>ออฟไลน์ (บันทึกในเครื่อง)</span>`;
             updateDynamicUI();
@@ -652,14 +660,87 @@
         }
 
 
-        function updateDynamicUI() { updateShiftSelects(); refreshLoginUI(); renderTable(); updateStats(); }
+
+        function updateDeleteEmployeeSelect() {
+            const sel = document.getElementById("delete-emp-id");
+            if (!sel) return;
+            const allowedTeam = getAllowedTeam();
+            sel.innerHTML = "";
+
+            const list = window.currentStaffList
+                .filter(p => allowedTeam === "ALL" || p.team === allowedTeam)
+                .sort((a,b) => {
+                    if(a.team !== b.team) return a.team.localeCompare(b.team);
+                    const ra = getRankOrder(a.rank || "S2");
+                    const rb = getRankOrder(b.rank || "S2");
+                    if(ra !== rb) return ra - rb;
+                    return a.name.localeCompare(b.name);
+                });
+
+            if (list.length === 0) {
+                sel.innerHTML = `<option value="">ไม่มีพนักงานให้ลบ</option>`;
+                return;
+            }
+
+            list.forEach(p => {
+                sel.innerHTML += `<option value="${p.id}">${p.team} | ${p.rank || "S2"} ${getRankLabel(p.rank || "S2")} | ${p.name} (${p.code})</option>`;
+            });
+        }
+
+        window.deleteEmployee = function() {
+            const id = Number(document.getElementById("delete-emp-id")?.value);
+            if (!id) return alert("กรุณาเลือกพนักงานที่ต้องการลบ");
+
+            const idx = window.currentStaffList.findIndex(p => p.id === id);
+            if (idx === -1) return alert("ไม่พบข้อมูลพนักงาน");
+
+            const p = window.currentStaffList[idx];
+            if (!canEditTeam(p.team)) return alert("คุณไม่มีสิทธิ์ลบพนักงานทีมนี้");
+
+            if (!confirm(`ยืนยันลบพนักงาน ${p.name} (${p.team}) ออกจากระบบ?`)) return;
+
+            window.currentStaffList.splice(idx, 1);
+            commitData();
+            showToast("ลบพนักงานเรียบร้อย");
+        };
+
+        function updateDynamicUI() { updateShiftSelects(); updateDeleteEmployeeSelect(); refreshLoginUI(); renderTable(); updateStats(); }
+
+
+        function getRankLabel(rank) {
+            return rank === "S4" ? "หัวหน้าทีม" : "พนักงาน";
+        }
+
+        function getRankOrder(rank) {
+            return rank === "S4" ? 1 : 2;
+        }
+
+        function getRankBadge(rank) {
+            if (rank === "S4") {
+                return `<span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/30">S4</span>`;
+            }
+            return `<span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/30">S2</span>`;
+        }
 
         function renderTable() {
             const tbody = document.getElementById("staff-table-body");
             const fTeam = document.getElementById("filter-team").value; const fShift = document.getElementById("filter-shift").value; const sName = document.getElementById("search-name").value.toLowerCase().trim();
             tbody.innerHTML = ""; let count = 0; let filtered = [];
+            let lastGroupKey = "";
 
-            window.currentStaffList.forEach((p, i) => {
+            const sortedStaffForRender = [...window.currentStaffList].sort((a,b) => {
+                if(a.team !== b.team) return a.team.localeCompare(b.team);
+                const ra = getRankOrder(a.rank || "S2");
+                const rb = getRankOrder(b.rank || "S2");
+                if(ra !== rb) return ra - rb;
+                const sk = Object.keys(window.shiftTimes);
+                const sa = sk.indexOf(a.shift)!==-1 ? sk.indexOf(a.shift) : 99;
+                const sb = sk.indexOf(b.shift)!==-1 ? sk.indexOf(b.shift) : 99;
+                if(sa !== sb) return sa - sb;
+                return a.name.localeCompare(b.name);
+            });
+
+            sortedStaffForRender.forEach((p, i) => {
                 const allowedTeam = getAllowedTeam();
                 if (!allowedTeam) return;
                 if (allowedTeam !== "ALL" && p.team !== allowedTeam) return;
@@ -668,8 +749,21 @@
                 if (sName !== "" && !p.name.toLowerCase().includes(sName) && !p.code.includes(sName)) return;
                 count++; filtered.push(p);
 
+                const groupKey = `${p.team}-${p.rank || "S2"}`;
+                if (groupKey !== lastGroupKey) {
+                    const groupRow = document.createElement("tr");
+                    const groupColor = (p.rank || "S2") === "S4" ? "bg-purple-950/30 text-purple-300 border-purple-500/20" : "bg-blue-950/20 text-blue-300 border-blue-500/20";
+                    groupRow.className = `border-y ${groupColor}`;
+                    groupRow.innerHTML = `<td colspan="41" class="py-2 px-4 text-xs font-bold tracking-wide">
+                        ${p.team} | ${(p.rank || "S2")} ${getRankLabel(p.rank || "S2")}
+                    </td>`;
+                    tbody.appendChild(groupRow);
+                    lastGroupKey = groupKey;
+                }
+
                 const times = window.shiftTimes[p.shift] || { login: "", rest: "" };
                 const tOffs = p.offs ? p.offs.length : 0; const tLeaves = p.leaves ? p.leaves.length : 0;
+                const rank = p.rank || "S2";
                 let tCol = p.team === "WIN2" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : p.team === "WIN3" ? "bg-indigo-500/10 text-indigo-400 border-indigo-500/20" : "bg-rose-500/10 text-rose-400 border-rose-500/20";
                 let typeCol = p.type === "WFH" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-indigo-500/10 text-indigo-400 border-indigo-500/20";
                 let dCol = p.shift === "S9" ? "text-emerald-400 bg-emerald-950/40" : p.shift === "S12" ? "text-amber-400 bg-amber-950/40" : p.shift === "S21" ? "text-indigo-400 bg-indigo-950/40" : "text-fuchsia-400 bg-fuchsia-950/40";
@@ -680,6 +774,12 @@
 
                 let html = `<td class="py-2 px-2 text-center text-slate-500 sticky left-0 bg-slate-900/90 border-r border-slate-800 z-10">${i + 1}</td>
                     <td class="py-2 px-1 text-center"><span class="px-2 py-0.5 text-[10px] font-bold border rounded ${tCol}">${p.team}</span></td>
+                    <td class="py-2 px-1 text-center">
+                        <select ${disabledAttr} onchange="changeRank(${p.id}, this.value)" class="bg-slate-950 border border-slate-700 rounded px-1 py-0.5 text-[10px] outline-none ${rank === 'S4' ? 'text-purple-400' : 'text-blue-400'} disabled:opacity-50 disabled:cursor-not-allowed">
+                            <option value="S2" ${rank === "S2" ? "selected" : ""}>S2</option>
+                            <option value="S4" ${rank === "S4" ? "selected" : ""}>S4</option>
+                        </select>
+                    </td>
                     <td class="py-2 px-3 text-slate-200"><span class="${editable ? 'cursor-edit hover:text-indigo-400' : 'text-slate-400'}" ${nameDblClick}>${p.name}</span></td>
                     <td class="py-2 px-3 text-slate-400 text-xs font-mono">${p.code}</td>
                     <td class="py-2 px-2 text-center"><span class="px-2 py-0.5 text-[10px] rounded-full ${typeCol}">${p.type}</span></td>
@@ -711,7 +811,7 @@
                 }
             });
             const cr = (lbl, cnts, col, bg) => {
-                let h = `<tr class="${bg} text-slate-300 border-b border-slate-900"><td colspan="8" class="py-2 px-3 text-right font-bold text-[10px] sticky left-0 ${bg} z-10 border-r border-slate-800">${lbl}</td><td colspan="2" class="border-r border-slate-800 bg-slate-950"></td>`;
+                let h = `<tr class="${bg} text-slate-300 border-b border-slate-900"><td colspan="9" class="py-2 px-3 text-right font-bold text-[10px] sticky left-0 ${bg} z-10 border-r border-slate-800">${lbl}</td><td colspan="2" class="border-r border-slate-800 bg-slate-950"></td>`;
                 for (let d=1; d<=31; d++) h += `<td class="text-center font-bold text-[11px] p-1 border-l border-slate-800/60 ${col}">${cnts[d]||'-'}</td>`; return h + `</tr>`;
             };
             const c = ["text-emerald-400", "text-amber-400", "text-indigo-400", "text-pink-400", "text-cyan-400"]; let i = 0;
@@ -746,6 +846,17 @@
             inp.onblur = save; inp.onkeydown = (e) => { if (e.key === 'Enter') save(); if (e.key === 'Escape') { const sp = document.createElement("span"); sp.className = "cursor-edit"; sp.ondblclick = () => editName(id, sp); sp.innerText = old; inp.parentNode.replaceChild(sp, inp); } };
         }
 
+        function changeRank(id, val) {
+            const idx = window.currentStaffList.findIndex(p=>p.id===id);
+            if(idx!==-1) {
+                if(!canEditTeam(window.currentStaffList[idx].team)) return alert("คุณไม่มีสิทธิ์แก้ไขพนักงานทีมนี้");
+                window.currentStaffList[idx].rank = val;
+                commitData();
+                showToast("อัปเดตยศเรียบร้อย");
+            }
+        }
+        window.changeRank = changeRank;
+
         function changeShift(id, val) { const idx = window.currentStaffList.findIndex(p=>p.id===id); if(idx!==-1) { if(!canEditTeam(window.currentStaffList[idx].team)) return alert("คุณไม่มีสิทธิ์แก้ไขพนักงานทีมนี้"); window.currentStaffList[idx].shift = val; commitData(); showToast("อัปเดตเรียบร้อย"); } }
         function toggleDayOff(id, d) {
             const idx = window.currentStaffList.findIndex(p=>p.id===id);
@@ -760,8 +871,13 @@
             const sk = Object.keys(window.shiftTimes);
             window.currentStaffList.sort((a, b) => {
                 if(a.team !== b.team) return a.team.localeCompare(b.team);
-                const sa = sk.indexOf(a.shift)!==-1 ? sk.indexOf(a.shift) : 99; const sb = sk.indexOf(b.shift)!==-1 ? sk.indexOf(b.shift) : 99;
-                if(sa !== sb) return sa - sb; return a.name.localeCompare(b.name);
+                const ra = getRankOrder(a.rank || "S2");
+                const rb = getRankOrder(b.rank || "S2");
+                if(ra !== rb) return ra - rb;
+                const sa = sk.indexOf(a.shift)!==-1 ? sk.indexOf(a.shift) : 99;
+                const sb = sk.indexOf(b.shift)!==-1 ? sk.indexOf(b.shift) : 99;
+                if(sa !== sb) return sa - sb;
+                return a.name.localeCompare(b.name);
             });
             commitData(); showToast("เรียงเรียบร้อย");
         }
@@ -770,11 +886,11 @@
         function showToast(msg) { const t = document.getElementById("toast"); document.getElementById("toast-text").innerText = msg; t.classList.replace("translate-y-[-100px]", "translate-y-0"); t.classList.replace("opacity-0", "opacity-100"); setTimeout(() => { t.classList.replace("translate-y-0", "translate-y-[-100px]"); t.classList.replace("opacity-100", "opacity-0"); }, 3000); }
         function exportData() {
             const filterTeam = document.getElementById("filter-team").value; const filterShift = document.getElementById("filter-shift").value; const searchName = document.getElementById("search-name").value.toLowerCase().trim();
-            let txt = `ชื่อพนักงาน      รหัสพนักงาน  ลักษณะงาน  กะ     เวลาทำงาน\n`; txt += `--------------------------------------------------------\n`; let count = 0;
+            let txt = `ยศ    ชื่อพนักงาน      รหัสพนักงาน  ลักษณะงาน  กะ     เวลาทำงาน\n`; txt += `----------------------------------------------------------------\n`; let count = 0;
             window.currentStaffList.forEach((p) => {
                 if (filterTeam !== "ALL" && p.team !== filterTeam) return; if (filterShift !== "ALL" && p.shift !== filterShift) return; if (searchName !== "" && !p.name.toLowerCase().includes(searchName) && !p.code.includes(searchName)) return;
                 count++; const times = window.shiftTimes[p.shift] || { login: "" };
-                txt += `${p.name.padEnd(14, ' ')} ${p.code.padEnd(12, ' ')} ${p.type.padEnd(10, ' ')} ${p.shift.padEnd(6, ' ')} ${times.login}\n`;
+                txt += `${(p.rank || "S2").padEnd(5, ' ')} ${p.name.padEnd(14, ' ')} ${p.code.padEnd(12, ' ')} ${p.type.padEnd(10, ' ')} ${p.shift.padEnd(6, ' ')} ${times.login}\n`;
             });
             if (count === 0) txt = "ไม่พบข้อมูล"; document.getElementById("export-textarea").value = txt; document.getElementById("export-modal").classList.remove("hidden");
         }
