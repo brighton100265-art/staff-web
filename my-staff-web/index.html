@@ -328,15 +328,18 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                 <h4 class="text-sm font-bold text-rose-400">ลบพนักงานที่ออก</h4>
 
                 <div>
-                    <label class="text-xs text-slate-400 font-medium">ค้นหาชื่อ / รหัสพนักงาน</label>
-                    <input id="delete-emp-search" type="text" oninput="updateDeleteEmployeeSelect()" placeholder="พิมพ์ชื่อหรือรหัส..." class="w-full mt-1 bg-slate-950 border border-slate-800 focus:border-rose-500 text-slate-200 px-3 py-2 rounded-xl text-sm outline-none placeholder:text-slate-600">
+                    <label class="text-xs text-slate-400 font-medium">รหัสพนักงาน</label>
+                    <input id="delete-emp-code" type="text" oninput="previewDeleteEmployeeByCode()" placeholder="กรอกรหัสพนักงานเท่านั้น" class="w-full mt-1 bg-slate-950 border border-slate-800 focus:border-rose-500 text-slate-200 px-3 py-2 rounded-xl text-sm outline-none placeholder:text-slate-600">
                     <input id="delete-emp-id" type="hidden">
+                    <input id="delete-emp-confirmed" type="hidden" value="0">
+                    <p id="delete-emp-result-count" class="text-[11px] text-slate-500 mt-1">กรอกรหัสพนักงานเพื่อค้นหา</p>
                 </div>
 
-                <div id="delete-emp-selected" class="hidden bg-rose-950/15 border border-rose-500/25 text-rose-200 rounded-xl px-3 py-2 text-xs"></div>
+                <div id="delete-emp-preview" class="hidden bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs space-y-2"></div>
 
-                <div id="delete-emp-results" class="hidden space-y-1 max-h-44 overflow-y-auto"></div>
-                <p id="delete-emp-result-count" class="text-[11px] text-slate-500">พิมพ์ชื่อหรือรหัสเพื่อค้นหา</p>
+                <button onclick="confirmDeleteEmployeeSelection()" id="delete-emp-confirm-btn" class="hidden w-full px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium rounded-xl">
+                    ยืนยันเลือกพนักงาน
+                </button>
 
                 <button onclick="deleteEmployee()" class="w-full px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white text-sm font-medium rounded-xl">
                     ลบพนักงาน
@@ -1752,193 +1755,110 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
 
         
         
-        function updateDeleteEmployeeSelect() {
+        
+        function resetDeleteEmployeePreview() {
             const hidden = document.getElementById("delete-emp-id");
-            const results = document.getElementById("delete-emp-results");
+            const confirmed = document.getElementById("delete-emp-confirmed");
+            const preview = document.getElementById("delete-emp-preview");
+            const confirmBtn = document.getElementById("delete-emp-confirm-btn");
             const countEl = document.getElementById("delete-emp-result-count");
-            const selectedEl = document.getElementById("delete-emp-selected");
-            const searchEl = document.getElementById("delete-emp-search");
-            if (!hidden || !results || !searchEl) return;
 
-            const q = normalizeCode(searchEl.value);
-            const teams = getUserEditTeams();
-
-            hidden.value = "";
-            if (selectedEl) {
-                selectedEl.classList.add("hidden");
-                selectedEl.innerHTML = "";
+            if (hidden) hidden.value = "";
+            if (confirmed) confirmed.value = "0";
+            if (preview) {
+                preview.classList.add("hidden");
+                preview.innerHTML = "";
             }
-            results.innerHTML = "";
-            results.classList.add("hidden");
+            if (confirmBtn) confirmBtn.classList.add("hidden");
+            if (countEl) countEl.innerText = "กรอกรหัสพนักงานเพื่อค้นหา";
+        }
 
+        function updateDeleteEmployeeSelect() {
+            // คงชื่อฟังก์ชันเดิมไว้ เพื่อให้ส่วนอื่นเรียกได้ แต่เปลี่ยนเป็น reset/preview แบบรหัสพนักงาน
+            resetDeleteEmployeePreview();
+        }
+
+        window.previewDeleteEmployeeByCode = function() {
+            const codeEl = document.getElementById("delete-emp-code");
+            const hidden = document.getElementById("delete-emp-id");
+            const confirmed = document.getElementById("delete-emp-confirmed");
+            const preview = document.getElementById("delete-emp-preview");
+            const confirmBtn = document.getElementById("delete-emp-confirm-btn");
+            const countEl = document.getElementById("delete-emp-result-count");
+
+            const code = String(codeEl?.value || "").trim();
+            if (hidden) hidden.value = "";
+            if (confirmed) confirmed.value = "0";
+            if (preview) {
+                preview.classList.add("hidden");
+                preview.innerHTML = "";
+            }
+            if (confirmBtn) confirmBtn.classList.add("hidden");
+
+            if (!code) {
+                if (countEl) countEl.innerText = "กรอกรหัสพนักงานเพื่อค้นหา";
+                return;
+            }
+
+            const teams = getUserEditTeams();
             if (!teams.length) {
                 if (countEl) countEl.innerText = "บัญชีนี้ไม่มีสิทธิ์ลบพนักงาน";
                 return;
             }
 
-            if (!q) {
-                if (countEl) countEl.innerText = "พิมพ์ชื่อหรือรหัสเพื่อค้นหา";
+            const matches = window.currentStaffList.filter(p =>
+                teams.includes(p.team) && String(p.code || "").trim() === code
+            );
+
+            if (!matches.length) {
+                if (countEl) countEl.innerText = "ไม่พบรหัสพนักงานนี้ในทีมที่คุณมีสิทธิ์";
                 return;
             }
 
-            const list = sortedStaffStable(window.currentStaffList.filter(p => teams.includes(p.team)))
-                .filter(p =>
-                    normalizeCode(p.name).includes(q) ||
-                    String(p.code || "").includes(q) ||
-                    normalizeCode(p.team).includes(q)
-                )
-                .slice(0, 8);
-
-            if (!list.length) {
-                if (countEl) countEl.innerText = "ไม่พบพนักงานที่ค้นหา";
+            if (matches.length > 1) {
+                if (countEl) countEl.innerText = "พบข้อมูลซ้ำ กรุณาแจ้ง Admin ตรวจสอบรหัสพนักงาน";
+                if (preview) {
+                    preview.classList.remove("hidden");
+                    preview.innerHTML = matches.map(p => `
+                        <div class="border border-amber-500/25 bg-amber-950/15 rounded-lg p-2 text-amber-200">
+                            ${p.team} | ${p.rank} ${getRankLabel(p.rank)} | ${p.name} (${p.code})
+                        </div>
+                    `).join("");
+                }
                 return;
             }
 
-            list.forEach(p => {
-                const btn = document.createElement("button");
-                btn.type = "button";
-                btn.className = "w-full text-left px-3 py-2 bg-slate-950 hover:bg-rose-950/25 border border-slate-800 hover:border-rose-500/40 rounded-xl text-xs text-slate-200 transition-all";
-                btn.innerHTML = `<span class="font-bold text-slate-100">${p.name}</span> <span class="text-slate-500">(${p.code})</span><br><span class="text-[11px] text-slate-400">${p.team} | ${p.rank} ${getRankLabel(p.rank)} | ${p.type} | ${p.shift}</span>`;
-                btn.onclick = () => selectEmployeeToDelete(p.id);
-                results.appendChild(btn);
-            });
+            const p = matches[0];
+            if (hidden) hidden.value = String(p.id);
+            if (preview) {
+                preview.classList.remove("hidden");
+                preview.innerHTML = `
+                    <div class="text-slate-400">พบพนักงาน</div>
+                    <div class="bg-rose-950/15 border border-rose-500/25 rounded-xl p-3">
+                        <div class="text-base font-bold text-slate-100">${p.name}</div>
+                        <div class="text-slate-300 mt-1">รหัส: <b>${p.code}</b></div>
+                        <div class="text-slate-400 mt-1">${p.team} | ${p.rank} ${getRankLabel(p.rank)} | ${p.type} | ${p.shift}</div>
+                    </div>
+                    <div class="text-[11px] text-amber-300">กรุณากดยืนยันเลือกพนักงานก่อนลบ เพื่อป้องกันการพิมพ์ผิด</div>
+                `;
+            }
+            if (confirmBtn) confirmBtn.classList.remove("hidden");
+            if (countEl) countEl.innerText = "พบพนักงานแล้ว กรุณากดยืนยันเลือกพนักงาน";
+        };
 
-            results.classList.remove("hidden");
-            if (countEl) countEl.innerText = `พบ ${list.length} รายการ — คลิกชื่อเพื่อเลือก`;
-        }
-
-        window.selectEmployeeToDelete = function(id) {
-            const p = window.currentStaffList.find(x => x.id === id);
-            if (!p) return;
-
-            const hidden = document.getElementById("delete-emp-id");
-            const selectedEl = document.getElementById("delete-emp-selected");
-            const results = document.getElementById("delete-emp-results");
+        window.confirmDeleteEmployeeSelection = function() {
+            const id = Number(document.getElementById("delete-emp-id")?.value);
+            const confirmed = document.getElementById("delete-emp-confirmed");
             const countEl = document.getElementById("delete-emp-result-count");
-            const searchEl = document.getElementById("delete-emp-search");
+            const p = window.currentStaffList.find(x => x.id === id);
 
-            hidden.value = String(id);
-            if (searchEl) searchEl.value = `${p.name} (${p.code})`;
-            if (selectedEl) {
-                selectedEl.classList.remove("hidden");
-                selectedEl.innerHTML = `เลือกแล้ว: <b>${p.name}</b> (${p.code}) — ${p.team} | ${p.rank} ${getRankLabel(p.rank)}`;
-            }
-            if (results) {
-                results.innerHTML = "";
-                results.classList.add("hidden");
-            }
-            if (countEl) countEl.innerText = "เลือกพนักงานแล้ว กดลบพนักงานเพื่อยืนยัน";
-        }
+            if (!p) return alert("กรุณากรอกรหัสพนักงานให้ถูกต้องก่อน");
 
+            if (confirmed) confirmed.value = "1";
+            if (countEl) countEl.innerText = `ยืนยันแล้ว: ${p.name} (${p.code}) สามารถกดลบพนักงานได้`;
+            showToast("ยืนยันพนักงานที่จะลบแล้ว");
+        };
 
-
-        function updateDynamicUI() {
-            updateMonthUI();
-            updateShiftSelects();
-            refreshCurrentUserFromStaff();
-            updateDeleteEmployeeSelect();
-            refreshLoginUI();
-            renderTable();
-            updateRoleVisibility();
-            updateStats();
-        }
-
-        function renderTable() {
-            const tbody = document.getElementById("staff-table-body");
-            const fTeam = document.getElementById("filter-team").value;
-            const fShift = document.getElementById("filter-shift").value;
-            const q = document.getElementById("search-name").value.toLowerCase().trim();
-            tbody.innerHTML = "";
-            let count = 0, filtered = [], lastGroup = "";
-            ensureStaffPositions();
-            const list = sortedStaffStable(window.currentStaffList);
-
-            list.forEach((p) => {
-                if (!window.currentUser || !canViewTeam(p.team)) return;
-                if (fTeam !== "ALL" && p.team !== fTeam) return;
-                if (fShift !== "ALL" && p.shift !== fShift) return;
-                if (q && !p.name.toLowerCase().includes(q) && !String(p.code).includes(q)) return;
-
-                const groupKey = `${p.team}-${p.rank}`;
-                if (groupKey !== lastGroup) {
-                    const gr = document.createElement("tr");
-                    const cls = p.rank === "S4" ? "bg-purple-950/30 text-purple-300 border-purple-500/20" : "bg-blue-950/20 text-blue-300 border-blue-500/20";
-                    gr.className = `border-y ${cls}`;
-                    gr.innerHTML = `<td colspan="42" class="py-2 px-4 text-xs font-bold tracking-wide">${p.team} | ${p.rank} ${getRankLabel(p.rank)}</td>`;
-                    tbody.appendChild(gr);
-                    lastGroup = groupKey;
-                }
-
-                count++;
-                filtered.push(p);
-                const i = count;
-                const editable = canEditTeam(p.team);
-                const times = window.shiftTimes[p.shift] || { login: "", rest: "" };
-                const tOffs = p.offs.length, tLeaves = p.leaves.length;
-                const tCol = p.team === "WIN2" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : p.team === "WIN3" ? "bg-indigo-500/10 text-indigo-400 border-indigo-500/20" : "bg-rose-500/10 text-rose-400 border-rose-500/20";
-                const typeCol = p.type === "WFH" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-indigo-500/10 text-indigo-400 border-indigo-500/20";
-                const shiftCol = p.shift === "S9" ? "text-emerald-400 bg-emerald-950/40" : p.shift === "S12" ? "text-amber-400 bg-amber-950/40" : p.shift === "S21" ? "text-indigo-400 bg-indigo-950/40" : "text-fuchsia-400 bg-fuchsia-950/40";
-                const disabled = editable ? "" : "disabled";
-                const sOpts = Object.keys(window.shiftTimes).map(s => `<option value="${s}" ${p.shift === s ? "selected" : ""}>${s}</option>`).join("");
-
-                let html = `<td class="py-2 px-2 text-center text-slate-500 sticky left-0 bg-slate-900/90 border-r border-slate-800 z-10 sticky-left">${i}</td>
-                    <td class="py-2 px-1 text-center"><span class="px-2 py-0.5 text-[10px] font-bold border rounded ${tCol}">${p.team}</span></td>
-                    <td class="py-2 px-1 text-center">
-                        <select ${disabled} onchange="changeRank(${p.id}, this.value)" class="bg-slate-950 border border-slate-700 rounded px-1 py-0.5 text-[10px] outline-none ${p.rank === "S4" ? "text-purple-400" : "text-blue-400"} disabled:opacity-50 disabled:cursor-not-allowed">
-                            <option value="S2" ${p.rank === "S2" ? "selected" : ""}>S2</option>
-                            <option value="S4" ${p.rank === "S4" ? "selected" : ""}>S4</option>
-                        </select>
-                    </td>
-                    <td class="py-2 px-3 text-slate-200"><span class="${editable ? "cursor-edit hover:text-indigo-400" : "text-slate-300"}" ${editable ? `ondblclick="editName(${p.id}, this)"` : ""}>${p.name}</span></td>
-                    <td class="py-2 px-3 text-slate-400 text-xs font-mono">${p.code}</td>
-                    <td class="py-2 px-2 text-center"><span class="px-2 py-0.5 text-[10px] rounded-full ${typeCol}">${p.type}</span></td>
-                    <td class="py-2 px-1 text-center"><select ${disabled} onchange="changeShift(${p.id}, this.value)" class="border px-2 py-0.5 rounded text-xs outline-none ${shiftCol} border-slate-700 disabled:opacity-50 disabled:cursor-not-allowed">${sOpts}</select></td>
-                    <td class="py-2 px-2 text-center text-xs text-slate-300 font-mono">${times.login}</td>
-                    <td class="py-2 px-2 text-center text-xs text-slate-400 font-mono">${times.rest}</td>
-                    <td class="py-2 px-2 text-center font-bold text-xs text-blue-400 bg-blue-950/5 border-x border-slate-800">${tOffs}</td>
-                    <td class="py-2 px-2 text-center font-bold text-xs text-amber-500 bg-amber-950/5 border-r border-slate-800">${tLeaves}</td>`;
-
-                for (let d=1; d<=31; d++) {
-                    const isO = p.offs.includes(d);
-                    const isL = p.leaves.includes(d);
-                    const isW = ["ส","อา"].includes(daysOfWeek[(d-1)%7]);
-                    let bg = isW ? "bg-indigo-950/10" : "bg-slate-900/10";
-                    let txt = "•", color = "text-blue-400";
-                    if (isO) { bg = "bg-rose-950/30"; txt = "O"; color = "text-red-400 font-bold"; }
-                    else if (isL) { bg = "bg-purple-950/30"; txt = "L"; color = "text-purple-400 font-bold"; }
-                    html += `<td onclick="toggleDayOff(${p.id}, ${d})" data-day="${d}" data-name="${p.name}" data-team="${p.team}" class="day-cell text-center ${editable ? "cursor-pointer" : "cursor-not-allowed opacity-70"} p-0.5 border-l border-slate-800/40 text-[11px] ${bg}"><div class="w-7 h-7 flex items-center justify-center mx-auto rounded-md ${color}">${txt}</div></td>`;
-                }
-                const tr = document.createElement("tr");
-                tr.className = "data-row border-b border-slate-800";
-                tr.innerHTML = html;
-                tbody.appendChild(tr);
-            });
-
-            renderDailySummary(filtered);
-            document.getElementById("empty-state").classList.toggle("hidden", count > 0);
-        }
-
-        function renderDailySummary(filtered) {
-            const tfoot = document.getElementById("table-summary-footer");
-            tfoot.innerHTML = "";
-            if (!filtered.length) return;
-            const ds = {};
-            Object.keys(window.shiftTimes).forEach(s => ds[s] = Array(32).fill(0));
-            const doff = Array(32).fill(0), dl = Array(32).fill(0);
-
-            filtered.forEach(p => {
-                for (let d=1; d<=31; d++) {
-                    if (p.offs.includes(d)) doff[d]++;
-                    else if (p.leaves.includes(d)) dl[d]++;
-                    else if (ds[p.shift]) ds[p.shift][d]++;
-                }
-            });
-
-            const row = (label, arr, color, bg) => {
-                let h = `<tr class="${bg} text-slate-300"><td colspan="9" class="py-2 px-3 text-right font-bold text-[10px] sticky left-0 ${bg} z-10 border-r border-slate-800">${label}</td><td colspan="2" class="border-r border-slate-800 bg-slate-950"></td>`;
-                for (let d=1; d<=31; d++) h += `<td class="text-center font-bold text-[11px] p-1 border-l border-slate-800/60 ${color}">${arr[d] || "-"}</td>`;
-                return h + "</tr>";
-            };
             const colors = ["text-emerald-400","text-amber-400","text-indigo-400","text-pink-400","text-cyan-400"];
             let i = 0;
             Object.keys(window.shiftTimes).forEach(s => tfoot.innerHTML += row(`รวมกะ ${s}`, ds[s], colors[i++ % colors.length], "bg-slate-900/60"));
@@ -2025,7 +1945,9 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
         };
         window.deleteEmployee = async function() {
             const id = Number(document.getElementById("delete-emp-id").value);
-            if (!id) return alert("กรุณาพิมพ์ค้นหา แล้วคลิกเลือกพนักงานที่ต้องการลบ");
+            const confirmed = document.getElementById("delete-emp-confirmed")?.value === "1";
+            if (!id) return alert("กรุณากรอกรหัสพนักงานให้ถูกต้อง");
+            if (!confirmed) return alert("กรุณากดยืนยันเลือกพนักงานก่อนลบ");
             const idx = window.currentStaffList.findIndex(p => p.id === id);
             if (idx < 0) return alert("กรุณาเลือกพนักงาน");
             const p = window.currentStaffList[idx];
@@ -2139,15 +2061,9 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
         window.openAddEmployeeModal = function() {
             if (!window.currentUser) return alert("กรุณาเข้าสู่ระบบก่อน");
             if (!isLeaderUser()) return alert("บัญชีนี้ไม่มีสิทธิ์เพิ่ม/ลบข้อมูล");
-            const search = document.getElementById("delete-emp-search");
-            const hiddenDeleteId = document.getElementById("delete-emp-id");
-            const selectedDelete = document.getElementById("delete-emp-selected");
-            const deleteResults = document.getElementById("delete-emp-results");
-            if (search) search.value = "";
-            if (hiddenDeleteId) hiddenDeleteId.value = "";
-            if (selectedDelete) { selectedDelete.classList.add("hidden"); selectedDelete.innerHTML = ""; }
-            if (deleteResults) { deleteResults.classList.add("hidden"); deleteResults.innerHTML = ""; }
-            updateDeleteEmployeeSelect();
+            const deleteCode = document.getElementById("delete-emp-code");
+            if (deleteCode) deleteCode.value = "";
+            resetDeleteEmployeePreview();
             refreshLoginUI();
             document.getElementById("add-employee-modal").classList.remove("hidden");
         };
