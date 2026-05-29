@@ -129,6 +129,7 @@
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
                     Export
                 </button>
+                <button onclick="forceSaveCloud()" class="px-4 py-2 bg-emerald-950/40 hover:bg-emerald-900/40 text-emerald-400 border border-emerald-900/30 font-medium text-sm rounded-xl transition-all">บันทึก Cloud</button>
                 <button onclick="reloadFromCloud()" class="px-4 py-2 bg-sky-950/40 hover:bg-sky-900/40 text-sky-400 border border-sky-900/30 font-medium text-sm rounded-xl transition-all">รีโหลดข้อมูล</button>
                 <button onclick="resetToDefault()" class="px-4 py-2 bg-rose-950/40 hover:bg-rose-900/40 text-rose-400 border border-rose-900/30 font-medium text-sm rounded-xl transition-all">
                     รีเซ็ต
@@ -312,7 +313,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // รหัสเชื่อมต่อ Firebase ของคุณ
         const firebaseConfig = {
@@ -639,63 +640,190 @@
             commitData(); closeAddShiftModal(); showToast("เพิ่มกะสำเร็จ!");
         };
 
+
+        function setSyncStatus(mode, msg) {
+            const el = document.getElementById("sync-status");
+            if (!el) return;
+
+            const styles = {
+                loading: "bg-slate-800 text-slate-400 border-slate-700",
+                online: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+                local: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+                error: "bg-rose-500/10 text-rose-400 border-rose-500/20"
+            };
+
+            const dots = {
+                loading: "bg-slate-500",
+                online: "bg-emerald-400 animate-pulse",
+                local: "bg-amber-400",
+                error: "bg-rose-400"
+            };
+
+            el.innerHTML = `<span class="px-2 py-1 ${styles[mode] || styles.loading} border rounded-lg text-xs font-semibold flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full ${dots[mode] || dots.loading}"></span>${msg}
+            </span>`;
+        }
+
+        function saveLocalBackup() {
+            localStorage.setItem("staff_v6", JSON.stringify(window.currentStaffList || []));
+            localStorage.setItem("shift_v6", JSON.stringify(window.shiftTimes || {}));
+            localStorage.setItem("schedule_backup_time", new Date().toISOString());
+        }
+
+        function loadLocalBackupOnly() {
+            const s1 = localStorage.getItem("staff_v6");
+            const s2 = localStorage.getItem("shift_v6");
+            if (s1) {
+                const parsedStaff = JSON.parse(s1);
+                if (Array.isArray(parsedStaff) && parsedStaff.length > 0) {
+                    window.currentStaffList = parsedStaff.map(p => ({ rank: "S2", ...p }));
+                }
+            }
+            if (s2) {
+                const parsedShift = JSON.parse(s2);
+                if (parsedShift && Object.keys(parsedShift).length > 0) window.shiftTimes = parsedShift;
+            }
+        }
+
         // ==========================================
         // ระบบซิงค์ข้อมูลคลาวด์ผ่าน Firebase
         // ==========================================
         const isFirebaseConfigured = true;
         const cloudDocId = 'company_schedule_v1';
-        let db = null; let auth = null; let isCloudMode = false;
+        let db = null;
+        let auth = null;
+        let isCloudMode = false;
+        let cloudReady = false;
+        let isApplyingSnapshot = false;
 
         try {
             const app = initializeApp(firebaseConfig);
-            auth = getAuth(app); db = getFirestore(app); isCloudMode = true;
-        } catch (err) { isCloudMode = false; }
-
-        if (isCloudMode) {
-            signInAnonymously(auth).catch((error) => {
-                console.error("Firebase Auth Error: ", error);
-                loadLocalData();
-            });
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    document.getElementById("sync-status").innerHTML = `<span class="px-2 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg text-xs font-semibold flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>ออนไลน์ (ซิงค์ออโต้)</span>`;
-                    onSnapshot(doc(db, 'schedule_db', cloudDocId), (docSnap) => {
-                        if (docSnap.exists()) {
-                            const data = docSnap.data();
-                            if (Array.isArray(data.staffList) && data.staffList.length > 0) window.currentStaffList = data.staffList.map(p => ({ rank: "S2", ...p })); else window.currentStaffList = JSON.parse(JSON.stringify(defaultStaff));
-                            if (data.shiftTimes) window.shiftTimes = data.shiftTimes;
-                            updateDynamicUI();
-                        } else {
-                            setDoc(doc(db, 'schedule_db', cloudDocId), { staffList: window.currentStaffList, shiftTimes: window.shiftTimes });
-                        }
-                    }, (error) => {
-                        console.error("Firestore Listen Error: ", error);
-                    });
-                }
-            });
-        } else {
-            loadLocalData();
+            auth = getAuth(app);
+            db = getFirestore(app);
+            isCloudMode = true;
+            setSyncStatus("loading", "กำลังเชื่อมต่อคลาวด์...");
+        } catch (err) {
+            console.error("Firebase Init Error:", err);
+            isCloudMode = false;
+            setSyncStatus("error", "เชื่อมต่อ Firebase ไม่ได้");
         }
 
+        async function startCloudSync() {
+            if (!isCloudMode) {
+                loadLocalData();
+                return;
+            }
+
+            try {
+                await signInAnonymously(auth);
+            } catch (error) {
+                console.error("Firebase Auth Error:", error);
+                setSyncStatus("local", "ออฟไลน์: บันทึกในเครื่อง");
+                loadLocalData();
+                return;
+            }
+
+            const ref = doc(db, 'schedule_db', cloudDocId);
+
+            try {
+                const snap = await getDoc(ref);
+
+                if (snap.exists()) {
+                    const data = snap.data();
+                    if (Array.isArray(data.staffList) && data.staffList.length > 0) {
+                        window.currentStaffList = data.staffList.map(p => ({ rank: "S2", ...p }));
+                    }
+                    if (data.shiftTimes && Object.keys(data.shiftTimes).length > 0) {
+                        window.shiftTimes = data.shiftTimes;
+                    }
+                    saveLocalBackup();
+                } else {
+                    // สร้างเอกสารครั้งแรกเท่านั้น ห้ามรีเซ็ตทับถ้ามีข้อมูล cloud อยู่แล้ว
+                    await setDoc(ref, {
+                        staffList: window.currentStaffList,
+                        shiftTimes: window.shiftTimes,
+                        updatedAt: serverTimestamp()
+                    }, { merge: true });
+                    saveLocalBackup();
+                }
+
+                cloudReady = true;
+                setSyncStatus("online", "ออนไลน์: ซิงค์ออโต้");
+                updateDynamicUI();
+
+                onSnapshot(ref, (docSnap) => {
+                    if (!docSnap.exists()) return;
+
+                    const data = docSnap.data();
+                    isApplyingSnapshot = true;
+
+                    if (Array.isArray(data.staffList) && data.staffList.length > 0) {
+                        window.currentStaffList = data.staffList.map(p => ({ rank: "S2", ...p }));
+                    }
+                    if (data.shiftTimes && Object.keys(data.shiftTimes).length > 0) {
+                        window.shiftTimes = data.shiftTimes;
+                    }
+
+                    saveLocalBackup();
+                    updateDynamicUI();
+                    setSyncStatus("online", "ออนไลน์: ซิงค์ล่าสุดแล้ว");
+
+                    setTimeout(() => {
+                        isApplyingSnapshot = false;
+                    }, 100);
+                }, (error) => {
+                    console.error("Firestore Listen Error:", error);
+                    setSyncStatus("error", "ซิงค์ผิดพลาด: ใช้ข้อมูลสำรอง");
+                    loadLocalBackupOnly();
+                    updateDynamicUI();
+                });
+
+            } catch (error) {
+                console.error("Firestore Load Error:", error);
+                setSyncStatus("local", "โหลดคลาวด์ไม่ได้: ใช้ข้อมูลในเครื่อง");
+                loadLocalData();
+            }
+        }
+
+        startCloudSync();
+
         function loadLocalData() {
-            const s1 = localStorage.getItem("staff_v6"); const s2 = localStorage.getItem("shift_v6");
-            if(s1) { const parsedStaff = JSON.parse(s1); if (Array.isArray(parsedStaff) && parsedStaff.length > 0) window.currentStaffList = parsedStaff.map(p => ({ rank: "S2", ...p })); }
-            if(s2) window.shiftTimes = JSON.parse(s2);
-            document.getElementById("sync-status").innerHTML = `<span class="px-2 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-lg text-xs font-semibold flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-400"></span>ออฟไลน์ (บันทึกในเครื่อง)</span>`;
+            try {
+                loadLocalBackupOnly();
+            } catch (e) {
+                console.error("Local load error:", e);
+            }
+            setSyncStatus("local", "ออฟไลน์: บันทึกในเครื่อง");
             updateDynamicUI();
         }
 
         async function commitData() {
-            if (isCloudMode && auth && auth.currentUser) {
+            saveLocalBackup();
+
+            if (isApplyingSnapshot) {
+                updateDynamicUI();
+                return;
+            }
+
+            if (isCloudMode && auth && auth.currentUser && db) {
                 try {
-                    await setDoc(doc(db, 'schedule_db', cloudDocId), { staffList: window.currentStaffList, shiftTimes: window.shiftTimes });
+                    setSyncStatus("loading", "กำลังบันทึก...");
+                    await setDoc(doc(db, 'schedule_db', cloudDocId), {
+                        staffList: window.currentStaffList,
+                        shiftTimes: window.shiftTimes,
+                        updatedAt: serverTimestamp()
+                    }, { merge: true });
+                    cloudReady = true;
+                    setSyncStatus("online", "บันทึกและซิงค์แล้ว");
                 } catch (e) {
-                    console.error("Error writing document: ", e);
+                    console.error("Error writing document:", e);
+                    setSyncStatus("error", "บันทึก Cloud ไม่สำเร็จ: เก็บในเครื่องแล้ว");
+                    alert("บันทึกลง Cloud ไม่สำเร็จ แต่ระบบเก็บสำรองในเครื่องนี้แล้ว\\n\\nให้ตรวจสอบ Firebase Rules / อินเทอร์เน็ต / โดเมนที่อนุญาต");
                 }
             } else {
-                localStorage.setItem("staff_v6", JSON.stringify(window.currentStaffList));
-                localStorage.setItem("shift_v6", JSON.stringify(window.shiftTimes));
+                setSyncStatus("local", "บันทึกในเครื่อง");
             }
+
             updateDynamicUI();
         }
 
@@ -1013,6 +1141,16 @@
         refreshLoginUI();
 
         setTimeout(refreshLoginUI, 0);
+
+        window.forceSaveCloud = async function() {
+            await commitData();
+            showToast("สั่งบันทึก Cloud แล้ว");
+        };
+
+        window.forceReloadCloud = function() {
+            location.reload();
+        };
+
 </script>
 </body>
 </html>
