@@ -2426,6 +2426,27 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
             return [...names].sort((a, b) => String(a).localeCompare(String(b), "en"));
         }
 
+
+        function getWFHTeamShiftLabelsV3(team) {
+            const fixedOrder = ["เช้า (09:30–18:30)", "บ่าย (12:30–21:30)", "ดึก (21:00–05:00)"];
+            const labels = [];
+
+            const teamWFH = (window.currentStaffList || []).filter(p =>
+                p.team === team && isWFHForReportV2(p)
+            );
+
+            teamWFH.forEach(p => {
+                const times = window.shiftTimes[p.shift] || {};
+                const label = getWFHReportShiftLabelV2(p.shift, times.login);
+                if (!labels.includes(label)) labels.push(label);
+            });
+
+            return [
+                ...fixedOrder.filter(label => labels.includes(label)),
+                ...labels.filter(label => !fixedOrder.includes(label))
+            ];
+        }
+
 window.generateWFHOffReport = function() {
             const dayInput = document.getElementById("wfh-report-day");
             const out = document.getElementById("wfh-report-output");
@@ -2440,7 +2461,6 @@ window.generateWFHOffReport = function() {
 
             const teams = ["WIN1", "WIN2", "WIN3"];
             const teamIcon = { WIN1: "🔵", WIN2: "🟢", WIN3: "🟧" };
-            const shiftLabels = getWFHReportShiftLabelsV2();
 
             const sortStaff = typeof sortedStaffStable === "function"
                 ? sortedStaffStable
@@ -2456,6 +2476,17 @@ window.generateWFHOffReport = function() {
 
                 lines.push(`${teamIcon[team] || "▪️"} ${team}`);
                 lines.push("");
+
+                // ดึงเฉพาะกะที่มีพนักงาน WFH อยู่จริงในทีมนั้น
+                // เช่น ทีมมีแค่ S9/S12 ก็โชว์แค่เช้า/บ่าย ไม่โชว์ดึก
+                const shiftLabels = getWFHTeamShiftLabelsV3(team);
+
+                if (!shiftLabels.length) {
+                    lines.push("• ไม่มีพนักงาน WFH ในทีมนี้");
+                    lines.push("");
+                    lines.push("");
+                    return;
+                }
 
                 const wfhOffPeople = sortStaff(window.currentStaffList || [])
                     .filter(p => p.team === team)
