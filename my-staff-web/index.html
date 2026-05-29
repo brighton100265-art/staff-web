@@ -157,10 +157,10 @@
                         <button onclick="clearBulkOffs()" class="leader-only px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-semibold text-xs rounded-xl transition-all">
                             ล้างช่อง
                         </button>
-                        <button onclick="openAddEmployeeModal()" class="admin-only px-3 py-2 bg-emerald-600/20 hover:bg-emerald-600/35 text-emerald-400 border border-emerald-500/30 font-semibold text-xs rounded-xl transition-all">
+                        <button onclick="openAddEmployeeModal()" class="leader-only px-3 py-2 bg-emerald-600/20 hover:bg-emerald-600/35 text-emerald-400 border border-emerald-500/30 font-semibold text-xs rounded-xl transition-all">
                             + เพิ่ม/ลบพนักงาน
                         </button>
-                        <button onclick="openAddShiftModal()" class="admin-only px-3 py-2 bg-amber-600/20 hover:bg-amber-600/35 text-amber-400 border border-amber-500/30 font-semibold text-xs rounded-xl transition-all">
+                        <button onclick="openAddShiftModal()" class="leader-only px-3 py-2 bg-amber-600/20 hover:bg-amber-600/35 text-amber-400 border border-amber-500/30 font-semibold text-xs rounded-xl transition-all">
                             เพิ่มกะ
                         </button>
                     </div>
@@ -175,6 +175,33 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                     บัญชี S2 ดูข้อมูลได้อย่างเดียว ไม่สามารถนำเข้าหรือแก้ไขข้อมูลได้
                 </div>
                 <div id="bulk-offs-result" class="hidden text-[11px] leading-5 rounded-xl border px-3 py-2"></div>
+            </div>
+
+
+            
+            <div class="leader-only flex-1 min-w-[360px] bg-slate-950/50 border border-slate-800 rounded-2xl p-4 space-y-3">
+                <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-3">
+                    <div>
+                        <div class="text-sm font-bold text-slate-200 flex items-center gap-2">
+                            📋 สรุป WFH หยุดรายวัน
+                            <span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20">สำหรับส่งรายงาน</span>
+                        </div>
+                        <p class="text-[11px] text-slate-500 mt-1">เลือกวันที่ แล้วระบบจะรวมรายชื่อพนักงาน WFH ที่หยุด แยกตามทีมและกะ</p>
+                    </div>
+                    <div class="flex gap-2 items-end">
+                        <div>
+                            <label class="text-[10px] text-slate-500">วันที่</label>
+                            <input id="wfh-report-day" type="number" min="1" max="31" value="1" class="w-20 bg-slate-950 border border-slate-800 focus:border-purple-500 text-slate-200 px-3 py-2 rounded-xl text-xs outline-none">
+                        </div>
+                        <button onclick="generateWFHOffReport()" class="px-3 py-2 bg-purple-600/20 hover:bg-purple-600/35 text-purple-400 border border-purple-500/30 font-semibold text-xs rounded-xl transition-all">
+                            สร้างรายงาน
+                        </button>
+                        <button onclick="copyWFHOffReport()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-semibold text-xs rounded-xl transition-all">
+                            คัดลอก
+                        </button>
+                    </div>
+                </div>
+                <textarea id="wfh-report-output" readonly placeholder="กดสร้างรายงานเพื่อแสดงรายชื่อ WFH ที่หยุด..." class="w-full h-36 bg-slate-950 border border-slate-800 focus:border-purple-500 text-slate-200 px-3 py-2 rounded-xl text-xs outline-none resize-y placeholder:text-slate-600"></textarea>
             </div>
 
 
@@ -315,7 +342,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
             measurementId: "G-246PYDN2L5"
         };
 
-        const ADMIN_CODE = atob("QlJJR0hUT04=");
+        const ADMIN_CODES = [atob("QlJJR0hUT04="), "IOM"];
         const defaultStaff = [
             {
                         "id": 1,
@@ -1405,8 +1432,8 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                 error.classList.remove("hidden");
                 return;
             }
-            if (code === ADMIN_CODE) {
-                window.currentUser = { code: ADMIN_CODE, name: "ADMIN", role: "ADMIN", rank: "ADMIN", team: "ALL", editableTeams: ["WIN1","WIN2","WIN3"] };
+            if (ADMIN_CODES.includes(code)) {
+                window.currentUser = { code: code, name: "ADMIN", role: "ADMIN", rank: "ADMIN", team: "ALL", editableTeams: ["WIN1","WIN2","WIN3"] };
             } else {
                 const emp = findEmployeeByCode(code);
                 if (!emp) {
@@ -1738,7 +1765,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
             const type = document.getElementById("new-emp-type").value;
             const rank = document.getElementById("new-emp-rank").value;
             if (window.currentUser.team !== "ALL") team = window.currentUser.team;
-            if (!isAdminUser()) return alert("เพิ่มพนักงานได้เฉพาะ Admin");
+            if (!canEditTeam(team)) return alert("บัญชีนี้ไม่มีสิทธิ์เพิ่มพนักงานทีมนี้");
             if (!name || !code) return alert("กรุณากรอกชื่อและรหัสพนักงาน");
             if (findEmployeeByCode(code)) return alert("รหัสพนักงานนี้มีอยู่แล้ว");
             window.currentStaffList.push({ id: Date.now(), team, rank, name, code, type, shift, offs: [], leaves: [] });
@@ -1751,7 +1778,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
             const idx = window.currentStaffList.findIndex(p => p.id === id);
             if (idx < 0) return alert("กรุณาเลือกพนักงาน");
             const p = window.currentStaffList[idx];
-            if (!isAdminUser()) return alert("ลบพนักงานได้เฉพาะ Admin");
+            if (!canEditTeam(p.team)) return alert("บัญชีนี้ไม่มีสิทธิ์ลบพนักงานทีมนี้");
             if (!confirm(`ยืนยันลบ ${p.name} (${p.team})?`)) return;
             window.currentStaffList.splice(idx, 1);
             await commitData();
@@ -1759,7 +1786,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
         };
 
         window.saveNewShift = async function() {
-            if (!window.currentUser || window.currentUser.team !== "ALL") return alert("เพิ่มกะได้เฉพาะ Admin");
+            if (!isLeaderUser()) return alert("เพิ่มกะได้เฉพาะหัวหน้า S4 หรือ Admin");
             const code = normalizeCode(document.getElementById("new-shift-code").value);
             const login = document.getElementById("new-shift-login").value.trim();
             const rest = document.getElementById("new-shift-rest").value.trim();
@@ -1788,14 +1815,15 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
         window.applyFilters = function() { renderTable(); };
         window.openAddEmployeeModal = function() {
             if (!window.currentUser) return alert("กรุณาเข้าสู่ระบบก่อน");
-            if (!isAdminUser()) return alert("เพิ่ม/ลบพนักงานได้เฉพาะ Admin");
+            if (!isLeaderUser()) return alert("บัญชีนี้ไม่มีสิทธิ์เพิ่ม/ลบข้อมูล");
             updateDeleteEmployeeSelect();
             refreshLoginUI();
             document.getElementById("add-employee-modal").classList.remove("hidden");
         };
         window.closeAddEmployeeModal = function() { document.getElementById("add-employee-modal").classList.add("hidden"); };
         window.openAddShiftModal = function() {
-            if (!window.currentUser || window.currentUser.team !== "ALL") return alert("เพิ่มกะได้เฉพาะ Admin");
+            if (!window.currentUser) return alert("กรุณาเข้าสู่ระบบก่อน");
+            if (!isLeaderUser()) return alert("เพิ่มกะได้เฉพาะหัวหน้า S4 หรือ Admin");
             document.getElementById("add-shift-modal").classList.remove("hidden");
         };
         window.closeAddShiftModal = function() { document.getElementById("add-shift-modal").classList.add("hidden"); };
@@ -1926,6 +1954,91 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
             result.classList.remove("hidden");
 
             if (success.length) showToast(`นำเข้าวันหยุดสำเร็จ ${success.length} รายการ`);
+        };
+
+
+        function getShiftGroupLabel(shift, login) {
+            const text = `${shift || ""} ${login || ""}`;
+            if (text.includes("09.30") || text.includes("09:30")) return "เช้า (09:30–18:30)";
+            if (text.includes("12.30") || text.includes("12:30")) return "บ่าย (12:30–21:30)";
+            if (text.includes("21.00") || text.includes("21:00")) return "ดึก (21:00–05:00)";
+            return `${shift || "ไม่ระบุกะ"} (${login || "ไม่ระบุเวลา"})`;
+        }
+
+        window.generateWFHOffReport = function() {
+            const dayInput = document.getElementById("wfh-report-day");
+            const out = document.getElementById("wfh-report-output");
+            const day = Number(dayInput?.value);
+
+            if (!Number.isInteger(day) || day < 1 || day > 31) {
+                alert("กรุณากรอกวันที่ 1-31");
+                return;
+            }
+
+            const teams = ["WIN1", "WIN2", "WIN3"];
+            const teamIcon = { WIN1: "🔵", WIN2: "🟢", WIN3: "🟧" };
+
+            let lines = [];
+            lines.push(`🗓️ พนักงาน WFH หยุดประจำวันที่ ${day}`);
+            lines.push("");
+
+            teams.forEach(team => {
+                const canSee = !window.currentUser || window.currentUser.team === "ALL" || window.currentUser.team === team;
+                if (!canSee) return;
+
+                lines.push(`${teamIcon[team] || "▪️"} ${team}`);
+                lines.push("");
+
+                const people = sortedStaffStable(window.currentStaffList)
+                    .filter(p => p.team === team && p.type === "WFH" && Array.isArray(p.offs) && p.offs.includes(day));
+
+                const shiftMap = {};
+                people.forEach(p => {
+                    const times = window.shiftTimes[p.shift] || {};
+                    const label = getShiftGroupLabel(p.shift, times.login);
+                    if (!shiftMap[label]) shiftMap[label] = [];
+                    shiftMap[label].push(p.name);
+                });
+
+                const preferredOrder = ["เช้า (09:30–18:30)", "บ่าย (12:30–21:30)", "ดึก (21:00–05:00)"];
+                let printedAny = false;
+
+                preferredOrder.forEach(label => {
+                    if (shiftMap[label] && shiftMap[label].length) {
+                        printedAny = true;
+                        lines.push(label);
+                        shiftMap[label].forEach(name => lines.push(`- ${name}`));
+                        lines.push("");
+                    }
+                });
+
+                Object.keys(shiftMap).filter(k => !preferredOrder.includes(k)).forEach(label => {
+                    if (shiftMap[label] && shiftMap[label].length) {
+                        printedAny = true;
+                        lines.push(label);
+                        shiftMap[label].forEach(name => lines.push(`- ${name}`));
+                        lines.push("");
+                    }
+                });
+
+                if (!printedAny) {
+                    lines.push("• ไม่มีพนักงาน WFH หยุด");
+                    lines.push("");
+                }
+            });
+
+            out.value = lines.join("\n").trim();
+            showToast("สร้างรายงาน WFH แล้ว");
+        };
+
+        window.copyWFHOffReport = function() {
+            const out = document.getElementById("wfh-report-output");
+            if (!out || !out.value.trim()) {
+                generateWFHOffReport();
+            }
+            out.select();
+            document.execCommand("copy");
+            showToast("คัดลอกรายงานแล้ว");
         };
 
         function showToast(msg) {
