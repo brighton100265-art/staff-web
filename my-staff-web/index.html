@@ -29,6 +29,9 @@
         }
 
         .shift-select {
+            width: 64px !important;
+            min-width: 64px !important;
+            max-width: 64px !important;
             color: #ffffff !important;
             font-weight: 700;
             border-width: 1px;
@@ -1972,7 +1975,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                 const typeCol = p.type === "WFH" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-indigo-500/10 text-indigo-400 border-indigo-500/20";
                 const shiftCol = getShiftClass(p.shift);
                 const disabled = editable ? "" : "disabled";
-                const sOpts = getSortedShiftKeys().map(s => `<option value="${s}" ${p.shift === s ? "selected" : ""}>${getShiftOptionLabel(s)}</option>`).join("");
+                const sOpts = getSortedShiftKeys().map(s => `<option value="${s}" ${p.shift === s ? "selected" : ""}>${s}</option>`).join("");
 
                 let html = `<td class="py-2 px-2 text-center text-slate-500 sticky left-0 bg-slate-900/90 border-r border-slate-800 z-10 sticky-left">${i}</td>
                     <td class="py-2 px-1 text-center"><span class="px-2 py-0.5 text-[10px] font-bold border rounded ${tCol}">${p.team}</span></td>
@@ -1985,7 +1988,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                     <td class="py-2 px-3 text-slate-200"><span class="${editable ? "cursor-edit hover:text-indigo-400" : "text-slate-300"}" ${editable ? `ondblclick="editName(${p.id}, this)"` : ""}>${p.name}</span></td>
                     <td class="py-2 px-3 text-slate-400 text-xs font-mono">${p.code}</td>
                     <td class="py-2 px-2 text-center"><span class="px-2 py-0.5 text-[10px] rounded-full ${typeCol}">${p.type}</span></td>
-                    <td class="py-2 px-1 text-center"><select ${disabled} onchange="changeShift(${p.id}, this.value)" class="shift-select border px-2 py-0.5 rounded text-xs outline-none ${shiftCol} disabled:opacity-50 disabled:cursor-not-allowed">${sOpts}</select></td>
+                    <td class="py-2 px-1 text-center"><select ${disabled} onchange="changeShift(${p.id}, this.value)" class="shift-select w-16 border px-2 py-0.5 rounded text-xs outline-none ${shiftCol} disabled:opacity-50 disabled:cursor-not-allowed">${sOpts}</select></td>
                     <td class="py-2 px-2 text-center text-xs text-slate-300 font-mono">${times.login}</td>
                     <td class="py-2 px-2 text-center text-xs text-slate-400 font-mono">${times.rest}</td>
                     <td class="py-2 px-2 text-center font-bold text-xs text-blue-400 bg-blue-950/5 border-x border-slate-800">${tOffs}</td>
