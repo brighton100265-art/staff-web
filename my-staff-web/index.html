@@ -99,11 +99,11 @@
             </div>
 
             <div class="flex flex-wrap gap-2">
-<button onclick="autoSort()" class="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-medium text-sm rounded-xl shadow-lg shadow-indigo-500/20 transition-all">Auto-Sort</button>
-                <button onclick="forceSaveCloud()" class="px-4 py-2 bg-emerald-950/40 hover:bg-emerald-900/40 text-emerald-400 border border-emerald-900/30 font-medium text-sm rounded-xl transition-all">บันทึก Cloud</button>
-                <button onclick="reloadFromCloud()" class="px-4 py-2 bg-sky-950/40 hover:bg-sky-900/40 text-sky-400 border border-sky-900/30 font-medium text-sm rounded-xl transition-all">รีโหลด</button>
-                <button onclick="exportData()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium text-sm rounded-xl transition-all">Export</button>
-                <button onclick="resetToDefault()" class="px-4 py-2 bg-rose-950/40 hover:bg-rose-900/40 text-rose-400 border border-rose-900/30 font-medium text-sm rounded-xl transition-all">รีเซ็ต</button>
+<button onclick="autoSort()" class="admin-only px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-medium text-sm rounded-xl shadow-lg shadow-indigo-500/20 transition-all">Auto-Sort</button>
+                <button onclick="forceSaveCloud()" class="admin-only px-4 py-2 bg-emerald-950/40 hover:bg-emerald-900/40 text-emerald-400 border border-emerald-900/30 font-medium text-sm rounded-xl transition-all">บันทึก Cloud</button>
+                <button onclick="reloadFromCloud()" class="admin-only px-4 py-2 bg-sky-950/40 hover:bg-sky-900/40 text-sky-400 border border-sky-900/30 font-medium text-sm rounded-xl transition-all">รีโหลด</button>
+                <button onclick="exportData()" class="admin-only px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium text-sm rounded-xl transition-all">Export</button>
+                <button onclick="resetToDefault()" class="admin-only px-4 py-2 bg-rose-950/40 hover:bg-rose-900/40 text-rose-400 border border-rose-900/30 font-medium text-sm rounded-xl transition-all">รีเซ็ต</button>
             </div>
         </header>
 
@@ -141,7 +141,7 @@
                 </div>
             </div>
 
-            <div class="flex-1 min-w-[420px] bg-slate-950/50 border border-slate-800 rounded-2xl p-4 space-y-3">
+            <div id="bulk-offs-panel" class="flex-1 min-w-[420px] bg-slate-950/50 border border-slate-800 rounded-2xl p-4 space-y-3">
                 <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-3">
                     <div>
                         <div class="text-sm font-bold text-slate-200 flex items-center gap-2">
@@ -151,16 +151,16 @@
                         <p class="text-[11px] text-slate-500 mt-1">รูปแบบ: ชื่อพนักงาน ตามด้วยวันที่ เช่น NOAH 1 7 21 หรือวางจาก Excel ได้เลย</p>
                     </div>
                     <div class="flex flex-wrap gap-2">
-                        <button onclick="processBulkOffs()" class="px-3 py-2 bg-blue-600/20 hover:bg-blue-600/35 text-blue-400 border border-blue-500/30 font-semibold text-xs rounded-xl transition-all">
+                        <button onclick="processBulkOffs()" class="leader-only px-3 py-2 bg-blue-600/20 hover:bg-blue-600/35 text-blue-400 border border-blue-500/30 font-semibold text-xs rounded-xl transition-all">
                             ประมวลผลวันหยุด
                         </button>
-                        <button onclick="clearBulkOffs()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-semibold text-xs rounded-xl transition-all">
+                        <button onclick="clearBulkOffs()" class="leader-only px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-semibold text-xs rounded-xl transition-all">
                             ล้างช่อง
                         </button>
-                        <button onclick="openAddEmployeeModal()" class="px-3 py-2 bg-emerald-600/20 hover:bg-emerald-600/35 text-emerald-400 border border-emerald-500/30 font-semibold text-xs rounded-xl transition-all">
+                        <button onclick="openAddEmployeeModal()" class="admin-only px-3 py-2 bg-emerald-600/20 hover:bg-emerald-600/35 text-emerald-400 border border-emerald-500/30 font-semibold text-xs rounded-xl transition-all">
                             + เพิ่ม/ลบพนักงาน
                         </button>
-                        <button onclick="openAddShiftModal()" class="px-3 py-2 bg-amber-600/20 hover:bg-amber-600/35 text-amber-400 border border-amber-500/30 font-semibold text-xs rounded-xl transition-all">
+                        <button onclick="openAddShiftModal()" class="admin-only px-3 py-2 bg-amber-600/20 hover:bg-amber-600/35 text-amber-400 border border-amber-500/30 font-semibold text-xs rounded-xl transition-all">
                             เพิ่มกะ
                         </button>
                     </div>
@@ -169,7 +169,11 @@
 NOAH 1 7 21
 NADIR 1 7 15 25
 ALPHA 1 7 15 25
-BIRD 4 11 19 24" class="w-full h-24 bg-slate-950 border border-slate-800 focus:border-blue-500 text-slate-200 px-3 py-2 rounded-xl text-xs outline-none resize-y placeholder:text-slate-600 font-mono"></textarea>
+BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate-800 focus:border-blue-500 text-slate-200 px-3 py-2 rounded-xl text-xs outline-none resize-y placeholder:text-slate-600 font-mono"></textarea>
+                
+                <div class="s2-only hidden text-[11px] text-slate-500 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2">
+                    บัญชี S2 ดูข้อมูลได้อย่างเดียว ไม่สามารถนำเข้าหรือแก้ไขข้อมูลได้
+                </div>
                 <div id="bulk-offs-result" class="hidden text-[11px] leading-5 rounded-xl border px-3 py-2"></div>
             </div>
 
@@ -1325,6 +1329,37 @@ BIRD 4 11 19 24" class="w-full h-24 bg-slate-950 border border-slate-800 focus:b
             sessionStorage.setItem("schedule_current_user", JSON.stringify(window.currentUser));
         }
 
+
+        function isAdminUser() {
+            return !!window.currentUser && window.currentUser.team === "ALL";
+        }
+
+        function isLeaderUser() {
+            return !!window.currentUser && (window.currentUser.team === "ALL" || window.currentUser.rank === "S4");
+        }
+
+        function updateRoleVisibility() {
+            const isAdmin = isAdminUser();
+            const isLeader = isLeaderUser();
+
+            document.querySelectorAll(".admin-only").forEach(el => {
+                el.classList.toggle("hidden", !isAdmin);
+            });
+
+            document.querySelectorAll(".leader-only").forEach(el => {
+                el.classList.toggle("hidden", !isLeader);
+            });
+
+            document.querySelectorAll(".s2-only").forEach(el => {
+                el.classList.toggle("hidden", isLeader);
+            });
+
+            const bulkPanel = document.getElementById("bulk-offs-panel");
+            if (bulkPanel) {
+                bulkPanel.classList.toggle("opacity-60", !isLeader);
+            }
+        }
+
         function refreshLoginUI() {
             const modal = document.getElementById("login-modal");
             const bar = document.getElementById("current-user-bar");
@@ -1527,6 +1562,7 @@ BIRD 4 11 19 24" class="w-full h-24 bg-slate-950 border border-slate-800 focus:b
             updateDeleteEmployeeSelect();
             refreshLoginUI();
             renderTable();
+            updateRoleVisibility();
             updateStats();
         }
 
@@ -1702,7 +1738,7 @@ BIRD 4 11 19 24" class="w-full h-24 bg-slate-950 border border-slate-800 focus:b
             const type = document.getElementById("new-emp-type").value;
             const rank = document.getElementById("new-emp-rank").value;
             if (window.currentUser.team !== "ALL") team = window.currentUser.team;
-            if (!canEditTeam(team)) return alert("บัญชีนี้ไม่มีสิทธิ์เพิ่มข้อมูล");
+            if (!isAdminUser()) return alert("เพิ่มพนักงานได้เฉพาะ Admin");
             if (!name || !code) return alert("กรุณากรอกชื่อและรหัสพนักงาน");
             if (findEmployeeByCode(code)) return alert("รหัสพนักงานนี้มีอยู่แล้ว");
             window.currentStaffList.push({ id: Date.now(), team, rank, name, code, type, shift, offs: [], leaves: [] });
@@ -1715,7 +1751,7 @@ BIRD 4 11 19 24" class="w-full h-24 bg-slate-950 border border-slate-800 focus:b
             const idx = window.currentStaffList.findIndex(p => p.id === id);
             if (idx < 0) return alert("กรุณาเลือกพนักงาน");
             const p = window.currentStaffList[idx];
-            if (!canEditTeam(p.team)) return alert("บัญชีนี้ไม่มีสิทธิ์ลบข้อมูล");
+            if (!isAdminUser()) return alert("ลบพนักงานได้เฉพาะ Admin");
             if (!confirm(`ยืนยันลบ ${p.name} (${p.team})?`)) return;
             window.currentStaffList.splice(idx, 1);
             await commitData();
@@ -1752,7 +1788,7 @@ BIRD 4 11 19 24" class="w-full h-24 bg-slate-950 border border-slate-800 focus:b
         window.applyFilters = function() { renderTable(); };
         window.openAddEmployeeModal = function() {
             if (!window.currentUser) return alert("กรุณาเข้าสู่ระบบก่อน");
-            if (!getUserEditTeams().length) return alert("บัญชีนี้ไม่มีสิทธิ์เพิ่ม/ลบข้อมูล");
+            if (!isAdminUser()) return alert("เพิ่ม/ลบพนักงานได้เฉพาะ Admin");
             updateDeleteEmployeeSelect();
             refreshLoginUI();
             document.getElementById("add-employee-modal").classList.remove("hidden");
@@ -1839,6 +1875,7 @@ BIRD 4 11 19 24" class="w-full h-24 bg-slate-950 border border-slate-800 focus:b
             const raw = ta ? ta.value : "";
 
             if (!window.currentUser) return alert("กรุณาเข้าสู่ระบบก่อน");
+            if (!isLeaderUser()) return alert("นำเข้าวันหยุดได้เฉพาะหัวหน้า S4 หรือ Admin");
             if (!raw.trim()) return alert("กรุณาวางข้อมูลวันหยุดก่อน");
 
             const { parsed, invalid } = parseBulkOffsText(raw);
