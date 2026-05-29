@@ -96,7 +96,7 @@
             <div class="space-y-3">
                 <div>
                     <label class="text-xs text-slate-400 font-medium">รหัสเข้าสู่ระบบ</label>
-                    <input id="login-code" type="password" placeholder="กรอกรหัสเข้าสู่ระบบ" class="w-full mt-1 bg-slate-950 border border-slate-800 focus:border-indigo-500 text-slate-200 px-3 py-2 rounded-xl text-sm outline-none uppercase">
+                    <input id="login-code" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" name="login_code_no_save" placeholder="กรอกรหัสเข้าสู่ระบบ" class="w-full mt-1 bg-slate-950 border border-slate-800 focus:border-indigo-500 text-slate-200 px-3 py-2 rounded-xl text-sm outline-none uppercase" autocomplete="off" autocapitalize="off" spellcheck="false" name="login_code_no_save">
                 </div>
                 <p id="login-error" class="hidden text-xs text-rose-400">รหัสไม่ถูกต้อง</p>
             </div>
@@ -364,7 +364,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
 
                 <div>
                     <label class="text-xs text-slate-400 font-medium">รหัสพนักงาน</label>
-                    <input id="delete-emp-code" type="text" oninput="previewDeleteEmployeeByCode()" placeholder="กรอกรหัสพนักงานเท่านั้น" class="w-full mt-1 bg-slate-950 border border-slate-800 focus:border-rose-500 text-slate-200 px-3 py-2 rounded-xl text-sm outline-none placeholder:text-slate-600">
+                    <input id="delete-emp-code" type="text" oninput="previewDeleteEmployeeByCode()" placeholder="กรอกรหัสพนักงานเท่านั้น" class="w-full mt-1 bg-slate-950 border border-slate-800 focus:border-rose-500 text-slate-200 px-3 py-2 rounded-xl text-sm outline-none placeholder:text-slate-600" autocomplete="off" autocapitalize="off" spellcheck="false">
                     <input id="delete-emp-id" type="hidden">
                     <input id="delete-emp-confirmed" type="hidden" value="0">
                     <p id="delete-emp-result-count" class="text-[11px] text-slate-500 mt-1">กรอกรหัสพนักงานเพื่อค้นหา</p>
@@ -2393,7 +2393,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
         }
 
         
-        function getWFHReportShiftLabel(shift, login) {
+        function getWFHReportShiftLabelV2(shift, login) {
             const s = String(shift || "").toUpperCase();
             const t = `${s} ${login || ""}`;
             if (s === "S9" || t.includes("09.30") || t.includes("09:30")) return "เช้า (09:30–18:30)";
@@ -2402,61 +2402,27 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
             return `${shift || "ไม่ระบุกะ"} (${login || "ไม่ระบุเวลา"})`;
         }
 
-        function getWFHReportShiftLabels() {
+        function getWFHReportShiftLabelsV2() {
             const fixed = ["เช้า (09:30–18:30)", "บ่าย (12:30–21:30)", "ดึก (21:00–05:00)"];
             const extra = [];
-            if (typeof getSortedShiftKeys === "function") {
-                getSortedShiftKeys().forEach(shift => {
-                    const times = window.shiftTimes[shift] || {};
-                    const label = getWFHReportShiftLabel(shift, times.login);
-                    if (!fixed.includes(label) && !extra.includes(label)) extra.push(label);
-                });
-            }
+            const shiftKeys = typeof getSortedShiftKeys === "function" ? getSortedShiftKeys() : Object.keys(window.shiftTimes || {});
+            shiftKeys.forEach(shift => {
+                const times = window.shiftTimes[shift] || {};
+                const label = getWFHReportShiftLabelV2(shift, times.login);
+                if (!fixed.includes(label) && !extra.includes(label)) extra.push(label);
+            });
             return [...fixed, ...extra];
         }
 
-        function isWFHForReport(p) {
+        function isWFHForReportV2(p) {
             return String(p.type || "").trim().toUpperCase() === "WFH";
         }
 
-        function isOffForReport(p, day) {
+        function isOffForReportV2(p, day) {
             return Array.isArray(p.offs) && p.offs.includes(day);
         }
 
-
-        function getWFHReportShiftLabel(shift, login) {
-            const s = String(shift || "").toUpperCase();
-            const t = `${s} ${login || ""}`;
-            if (s === "S9" || t.includes("09.30") || t.includes("09:30")) return "เช้า (09:30–18:30)";
-            if (s === "S12" || t.includes("12.30") || t.includes("12:30")) return "บ่าย (12:30–21:30)";
-            if (s === "S21" || t.includes("21.00") || t.includes("21:00")) return "ดึก (21:00–05:00)";
-            return `${shift || "ไม่ระบุกะ"} (${login || "ไม่ระบุเวลา"})`;
-        }
-
-        function getWFHReportShiftLabels() {
-            const fixed = ["เช้า (09:30–18:30)", "บ่าย (12:30–21:30)", "ดึก (21:00–05:00)"];
-            const extra = [];
-
-            if (typeof getSortedShiftKeys === "function") {
-                getSortedShiftKeys().forEach(shift => {
-                    const times = window.shiftTimes[shift] || {};
-                    const label = getWFHReportShiftLabel(shift, times.login);
-                    if (!fixed.includes(label) && !extra.includes(label)) extra.push(label);
-                });
-            }
-
-            return [...fixed, ...extra];
-        }
-
-        function isWFHForReport(p) {
-            return String(p.type || "").trim().toUpperCase() === "WFH";
-        }
-
-        function isOffForReport(p, day) {
-            return Array.isArray(p.offs) && p.offs.includes(day);
-        }
-
-        function sortNamesForReport(names) {
+        function sortNamesForReportV2(names) {
             return [...names].sort((a, b) => String(a).localeCompare(String(b), "en"));
         }
 
@@ -2474,7 +2440,7 @@ window.generateWFHOffReport = function() {
 
             const teams = ["WIN1", "WIN2", "WIN3"];
             const teamIcon = { WIN1: "🔵", WIN2: "🟢", WIN3: "🟧" };
-            const shiftLabels = getWFHReportShiftLabels();
+            const shiftLabels = getWFHReportShiftLabelsV2();
 
             const sortStaff = typeof sortedStaffStable === "function"
                 ? sortedStaffStable
@@ -2484,30 +2450,30 @@ window.generateWFHOffReport = function() {
             lines.push(`🗓️ พนักงาน WFH หยุดประจำวันที่ ${day}`);
             lines.push("");
 
-            teams.forEach((team, teamIndex) => {
+            teams.forEach((team) => {
                 const canSee = !window.currentUser || window.currentUser.team === "ALL" || window.currentUser.team === team;
                 if (!canSee) return;
 
                 lines.push(`${teamIcon[team] || "▪️"} ${team}`);
                 lines.push("");
 
-                const wfhOffPeople = sortStaff(window.currentStaffList)
+                const wfhOffPeople = sortStaff(window.currentStaffList || [])
                     .filter(p => p.team === team)
-                    .filter(p => isWFHForReport(p))
-                    .filter(p => isOffForReport(p, day));
+                    .filter(p => isWFHForReportV2(p))
+                    .filter(p => isOffForReportV2(p, day));
 
                 const shiftMap = {};
                 shiftLabels.forEach(label => shiftMap[label] = []);
 
                 wfhOffPeople.forEach(p => {
                     const times = window.shiftTimes[p.shift] || {};
-                    const label = getWFHReportShiftLabel(p.shift, times.login);
+                    const label = getWFHReportShiftLabelV2(p.shift, times.login);
                     if (!shiftMap[label]) shiftMap[label] = [];
                     shiftMap[label].push(p.name);
                 });
 
                 shiftLabels.forEach(label => {
-                    const names = sortNamesForReport(shiftMap[label] || []);
+                    const names = sortNamesForReportV2(shiftMap[label] || []);
                     lines.push(label);
 
                     if (names.length) {
@@ -2519,9 +2485,7 @@ window.generateWFHOffReport = function() {
                     lines.push("");
                 });
 
-                if (teamIndex < teams.length - 1) {
-                    lines.push("");
-                }
+                lines.push("");
             });
 
             out.value = lines.join("\n").replace(/\n{4,}/g, "\n\n\n").trim();
@@ -2545,6 +2509,7 @@ window.generateWFHOffReport = function() {
                 generateWFHOffReport();
             }
 
+            out.focus();
             out.select();
             out.setSelectionRange(0, 999999);
             document.execCommand("copy");
