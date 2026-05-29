@@ -468,12 +468,15 @@
         function refreshCurrentUserFromStaff() {
             if (!window.currentUser || window.currentUser.team === "ALL") return;
             const emp = findEmployeeByCode(window.currentUser.code);
-            if (!emp) {
-                sessionStorage.removeItem("schedule_current_user");
-                window.currentUser = null;
-                refreshLoginUI();
-                return;
-            }
+            if (!emp) return;
+
+            window.currentUser.name = emp.name;
+            window.currentUser.team = emp.team;
+            window.currentUser.rank = emp.rank || "S2";
+            window.currentUser.role = window.currentUser.rank === "S4" ? "LEADER" : "STAFF";
+            window.currentUser.editableTeams = window.currentUser.rank === "S4" ? [emp.team] : [];
+            sessionStorage.setItem("schedule_current_user", JSON.stringify(window.currentUser));
+        }
             window.currentUser.name = emp.name;
             window.currentUser.team = emp.team;
             window.currentUser.rank = emp.rank || "S2";
@@ -488,6 +491,10 @@
             const textEl = document.getElementById("current-user-text");
             const teamFilter = document.getElementById("filter-team");
             const newEmpTeam = document.getElementById("new-emp-team");
+
+            if (window.currentUser && !window.currentUser.rank) {
+                window.currentUser.rank = window.currentUser.team === "ALL" ? "ADMIN" : "S2";
+            }
 
             if (!window.currentUser) {
                 modal?.classList.remove("hidden");
@@ -911,7 +918,7 @@
             showToast("ลบพนักงานเรียบร้อย");
         };
 
-        function updateDynamicUI() { updateShiftSelects(); updateDeleteEmployeeSelect(); refreshCurrentUserFromStaff(); refreshLoginUI(); renderTable(); updateStats(); }
+        function updateDynamicUI() { updateShiftSelects(); refreshCurrentUserFromStaff(); updateDeleteEmployeeSelect(); refreshLoginUI(); renderTable(); updateStats(); }
 
 
         function getRankLabel(rank) {
@@ -961,7 +968,7 @@
                     const groupRow = document.createElement("tr");
                     const groupColor = (p.rank || "S2") === "S4" ? "bg-purple-950/30 text-purple-300 border-purple-500/20" : "bg-blue-950/20 text-blue-300 border-blue-500/20";
                     groupRow.className = `border-y ${groupColor}`;
-                    groupRow.innerHTML = `<td colspan="41" class="py-2 px-4 text-xs font-bold tracking-wide">
+                    groupRow.innerHTML = `<td colspan="42" class="py-2 px-4 text-xs font-bold tracking-wide">
                         ${p.team} | ${(p.rank || "S2")} ${getRankLabel(p.rank || "S2")}
                     </td>`;
                     tbody.appendChild(groupRow);
@@ -1000,7 +1007,7 @@
                     const isW = (["ส", "อา"].includes(["จ", "อ", "พ", "พฤ", "ศ", "ส", "อา"][(d-1) % 7]));
                     let bg = isW ? "bg-indigo-950/10" : "bg-slate-900/10"; let txt = "";
                     if (isO) { bg = "bg-blue-600 text-white font-bold"; txt = "O"; } else if (isL) { bg = "bg-amber-500 text-white font-bold"; txt = "L"; }
-                    html += `<td ${editable ? `onclick="toggleDayOff(${p.id}, ${d})"` : ""} data-day="${d}" data-name="${p.name}" data-team="${p.team}" class="day-cell text-center ${editable ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'} p-0.5 border-l border-slate-800/40 text-[11px] ${bg}"><div class="w-7 h-7 flex items-center justify-center mx-auto rounded-md">${txt}</div></td>`;
+                    html += `<td onclick="toggleDayOff(${p.id}, ${d})" data-day="${d}" data-name="${p.name}" data-team="${p.team}" class="day-cell text-center ${editable ? \'cursor-pointer\' : \'cursor-not-allowed opacity-70\'} p-0.5 border-l border-slate-800/40 text-[11px] ${bg}"><div class="w-7 h-7 flex items-center justify-center mx-auto rounded-md">${txt}</div></td>`;
                 }
                 const tr = document.createElement("tr"); tr.className = "border-b border-slate-800"; tr.innerHTML = html; tbody.appendChild(tr);
             });
@@ -1056,8 +1063,9 @@
         function changeRank(id, val) {
             const idx = window.currentStaffList.findIndex(p=>p.id===id);
             if(idx!==-1) {
-                if(!canEditTeam(window.currentStaffList[idx].team)) return alert("คุณไม่มีสิทธิ์แก้ไขข้อมูลทีมนี้ หรือบัญชีของคุณเป็น S2 ดูได้อย่างเดียว");
-                window.currentStaffList[idx].rank = val;
+                const p = window.currentStaffList[idx];
+                if(!canEditTeam(p.team)) return alert("บัญชีนี้ไม่มีสิทธิ์แก้ไขข้อมูล");
+                p.rank = val;
                 commitData();
                 showToast("อัปเดตยศเรียบร้อย");
             }
@@ -1068,10 +1076,24 @@
         function toggleDayOff(id, d) {
             const idx = window.currentStaffList.findIndex(p=>p.id===id);
             if(idx!==-1) {
-                const p = window.currentStaffList[idx]; if(!canEditTeam(p.team)) return alert("คุณไม่มีสิทธิ์แก้ไขข้อมูลทีมนี้ หรือบัญชีของคุณเป็น S2 ดูได้อย่างเดียว"); if(!p.offs) p.offs=[]; if(!p.leaves) p.leaves=[];
-                const io = p.offs.indexOf(d); const il = p.leaves.indexOf(d);
-                if(io===-1 && il===-1) { p.offs.push(d); p.offs.sort((a,b)=>a-b); } else if(io!==-1) { p.offs.splice(io, 1); p.leaves.push(d); p.leaves.sort((a,b)=>a-b); } else { p.leaves.splice(il, 1); }
+                const p = window.currentStaffList[idx];
+                if(!canEditTeam(p.team)) return alert("บัญชีนี้ไม่มีสิทธิ์แก้ไขวันหยุด");
+                if(!p.offs) p.offs=[];
+                if(!p.leaves) p.leaves=[];
+                const io = p.offs.indexOf(d);
+                const il = p.leaves.indexOf(d);
+                if(io===-1 && il===-1) {
+                    p.offs.push(d);
+                    p.offs.sort((a,b)=>a-b);
+                } else if(io!==-1) {
+                    p.offs.splice(io, 1);
+                    p.leaves.push(d);
+                    p.leaves.sort((a,b)=>a-b);
+                } else {
+                    p.leaves.splice(il, 1);
+                }
                 commitData();
+                showToast("อัปเดตวันหยุด/วันลาแล้ว");
             }
         }
         function autoSort() {
