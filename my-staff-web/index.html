@@ -406,6 +406,28 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
         </div>
     </div>
 
+
+    <div id="day-confirm-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-[999999] hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-base font-bold text-slate-200">ยืนยันการแก้ไขวันหยุด/วันลา</h3>
+                <button onclick="closeDayConfirmModal()" class="text-slate-400 hover:text-slate-200">ปิด</button>
+            </div>
+
+            <div id="day-confirm-detail" class="bg-slate-950 border border-slate-800 rounded-xl p-4 text-sm text-slate-300 leading-7"></div>
+
+            <div class="flex justify-end gap-2">
+                <button onclick="closeDayConfirmModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-sm font-semibold rounded-xl">
+                    ยกเลิก
+                </button>
+                <button onclick="confirmToggleDayOff()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-xl">
+                    ยืนยัน
+                </button>
+            </div>
+        </div>
+    </div>
+
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -2073,16 +2095,88 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
             await commitData();
             showToast("อัปเดตกะเรียบร้อย");
         };
-        window.toggleDayOff = async function(id, d) {
-            const p = window.currentStaffList.find(x => x.id === id);
-            if (!p) return;
-            if (!canEditTeam(p.team)) return alert("บัญชีนี้ไม่มีสิทธิ์แก้ไขวันหยุด");
-            const io = p.offs.indexOf(d), il = p.leaves.indexOf(d);
-            if (io === -1 && il === -1) p.offs.push(d);
-            else if (io !== -1) { p.offs.splice(io,1); p.leaves.push(d); }
-            else p.leaves.splice(il,1);
-            p.offs.sort((a,b)=>a-b); p.leaves.sort((a,b)=>a-b);
+        
+        window.pendingDayToggle = null;
+
+        function getDayStatusText(p, d) {
+            if (Array.isArray(p.offs) && p.offs.includes(d)) return "วันหยุด O";
+            if (Array.isArray(p.leaves) && p.leaves.includes(d)) return "วันลา L";
+            return "วันทำงาน";
+        }
+
+        function getNextDayStatusText(p, d) {
+            if (Array.isArray(p.offs) && p.offs.includes(d)) return "วันลา L";
+            if (Array.isArray(p.leaves) && p.leaves.includes(d)) return "วันทำงาน";
+            return "วันหยุด O";
+        }
+
+        window.closeDayConfirmModal = function() {
+            window.pendingDayToggle = null;
+            const modal = document.getElementById("day-confirm-modal");
+            if (modal) modal.classList.add("hidden");
+        };
+
+        window.confirmToggleDayOff = async function() {
+            if (!window.pendingDayToggle) return closeDayConfirmModal();
+
+            const { id, d } = window.pendingDayToggle;
+            const idx = window.currentStaffList.findIndex(p => p.id === id);
+            if (idx === -1) return closeDayConfirmModal();
+
+            const p = window.currentStaffList[idx];
+            if (!canEditTeam(p.team)) {
+                closeDayConfirmModal();
+                return alert("บัญชีนี้ไม่มีสิทธิ์แก้ไขวันหยุด");
+            }
+
+            if (!p.offs) p.offs = [];
+            if (!p.leaves) p.leaves = [];
+
+            const io = p.offs.indexOf(d);
+            const il = p.leaves.indexOf(d);
+
+            if (io === -1 && il === -1) {
+                p.offs.push(d);
+            } else if (io !== -1) {
+                p.offs.splice(io, 1);
+                p.leaves.push(d);
+            } else {
+                p.leaves.splice(il, 1);
+            }
+
+            p.offs.sort((a,b)=>a-b);
+            p.leaves.sort((a,b)=>a-b);
+
+            closeDayConfirmModal();
             await commitData();
+            showToast("อัปเดตวันหยุด/วันลาแล้ว");
+        };
+
+window.toggleDayOff = function(id, d) {
+            const idx = window.currentStaffList.findIndex(p => p.id === id);
+            if (idx === -1) return;
+
+            const p = window.currentStaffList[idx];
+            if (!canEditTeam(p.team)) return alert("บัญชีนี้ไม่มีสิทธิ์แก้ไขวันหยุด");
+
+            const currentStatus = getDayStatusText(p, d);
+            const nextStatus = getNextDayStatusText(p, d);
+
+            window.pendingDayToggle = { id, d };
+
+            const detail = document.getElementById("day-confirm-detail");
+            if (detail) {
+                detail.innerHTML = `
+                    <div><span class="text-slate-500">พนักงาน:</span> <b class="text-slate-100">${p.name}</b></div>
+                    <div><span class="text-slate-500">ทีม:</span> <b class="text-slate-100">${p.team}</b></div>
+                    <div><span class="text-slate-500">วันที่:</span> <b class="text-slate-100">${d}</b></div>
+                    <div><span class="text-slate-500">สถานะปัจจุบัน:</span> <b class="text-amber-300">${currentStatus}</b></div>
+                    <div><span class="text-slate-500">จะเปลี่ยนเป็น:</span> <b class="text-indigo-300">${nextStatus}</b></div>
+                `;
+            }
+
+            const modal = document.getElementById("day-confirm-modal");
+            if (modal) modal.classList.remove("hidden");
         };
 
         window.editName = function(id, el) {
