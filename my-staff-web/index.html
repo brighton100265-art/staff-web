@@ -119,7 +119,7 @@
                     <button onclick="copyFromPreviousMonth()" class="admin-only px-3 py-2 bg-cyan-600/20 hover:bg-cyan-600/35 text-cyan-400 border border-cyan-500/30 font-semibold text-xs rounded-xl transition-all">
                         คัดลอกจากเดือนก่อน
                     </button>
-                    <span id="month-status" class="text-[11px] text-slate-500"></span>
+                    <span id="month-status" class="text-[11px] text-slate-500"></span><span class="text-[10px] text-amber-400/80">เลือกเดือน/ปีเดียวกันเพื่อซิงค์ข้อมูลชุดเดียวกัน</span>
                 </div>
 
                 </div>
@@ -326,8 +326,21 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
 
             <div class="border-t border-slate-800 pt-4 mt-4 space-y-3">
                 <h4 class="text-sm font-bold text-rose-400">ลบพนักงานที่ออก</h4>
-                <select id="delete-emp-id" class="w-full mt-1 bg-slate-950 border border-slate-800 text-slate-200 px-3 py-2 rounded-xl text-sm"></select>
-                <button onclick="deleteEmployee()" class="w-full px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white text-sm font-medium rounded-xl">ลบพนักงาน</button>
+
+                <div>
+                    <label class="text-xs text-slate-400 font-medium">ค้นหาชื่อ / รหัสพนักงาน</label>
+                    <input id="delete-emp-search" type="text" oninput="updateDeleteEmployeeSelect()" placeholder="พิมพ์ชื่อหรือรหัส เช่น ARNOLD / 250711601" class="w-full mt-1 bg-slate-950 border border-slate-800 focus:border-rose-500 text-slate-200 px-3 py-2 rounded-xl text-sm outline-none placeholder:text-slate-600">
+                </div>
+
+                <div>
+                    <label class="text-xs text-slate-400 font-medium">ผลการค้นหา</label>
+                    <select id="delete-emp-id" size="5" class="w-full mt-1 bg-slate-950 border border-slate-800 text-slate-200 px-3 py-2 rounded-xl text-sm"></select>
+                    <p id="delete-emp-result-count" class="text-[11px] text-slate-500 mt-1">พิมพ์ชื่อหรือรหัสเพื่อค้นหา</p>
+                </div>
+
+                <button onclick="deleteEmployee()" class="w-full px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white text-sm font-medium rounded-xl">
+                    ลบพนักงาน
+                </button>
             </div>
         </div>
     </div>
@@ -1344,11 +1357,16 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
             if (m) m.value = String(window.selectedMonth);
             if (y) y.value = String(window.selectedYear);
             if (label) label.innerText = `(${monthNamesTH[window.selectedMonth]} ${window.selectedYear})`;
-            if (status) status.innerText = `กำลังใช้งาน: ${monthNamesTH[window.selectedMonth]} ${window.selectedYear}`;
+            if (status) status.innerText = `กำลังใช้งาน: ${monthNamesTH[window.selectedMonth]} ${window.selectedYear} (${getScheduleDocId()})`;
         }
 
 
         let cloudDocId = getScheduleDocId();
+        const legacyCloudDocIds = [
+            "company_schedule_latest",
+            "company_schedule_v2_clean",
+            "company_schedule_v1"
+        ];
         let db = null, auth = null, isCloudMode = false, isApplyingSnapshot = false;
 
         function normalizeCode(code) { return String(code || "").trim().toUpperCase(); }
@@ -1527,6 +1545,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
         };
 
 
+        
         async function loadScheduleFromCloudOrCreate() {
             cloudDocId = getScheduleDocId();
             const ref = doc(db, "schedule_db", cloudDocId);
@@ -1534,33 +1553,60 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
 
             if (snap.exists()) {
                 const data = snap.data();
-                if (Array.isArray(data.staffList) && data.staffList.length) {
-                    window.currentStaffList = ensureStaffShape(data.staffList);
-                } else {
-                    window.currentStaffList = ensureStaffShape(defaultStaff);
-                }
+                window.currentStaffList = Array.isArray(data.staffList) && data.staffList.length
+                    ? ensureStaffShape(data.staffList)
+                    : ensureStaffShape(defaultStaff);
 
-                if (data.shiftTimes && Object.keys(data.shiftTimes).length) {
-                    window.shiftTimes = data.shiftTimes;
-                } else {
-                    window.shiftTimes = JSON.parse(JSON.stringify(defaultShiftTimes));
+                window.shiftTimes = data.shiftTimes && Object.keys(data.shiftTimes).length
+                    ? data.shiftTimes
+                    : JSON.parse(JSON.stringify(defaultShiftTimes));
+
+                ensureStaffPositions();
+                saveLocalBackup();
+                return;
+            }
+
+            // ถ้าเดือนนี้ยังไม่มีข้อมูล ให้ดึงจากเอกสาร Cloud เดิมก่อน เพื่อไม่ให้ข้อมูลดูเหมือนหาย
+            let migrated = false;
+            for (const oldId of legacyCloudDocIds) {
+                try {
+                    const oldSnap = await getDoc(doc(db, "schedule_db", oldId));
+                    if (oldSnap.exists()) {
+                        const oldData = oldSnap.data();
+                        if (Array.isArray(oldData.staffList) && oldData.staffList.length) {
+                            window.currentStaffList = ensureStaffShape(oldData.staffList);
+                            window.shiftTimes = oldData.shiftTimes && Object.keys(oldData.shiftTimes).length
+                                ? oldData.shiftTimes
+                                : JSON.parse(JSON.stringify(defaultShiftTimes));
+                            migrated = true;
+                            break;
+                        }
+                    }
+                } catch (e) {
+                    console.warn("Legacy load skipped:", oldId, e);
                 }
-            } else {
+            }
+
+            if (!migrated) {
                 window.currentStaffList = ensureStaffShape(defaultStaff);
                 window.shiftTimes = JSON.parse(JSON.stringify(defaultShiftTimes));
-                await setDoc(ref, {
-                    staffList: window.currentStaffList,
-                    shiftTimes: window.shiftTimes,
-                    month: window.selectedMonth,
-                    year: window.selectedYear,
-                    createdAt: serverTimestamp(),
-                    updatedAt: serverTimestamp()
-                }, { merge: true });
             }
 
             ensureStaffPositions();
+
+            await setDoc(ref, {
+                staffList: window.currentStaffList,
+                shiftTimes: window.shiftTimes,
+                month: window.selectedMonth,
+                year: window.selectedYear,
+                migratedFromLegacy: migrated,
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            }, { merge: true });
+
             saveLocalBackup();
         }
+
 
         let unsubscribeSchedule = null;
 
@@ -1627,7 +1673,22 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                 try {
                     setSyncStatus("loading", "กำลังบันทึก...");
                     cloudDocId = getScheduleDocId();
-                    await setDoc(doc(db, "schedule_db", cloudDocId), { staffList: window.currentStaffList, shiftTimes: window.shiftTimes, month: window.selectedMonth, year: window.selectedYear, updatedAt: serverTimestamp() }, { merge: true });
+                    await setDoc(doc(db, "schedule_db", cloudDocId), {
+                        staffList: window.currentStaffList,
+                        shiftTimes: window.shiftTimes,
+                        month: window.selectedMonth,
+                        year: window.selectedYear,
+                        updatedAt: serverTimestamp()
+                    }, { merge: true });
+
+                    await setDoc(doc(db, "schedule_db", "company_schedule_latest"), {
+                        staffList: window.currentStaffList,
+                        shiftTimes: window.shiftTimes,
+                        month: window.selectedMonth,
+                        year: window.selectedYear,
+                        currentDocId: cloudDocId,
+                        updatedAt: serverTimestamp()
+                    }, { merge: true });
                     setSyncStatus("online", "บันทึกและซิงค์แล้ว");
                 } catch (e) {
                     console.error(e);
@@ -1689,18 +1750,54 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
             if (window.shiftTimes[current]) filterShift.value = current;
         }
 
+        
         function updateDeleteEmployeeSelect() {
             const sel = document.getElementById("delete-emp-id");
+            if (!sel) return;
+
+            const countEl = document.getElementById("delete-emp-result-count");
+            const searchEl = document.getElementById("delete-emp-search");
+            const q = normalizeCode(searchEl ? searchEl.value : "");
+
             const teams = getUserEditTeams();
             sel.innerHTML = "";
-            ensureStaffPositions();
-            const list = sortedStaffStable(window.currentStaffList.filter(p => teams.includes(p.team)));
-            if (!list.length) {
+
+            let list = sortedStaffStable(window.currentStaffList.filter(p => teams.includes(p.team)));
+
+            if (q) {
+                list = list.filter(p =>
+                    normalizeCode(p.name).includes(q) ||
+                    String(p.code || "").includes(q) ||
+                    normalizeCode(p.team).includes(q)
+                );
+            } else {
+                // ไม่โชว์ทั้งหมดตั้งแต่แรก เพื่อลดความลายตา
+                list = list.slice(0, 12);
+            }
+
+            if (!getUserEditTeams().length) {
                 sel.innerHTML = `<option value="">ไม่มีสิทธิ์ลบพนักงาน</option>`;
+                if (countEl) countEl.innerText = "บัญชีนี้ไม่มีสิทธิ์ลบพนักงาน";
                 return;
             }
-            list.forEach(p => sel.innerHTML += `<option value="${p.id}">${p.team} | ${p.rank} ${getRankLabel(p.rank)} | ${p.name} (${p.code})</option>`);
+
+            if (!list.length) {
+                sel.innerHTML = `<option value="">ไม่พบพนักงานที่ค้นหา</option>`;
+                if (countEl) countEl.innerText = q ? "ไม่พบผลลัพธ์" : "พิมพ์ชื่อหรือรหัสเพื่อค้นหา";
+                return;
+            }
+
+            list.forEach(p => {
+                sel.innerHTML += `<option value="${p.id}">${p.team} | ${p.rank} ${getRankLabel(p.rank)} | ${p.name} (${p.code})</option>`;
+            });
+
+            if (countEl) {
+                countEl.innerText = q
+                    ? `พบ ${list.length} รายการ`
+                    : `แสดง ${list.length} รายการแรก — พิมพ์ชื่อหรือรหัสเพื่อค้นหาเร็วขึ้น`;
+            }
         }
+
 
         function updateDynamicUI() {
             updateMonthUI();
@@ -1895,6 +1992,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
         };
         window.deleteEmployee = async function() {
             const id = Number(document.getElementById("delete-emp-id").value);
+            if (!id) return alert("กรุณาค้นหาและเลือกพนักงานที่ต้องการลบ");
             const idx = window.currentStaffList.findIndex(p => p.id === id);
             if (idx < 0) return alert("กรุณาเลือกพนักงาน");
             const p = window.currentStaffList[idx];
@@ -2008,6 +2106,8 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
         window.openAddEmployeeModal = function() {
             if (!window.currentUser) return alert("กรุณาเข้าสู่ระบบก่อน");
             if (!isLeaderUser()) return alert("บัญชีนี้ไม่มีสิทธิ์เพิ่ม/ลบข้อมูล");
+            const search = document.getElementById("delete-emp-search");
+            if (search) search.value = "";
             updateDeleteEmployeeSelect();
             refreshLoginUI();
             document.getElementById("add-employee-modal").classList.remove("hidden");
