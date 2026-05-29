@@ -27,6 +27,38 @@
         tbody#staff-table-body tr.data-row:hover td.sticky-left {
             background-color: rgba(15, 23, 42, .98) !important;
         }
+
+        .shift-select {
+            color: #ffffff !important;
+            font-weight: 700;
+            border-width: 1px;
+        }
+        .shift-select option {
+            background: #020617;
+            color: #e2e8f0;
+            font-weight: 700;
+        }
+        .shift-s9 {
+            background: rgba(37, 99, 235, 0.22) !important;
+            border-color: rgba(59, 130, 246, 0.55) !important;
+            color: #93c5fd !important;
+        }
+        .shift-s12 {
+            background: rgba(245, 158, 11, 0.22) !important;
+            border-color: rgba(245, 158, 11, 0.55) !important;
+            color: #fcd34d !important;
+        }
+        .shift-s21 {
+            background: rgba(124, 58, 237, 0.22) !important;
+            border-color: rgba(139, 92, 246, 0.60) !important;
+            color: #c4b5fd !important;
+        }
+        .shift-other {
+            background: rgba(14, 165, 233, 0.18) !important;
+            border-color: rgba(14, 165, 233, 0.50) !important;
+            color: #7dd3fc !important;
+        }
+
         .day-tooltip {
             position: fixed;
             background: rgba(15, 23, 42, .98);
@@ -1727,8 +1759,36 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
             }).map(x => x.p);
         }
 
+
+        function getShiftNumber(shift) {
+            const match = String(shift || "").match(/\d+/);
+            return match ? Number(match[0]) : 999;
+        }
+
+        function getSortedShiftKeys() {
+            return Object.keys(window.shiftTimes).sort((a, b) => {
+                const na = getShiftNumber(a);
+                const nb = getShiftNumber(b);
+                if (na !== nb) return na - nb;
+                return String(a).localeCompare(String(b));
+            });
+        }
+
+        function getShiftClass(shift) {
+            const s = String(shift || "").toUpperCase();
+            if (s === "S9") return "shift-s9";
+            if (s === "S12") return "shift-s12";
+            if (s === "S21") return "shift-s21";
+            return "shift-other";
+        }
+
+        function getShiftOptionLabel(shift) {
+            const times = window.shiftTimes[shift] || {};
+            return times.login ? `${shift} (${times.login})` : shift;
+        }
+
         function sortedStaff(list) {
-            const sk = Object.keys(window.shiftTimes);
+            const sk = getSortedShiftKeys();
             return [...list].sort((a,b) => {
                 if (a.team !== b.team) return a.team.localeCompare(b.team);
                 const ra = getRankOrder(a.rank), rb = getRankOrder(b.rank);
@@ -1743,13 +1803,18 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
         function updateShiftSelects() {
             const filterShift = document.getElementById("filter-shift");
             const modalShift = document.getElementById("new-emp-shift");
+            if (!filterShift || !modalShift) return;
+
             const current = filterShift.value;
             filterShift.innerHTML = '<option value="ALL">แสดงทุกกะ</option>';
             modalShift.innerHTML = "";
-            Object.keys(window.shiftTimes).forEach(s => {
-                filterShift.innerHTML += `<option value="${s}">เฉพาะกะ ${s}</option>`;
-                modalShift.innerHTML += `<option value="${s}">${s}</option>`;
+
+            getSortedShiftKeys().forEach(s => {
+                const label = getShiftOptionLabel(s);
+                filterShift.innerHTML += `<option value="${s}">เฉพาะกะ ${label}</option>`;
+                modalShift.innerHTML += `<option value="${s}">${label}</option>`;
             });
+
             if (window.shiftTimes[current]) filterShift.value = current;
         }
 
@@ -1905,9 +1970,9 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                 const tOffs = p.offs.length, tLeaves = p.leaves.length;
                 const tCol = p.team === "WIN2" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : p.team === "WIN3" ? "bg-indigo-500/10 text-indigo-400 border-indigo-500/20" : "bg-rose-500/10 text-rose-400 border-rose-500/20";
                 const typeCol = p.type === "WFH" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-indigo-500/10 text-indigo-400 border-indigo-500/20";
-                const shiftCol = p.shift === "S9" ? "text-emerald-400 bg-emerald-950/40" : p.shift === "S12" ? "text-amber-400 bg-amber-950/40" : p.shift === "S21" ? "text-indigo-400 bg-indigo-950/40" : "text-fuchsia-400 bg-fuchsia-950/40";
+                const shiftCol = getShiftClass(p.shift);
                 const disabled = editable ? "" : "disabled";
-                const sOpts = Object.keys(window.shiftTimes).map(s => `<option value="${s}" ${p.shift === s ? "selected" : ""}>${s}</option>`).join("");
+                const sOpts = getSortedShiftKeys().map(s => `<option value="${s}" ${p.shift === s ? "selected" : ""}>${getShiftOptionLabel(s)}</option>`).join("");
 
                 let html = `<td class="py-2 px-2 text-center text-slate-500 sticky left-0 bg-slate-900/90 border-r border-slate-800 z-10 sticky-left">${i}</td>
                     <td class="py-2 px-1 text-center"><span class="px-2 py-0.5 text-[10px] font-bold border rounded ${tCol}">${p.team}</span></td>
@@ -1920,7 +1985,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                     <td class="py-2 px-3 text-slate-200"><span class="${editable ? "cursor-edit hover:text-indigo-400" : "text-slate-300"}" ${editable ? `ondblclick="editName(${p.id}, this)"` : ""}>${p.name}</span></td>
                     <td class="py-2 px-3 text-slate-400 text-xs font-mono">${p.code}</td>
                     <td class="py-2 px-2 text-center"><span class="px-2 py-0.5 text-[10px] rounded-full ${typeCol}">${p.type}</span></td>
-                    <td class="py-2 px-1 text-center"><select ${disabled} onchange="changeShift(${p.id}, this.value)" class="border px-2 py-0.5 rounded text-xs outline-none ${shiftCol} border-slate-700 disabled:opacity-50 disabled:cursor-not-allowed">${sOpts}</select></td>
+                    <td class="py-2 px-1 text-center"><select ${disabled} onchange="changeShift(${p.id}, this.value)" class="shift-select border px-2 py-0.5 rounded text-xs outline-none ${shiftCol} disabled:opacity-50 disabled:cursor-not-allowed">${sOpts}</select></td>
                     <td class="py-2 px-2 text-center text-xs text-slate-300 font-mono">${times.login}</td>
                     <td class="py-2 px-2 text-center text-xs text-slate-400 font-mono">${times.rest}</td>
                     <td class="py-2 px-2 text-center font-bold text-xs text-blue-400 bg-blue-950/5 border-x border-slate-800">${tOffs}</td>
@@ -1951,7 +2016,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
             tfoot.innerHTML = "";
             if (!filtered.length) return;
             const ds = {};
-            Object.keys(window.shiftTimes).forEach(s => ds[s] = Array(32).fill(0));
+            getSortedShiftKeys().forEach(s => ds[s] = Array(32).fill(0));
             const doff = Array(32).fill(0), dl = Array(32).fill(0);
 
             filtered.forEach(p => {
@@ -1969,7 +2034,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
             };
             const colors = ["text-emerald-400","text-amber-400","text-indigo-400","text-pink-400","text-cyan-400"];
             let i = 0;
-            Object.keys(window.shiftTimes).forEach(s => tfoot.innerHTML += row(`รวมกะ ${s}`, ds[s], colors[i++ % colors.length], "bg-slate-900/60"));
+            getSortedShiftKeys().forEach(s => tfoot.innerHTML += row(`รวมกะ ${s}`, ds[s], colors[i++ % colors.length], "bg-slate-900/60"));
             tfoot.innerHTML += row("รวมหยุด (O)", doff, "text-red-400", "bg-rose-950/20");
             tfoot.innerHTML += row("รวมลา (L)", dl, "text-purple-400", "bg-purple-950/20");
         }
@@ -1981,7 +2046,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
             const cont = document.getElementById("dashboard-widgets");
             while (cont.children.length > 1) cont.removeChild(cont.lastChild);
             const colors = ["emerald","amber","indigo"];
-            Object.keys(window.shiftTimes).slice(0,3).forEach((s,idx) => {
+            getSortedShiftKeys().slice(0,3).forEach((s,idx) => {
                 const w = document.createElement("div");
                 w.className = "bg-slate-900 border border-slate-800 p-5 rounded-2xl flex items-center justify-between shadow-md";
                 w.innerHTML = `<div><p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">กะ ${s}</p><h3 class="text-2xl font-bold text-${colors[idx]}-400 mt-1">${list.filter(p=>p.shift===s).length} คน</h3><p class="text-[11px] text-slate-500 mt-1">เข้า ${window.shiftTimes[s].login}</p></div><div class="w-12 h-12 rounded-xl bg-${colors[idx]}-500/10 border border-${colors[idx]}-500/20 flex items-center justify-center text-${colors[idx]}-400">⏱</div>`;
