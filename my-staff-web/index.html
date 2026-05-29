@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบตารางเวลาพนักงานแนวตั้งอัจฉริยะ</title>
+    <title>ระบบจัดการตารางงาน WIN</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,42 +16,37 @@
         ::-webkit-scrollbar-thumb:hover { background: #475569; }
         .cursor-edit { cursor: pointer; }
 
-        tbody#staff-table-body tr {
-            transition: outline 0.15s ease, box-shadow 0.15s ease;
+        tbody#staff-table-body tr.data-row {
+            transition: outline .15s ease, box-shadow .15s ease;
         }
-
-        tbody#staff-table-body tr:hover {
-            outline: 1px solid rgba(99, 102, 241, 0.45);
+        tbody#staff-table-body tr.data-row:hover {
+            outline: 1px solid rgba(99, 102, 241, .45);
             outline-offset: -1px;
-            box-shadow: inset 0 0 0 9999px rgba(99, 102, 241, 0.025);
+            box-shadow: inset 0 0 0 9999px rgba(99, 102, 241, .025);
         }
-
-        tbody#staff-table-body tr:hover td.sticky {
-            background-color: rgba(15, 23, 42, 0.96) !important;
+        tbody#staff-table-body tr.data-row:hover td.sticky-left {
+            background-color: rgba(15, 23, 42, .98) !important;
         }
-
-
         .day-tooltip {
             position: fixed;
-            background: rgba(15, 23, 42, 0.98);
-            border: 1px solid rgba(99, 102, 241, 0.55);
+            background: rgba(15, 23, 42, .98);
+            border: 1px solid rgba(99, 102, 241, .55);
             color: #e2e8f0;
-            padding: 6px 10px;
+            padding: 7px 10px;
             border-radius: 10px;
             font-size: 12px;
             font-weight: 600;
             pointer-events: none;
-            z-index: 99999;
+            z-index: 999999;
             backdrop-filter: blur(8px);
             display: none;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.35);
+            box-shadow: 0 10px 25px rgba(0,0,0,.35);
             white-space: nowrap;
         }
-</style>
+    </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen antialiased selection:bg-indigo-500/30">
 
-    <!-- Login Modal -->
     <div id="login-modal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-sm z-[999999] flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-5">
             <div class="text-center space-y-2">
@@ -63,34 +58,26 @@
                 <h2 class="text-xl font-bold text-slate-100">เข้าสู่ระบบ</h2>
                 <p class="text-xs text-slate-400">กรุณากรอกรหัสเพื่อเข้าสู่ระบบ</p>
             </div>
-
             <div class="space-y-3">
                 <div>
                     <label class="text-xs text-slate-400 font-medium">รหัสเข้าสู่ระบบ</label>
-                    <input id="login-code" type="text" placeholder="กรอกรหัสเข้าสู่ระบบ" class="w-full mt-1 bg-slate-950 border border-slate-800 focus:border-indigo-500 text-slate-200 px-3 py-2 rounded-xl text-sm outline-none uppercase">
+                    <input id="login-code" type="password" placeholder="กรอกรหัสเข้าสู่ระบบ" class="w-full mt-1 bg-slate-950 border border-slate-800 focus:border-indigo-500 text-slate-200 px-3 py-2 rounded-xl text-sm outline-none uppercase">
                 </div>
                 <p id="login-error" class="hidden text-xs text-rose-400">รหัสไม่ถูกต้อง</p>
             </div>
-
-            <button onclick="loginUser()" class="w-full px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm rounded-xl transition-all">
-                เข้าสู่ระบบ
-            </button>
-
-            <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-[11px] text-slate-500 leading-5 text-center">
-                กรุณาใช้รหัสที่ได้รับอนุญาตเท่านั้น
-            </div>
+            <button onclick="loginUser()" class="w-full px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm rounded-xl transition-all">เข้าสู่ระบบ</button>
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-[11px] text-slate-500 leading-5 text-center">กรุณาใช้รหัสที่ได้รับอนุญาตเท่านั้น</div>
         </div>
     </div>
 
-    <!-- Current User Bar -->
     <div id="current-user-bar" class="hidden fixed bottom-4 right-4 z-[999998] bg-slate-900/95 border border-slate-700 rounded-xl px-4 py-2 shadow-xl text-xs text-slate-300">
         <span id="current-user-text"></span>
         <button onclick="logoutUser()" class="ml-3 text-rose-400 hover:text-rose-300 font-semibold">ออกจากระบบ</button>
     </div>
 
+    <div id="day-tooltip" class="day-tooltip"></div>
 
-    <div class="max-w-[1600px] mx-auto p-4 md:p-6 space-y-6">
-        
+    <div class="max-w-[1700px] mx-auto p-4 md:p-6 space-y-6">
         <header class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
             <div class="flex items-center gap-4">
                 <div class="p-3 bg-indigo-600/10 rounded-xl border border-indigo-500/20 text-indigo-400">
@@ -107,37 +94,22 @@
                             </span>
                         </div>
                     </div>
-                    <p class="text-xs md:text-sm text-slate-400 mt-1">บริหารจัดการกะ สลับลำดับ และลงวันหยุด/วันลาแบบเรียลไทม์ พร้อมตารางสรุปรวมกะรายวันท้ายแผ่นงาน</p>
+                    <p class="text-xs md:text-sm text-slate-400 mt-1">จัดการกะ วันหยุด/วันลา ยศพนักงาน และสิทธิ์หัวหน้าทีมแบบเรียลไทม์</p>
                 </div>
             </div>
-            
+
             <div class="flex flex-wrap gap-2">
-                <button onclick="openAddEmployeeModal()" class="px-4 py-2 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/30 font-medium text-sm rounded-xl transition-all flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                    เพิ่มพนักงาน
-                </button>
-                <button onclick="openAddShiftModal()" class="px-4 py-2 bg-amber-600/20 hover:bg-amber-600/40 text-amber-400 border border-amber-500/30 font-medium text-sm rounded-xl transition-all flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    เพิ่มกะ
-                </button>
-                <div class="w-px h-8 bg-slate-800 mx-1 self-center"></div>
-                <button onclick="autoSort()" class="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-medium text-sm rounded-xl shadow-lg shadow-indigo-500/20 transition-all flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18" /></svg>
-                    Auto-Sort
-                </button>
-                <button onclick="exportData()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium text-sm rounded-xl transition-all flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
-                    Export
-                </button>
+                <button onclick="openAddEmployeeModal()" class="px-4 py-2 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/30 font-medium text-sm rounded-xl transition-all flex items-center gap-2">+ เพิ่ม/ลบพนักงาน</button>
+                <button onclick="openAddShiftModal()" class="px-4 py-2 bg-amber-600/20 hover:bg-amber-600/40 text-amber-400 border border-amber-500/30 font-medium text-sm rounded-xl transition-all">เพิ่มกะ</button>
+                <button onclick="autoSort()" class="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-medium text-sm rounded-xl shadow-lg shadow-indigo-500/20 transition-all">Auto-Sort</button>
                 <button onclick="forceSaveCloud()" class="px-4 py-2 bg-emerald-950/40 hover:bg-emerald-900/40 text-emerald-400 border border-emerald-900/30 font-medium text-sm rounded-xl transition-all">บันทึก Cloud</button>
-                <button onclick="reloadFromCloud()" class="px-4 py-2 bg-sky-950/40 hover:bg-sky-900/40 text-sky-400 border border-sky-900/30 font-medium text-sm rounded-xl transition-all">รีโหลดข้อมูล</button>
-                <button onclick="resetToDefault()" class="px-4 py-2 bg-rose-950/40 hover:bg-rose-900/40 text-rose-400 border border-rose-900/30 font-medium text-sm rounded-xl transition-all">
-                    รีเซ็ต
-                </button>
+                <button onclick="reloadFromCloud()" class="px-4 py-2 bg-sky-950/40 hover:bg-sky-900/40 text-sky-400 border border-sky-900/30 font-medium text-sm rounded-xl transition-all">รีโหลด</button>
+                <button onclick="exportData()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium text-sm rounded-xl transition-all">Export</button>
+                <button onclick="resetToDefault()" class="px-4 py-2 bg-rose-950/40 hover:bg-rose-900/40 text-rose-400 border border-rose-900/30 font-medium text-sm rounded-xl transition-all">รีเซ็ต</button>
             </div>
         </header>
-<div id="toast" class="fixed top-5 right-5 z-50 transform translate-y-[-100px] opacity-0 transition-all duration-300 bg-emerald-900 border border-emerald-500 text-emerald-200 px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3">
-            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+
+        <div id="toast" class="fixed top-5 right-5 z-50 transform translate-y-[-100px] opacity-0 transition-all duration-300 bg-emerald-900 border border-emerald-500 text-emerald-200 px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3">
             <span id="toast-text">สำเร็จ!</span>
         </div>
 
@@ -148,9 +120,7 @@
                     <h3 id="stat-total" class="text-2xl font-bold text-slate-100 mt-1">-- คน</h3>
                     <p class="text-[11px] text-slate-500 mt-1" id="stat-sub-types">Office: -- | WFH: --</p>
                 </div>
-                <div class="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-                </div>
+                <div class="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">👥</div>
             </div>
         </div>
 
@@ -172,28 +142,26 @@
                     </select>
                 </div>
             </div>
-
             <div class="flex flex-col gap-1.5 md:w-80">
                 <label class="text-xs text-slate-400 font-medium">ค้นหาชื่อพนักงาน / รหัส</label>
-                <div class="relative">
-                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                    </span>
-                    <input type="text" id="search-name" oninput="applyFilters()" placeholder="พิมพ์ชื่อเพื่อค้นหา..." class="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 text-slate-200 pl-10 pr-4 py-2 rounded-xl text-sm outline-none transition-all placeholder:text-slate-600">
-                </div>
+                <input type="text" id="search-name" oninput="applyFilters()" placeholder="พิมพ์ชื่อหรือรหัส..." class="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 text-slate-200 px-4 py-2 rounded-xl text-sm outline-none transition-all placeholder:text-slate-600">
             </div>
         </div>
 
         <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-800 bg-slate-900/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div class="flex items-center gap-2 text-indigo-400">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
-                    <span class="font-semibold text-sm text-slate-200">แผ่นงานตารางเวรพนักงานแนวตั้ง (คลิกช่องวันที่เพื่อสลับ วันทำงาน ➔ วันหยุด O ➔ วันลา L)</span>
+                    <span class="font-semibold text-sm text-slate-200">แผ่นงานตารางเวรพนักงานแนวตั้ง (วันทำงาน → วันหยุด O → วันลา L)</span>
+                </div>
+                <div class="flex gap-4 text-xs">
+                    <span class="text-blue-400">● วันทำงาน</span>
+                    <span class="text-red-400">O วันหยุด</span>
+                    <span class="text-purple-400">L วันลา</span>
                 </div>
             </div>
 
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse table-auto min-w-[1300px]">
+                <table class="w-full text-left border-collapse table-auto min-w-[1450px]">
                     <thead>
                         <tr class="bg-slate-950/80 text-xs text-slate-400 font-semibold tracking-wider border-b border-slate-800">
                             <th class="py-3 px-3 text-center w-12 sticky left-0 bg-slate-950 z-20">ลำดับ</th>
@@ -225,7 +193,7 @@
                     <tfoot id="table-summary-footer" class="bg-slate-950 text-[11px] font-semibold border-t-2 border-slate-800 divide-y divide-slate-900"></tfoot>
                 </table>
             </div>
-            
+
             <div id="empty-state" class="hidden p-12 text-center text-slate-500">
                 <p class="text-base font-medium">ไม่พบข้อมูลพนักงานที่ค้นหา</p>
             </div>
@@ -233,14 +201,12 @@
     </div>
 
     <div id="add-employee-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                <h3 class="text-base font-bold text-slate-200">จัดการพนักงาน</h3>
+                <h3 class="text-base font-bold text-slate-200">เพิ่ม / ลบพนักงาน</h3>
                 <button onclick="closeAddEmployeeModal()" class="text-slate-400 hover:text-slate-200">ปิด</button>
             </div>
-
             <div class="space-y-3">
-                <h4 class="text-sm font-semibold text-emerald-400">➕ เพิ่มพนักงานใหม่</h4>
                 <div><label class="text-xs text-slate-400 font-medium">ชื่อพนักงาน</label><input type="text" id="new-emp-name" class="w-full mt-1 bg-slate-950 border border-slate-800 text-slate-200 px-3 py-2 rounded-xl text-sm uppercase"></div>
                 <div><label class="text-xs text-slate-400 font-medium">รหัสพนักงาน</label><input type="text" id="new-emp-code" class="w-full mt-1 bg-slate-950 border border-slate-800 text-slate-200 px-3 py-2 rounded-xl text-sm"></div>
                 <div class="grid grid-cols-2 gap-3">
@@ -264,21 +230,13 @@
                         <option value="S4">S4 - หัวหน้าทีม</option>
                     </select>
                 </div>
-                <div class="flex justify-end gap-2 pt-1">
-                    <button onclick="saveNewEmployee()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-xl">บันทึกเพิ่มพนักงาน</button>
-                </div>
+                <button onclick="saveNewEmployee()" class="w-full px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium rounded-xl">บันทึกพนักงานใหม่</button>
             </div>
 
-            <div class="border-t border-slate-800 pt-4 space-y-3">
-                <h4 class="text-sm font-semibold text-rose-400">🗑️ ลบพนักงานออก</h4>
-                <div>
-                    <label class="text-xs text-slate-400 font-medium">เลือกพนักงานที่ลาออก / ต้องการลบ</label>
-                    <select id="delete-emp-select" class="w-full mt-1 bg-slate-950 border border-slate-800 text-slate-200 px-3 py-2 rounded-xl text-sm"></select>
-                    <p class="text-[11px] text-slate-500 mt-1">เมื่อลบแล้ว ข้อมูลวันหยุด/วันลาในแถวนั้นจะถูกลบออกจากระบบด้วย</p>
-                </div>
-                <div class="flex justify-end gap-2 pt-1">
-                    <button onclick="deleteSelectedEmployee()" class="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white text-sm font-medium rounded-xl">ลบพนักงาน</button>
-                </div>
+            <div class="border-t border-slate-800 pt-4 mt-4 space-y-3">
+                <h4 class="text-sm font-bold text-rose-400">ลบพนักงานที่ออก</h4>
+                <select id="delete-emp-id" class="w-full mt-1 bg-slate-950 border border-slate-800 text-slate-200 px-3 py-2 rounded-xl text-sm"></select>
+                <button onclick="deleteEmployee()" class="w-full px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white text-sm font-medium rounded-xl">ลบพนักงาน</button>
             </div>
         </div>
     </div>
@@ -286,16 +244,14 @@
     <div id="add-shift-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl">
             <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                <h3 class="text-base font-bold text-slate-200">🕒 เพิ่มกะใหม่</h3>
+                <h3 class="text-base font-bold text-slate-200">เพิ่มกะใหม่</h3>
                 <button onclick="closeAddShiftModal()" class="text-slate-400 hover:text-slate-200">ปิด</button>
             </div>
             <div class="space-y-3">
                 <div><label class="text-xs text-slate-400 font-medium">รหัสกะ</label><input type="text" id="new-shift-code" placeholder="S15" class="w-full mt-1 bg-slate-950 border border-slate-800 text-slate-200 px-3 py-2 rounded-xl text-sm uppercase"></div>
                 <div><label class="text-xs text-slate-400 font-medium">เวลาเข้างาน</label><input type="text" id="new-shift-login" placeholder="15.00-00.00" class="w-full mt-1 bg-slate-950 border border-slate-800 text-slate-200 px-3 py-2 rounded-xl text-sm"></div>
                 <div><label class="text-xs text-slate-400 font-medium">เวลาพัก</label><input type="text" id="new-shift-rest" placeholder="19.00-20.00" class="w-full mt-1 bg-slate-950 border border-slate-800 text-slate-200 px-3 py-2 rounded-xl text-sm"></div>
-            </div>
-            <div class="flex justify-end gap-2 pt-4">
-                <button onclick="saveNewShift()" class="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium rounded-xl">บันทึก</button>
+                <button onclick="saveNewShift()" class="w-full px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium rounded-xl">บันทึกกะ</button>
             </div>
         </div>
     </div>
@@ -304,18 +260,15 @@
         <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-xl w-full p-6 space-y-4 shadow-2xl">
             <div class="flex justify-between border-b border-slate-800 pb-3"><h3 class="text-base font-bold text-slate-200">ส่งออกข้อมูล</h3><button onclick="closeExportModal()" class="text-slate-400">ปิด</button></div>
             <textarea id="export-textarea" readonly class="w-full h-80 bg-slate-950 border border-slate-800 rounded-xl p-3 font-mono text-xs text-emerald-400 focus:outline-none select-all"></textarea>
-            <div class="flex justify-end pt-2"><button onclick="copyExportText()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl">คัดลอกทั้งหมด</button></div>
+            <button onclick="copyExportText()" class="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl">คัดลอกทั้งหมด</button>
         </div>
     </div>
 
-    <div id="day-tooltip" class="day-tooltip"></div>
-
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // รหัสเชื่อมต่อ Firebase ของคุณ
         const firebaseConfig = {
             apiKey: "AIzaSyCgE3CaI103eB9llHv4Ect1SuDpDS9nGv0",
             authDomain: "ta-win.firebaseapp.com",
@@ -326,142 +279,1001 @@
             measurementId: "G-246PYDN2L5"
         };
 
+        const ADMIN_CODE = atob("QlJJR0hUT04=");
         const defaultStaff = [
-            // WIN1
-            { id: 1, team: "WIN1", name: "IMAGE", code: "251003601", type: "Office", shift: "S9", rank: "S2", offs: [], leaves: [] },
-            { id: 2, team: "WIN1", name: "DARIN", code: "251015602", type: "Office", shift: "S9", rank: "S2", offs: [], leaves: [] },
-            { id: 3, team: "WIN1", name: "SANDO", code: "260120607", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
-            { id: 4, team: "WIN1", name: "TAXTAR", code: "260312602", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
-            { id: 5, team: "WIN1", name: "PURE", code: "260321601", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
-            { id: 6, team: "WIN1", name: "OLIVTTA", code: "251215601", type: "Office", shift: "S9", rank: "S2", offs: [], leaves: [] },
-            { id: 7, team: "WIN1", name: "ETHAN", code: "251220601", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
-            { id: 8, team: "WIN1", name: "SNACK", code: "260127603", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
-            { id: 9, team: "WIN1", name: "CHARLOTTE", code: "260115601", type: "Office", shift: "S9", rank: "S2", offs: [], leaves: [] },
-            { id: 10, team: "WIN1", name: "TAWAN", code: "251213601", type: "Office", shift: "S9", rank: "S2", offs: [], leaves: [] },
-            { id: 11, team: "WIN1", name: "YUTA", code: "251218601", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
-            { id: 12, team: "WIN1", name: "MIKEE", code: "260203605", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
-            { id: 13, team: "WIN1", name: "BOONPERM", code: "260407602", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
-            { id: 14, team: "WIN1", name: "FAREEN", code: "260507601", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
-            { id: 15, team: "WIN1", name: "ARNOLD", code: "250711601", type: "Office", shift: "S12", rank: "S2", offs: [], leaves: [] },
-            { id: 16, team: "WIN1", name: "NANNYS", code: "241030605", type: "Office", shift: "S12", rank: "S2", offs: [], leaves: [] },
-            { id: 17, team: "WIN1", name: "NOVA", code: "251214601", type: "Office", shift: "S12", rank: "S2", offs: [], leaves: [] },
-            { id: 18, team: "WIN1", name: "ALAN", code: "241030606", type: "Office", shift: "S12", rank: "S2", offs: [], leaves: [] },
-            { id: 19, team: "WIN1", name: "AILEEN", code: "250225604", type: "Office", shift: "S12", rank: "S2", offs: [], leaves: [] },
-            { id: 20, team: "WIN1", name: "TIGER", code: "250901601", type: "Office", shift: "S12", rank: "S2", offs: [], leaves: [] },
-            { id: 21, team: "WIN1", name: "SLEEP", code: "251001601", type: "Office", shift: "S12", rank: "S2", offs: [], leaves: [] },
-            { id: 22, team: "WIN1", name: "HANI", code: "250530601", type: "Office", shift: "S12", rank: "S2", offs: [], leaves: [] },
-            { id: 23, team: "WIN1", name: "DARA", code: "260106603", type: "WFH", shift: "S12", rank: "S2", offs: [], leaves: [] },
-            { id: 24, team: "WIN1", name: "LINMI", code: "251125601", type: "WFH", shift: "S12", rank: "S2", offs: [], leaves: [] },
-            { id: 25, team: "WIN1", name: "DRAGON", code: "260102603", type: "Office", shift: "S12", rank: "S2", offs: [], leaves: [] },
-            { id: 26, team: "WIN1", name: "MOON", code: "260127601", type: "Office", shift: "S12", rank: "S2", offs: [], leaves: [] },
-            { id: 27, team: "WIN1", name: "JULLY", code: "260103601", type: "Office", shift: "S12", rank: "S2", offs: [], leaves: [] },
-
-            // WIN2
-            { id: 28, team: "WIN2", name: "YADA", code: "251017603", type: "Office", shift: "S9", rank: "S2", offs: [], leaves: [] },
-            { id: 29, team: "WIN2", name: "GIFTZII", code: "250425602", type: "Office", shift: "S9", rank: "S2", offs: [], leaves: [] },
-            { id: 30, team: "WIN2", name: "MEME", code: "250425601", type: "Office", shift: "S9", rank: "S2", offs: [], leaves: [] },
-            { id: 31, team: "WIN2", name: "NEW", code: "251001602", type: "Office", shift: "S9", rank: "S2", offs: [], leaves: [] },
-            { id: 32, team: "WIN2", name: "ROSALIA", code: "251201602", type: "Office", shift: "S9", rank: "S2", offs: [], leaves: [] },
-            { id: 33, team: "WIN2", name: "SHAWTY", code: "251114601", type: "Office", shift: "S9", rank: "S2", offs: [], leaves: [] },
-            { id: 34, team: "WIN2", name: "TOP1", code: "250927602", type: "Office", shift: "S9", rank: "S2", offs: [], leaves: [] },
-            { id: 35, team: "WIN2", name: "BAKA", code: "250922601", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
-            { id: 36, team: "WIN2", name: "DINO", code: "251223604", type: "Office", shift: "S9", rank: "S2", offs: [], leaves: [] },
-            { id: 37, team: "WIN2", name: "ISLA", code: "260120608", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
-            { id: 38, team: "WIN2", name: "MIKEY", code: "251223603", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
-            { id: 39, team: "WIN2", name: "PANDA", code: "260203608", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
-            { id: 40, team: "WIN2", name: "PEE", code: "260108601", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
-            { id: 41, team: "WIN2", name: "SEE", code: "260129602", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
-            { id: 42, team: "WIN2", name: "SUN", code: "260129601", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
-            { id: 43, team: "WIN2", name: "ZERO", code: "260210601", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
-            { id: 44, team: "WIN2", name: "RUCHA", code: "240412602", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
-            { id: 45, team: "WIN2", name: "JUJU", code: "260303602", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
-            { id: 46, team: "WIN2", name: "BAOBEI", code: "260124601", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
-            { id: 47, team: "WIN2", name: "BANK", code: "260303603", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
-            { id: 48, team: "WIN2", name: "TONLIW", code: "251012602", type: "Office", shift: "S9", rank: "S2", offs: [], leaves: [] },
-            { id: 49, team: "WIN2", name: "VESPER", code: "260228605", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
-            { id: 50, team: "WIN2", name: "RJ", code: "260210603", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
-            { id: 51, team: "WIN2", name: "DEEDO", code: "260221601", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
-            { id: 52, team: "WIN2", name: "CAT", code: "251225602", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
-            { id: 53, team: "WIN2", name: "CHERLYN", code: "260217601", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
-            { id: 54, team: "WIN2", name: "MIND", code: "251014601", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
-            { id: 55, team: "WIN2", name: "TIYA", code: "260228602", type: "WFH", shift: "S9", rank: "S2", offs: [], leaves: [] },
-            { id: 56, team: "WIN2", name: "NOAH", code: "240412603", type: "Office", shift: "S12", rank: "S2", offs: [], leaves: [] },
-            { id: 57, team: "WIN2", name: "NADIR", code: "250422604", type: "Office", shift: "S12", rank: "S2", offs: [], leaves: [] },
-            { id: 58, team: "WIN2", name: "ALPHA", code: "250915602", type: "Office", shift: "S12", rank: "S2", offs: [], leaves: [] },
-            { id: 59, team: "WIN2", name: "BIRD", code: "250916604", type: "Office", shift: "S12", rank: "S2", offs: [], leaves: [] },
-            { id: 60, team: "WIN2", name: "LEMON", code: "260205602", type: "WFH", shift: "S12", rank: "S2", offs: [], leaves: [] },
-            { id: 61, team: "WIN2", name: "PIM", code: "260112604", type: "WFH", shift: "S12", rank: "S2", offs: [], leaves: [] },
-            { id: 62, team: "WIN2", name: "HUNNY", code: "251012603", type: "Office", shift: "S12", rank: "S2", offs: [], leaves: [] },
-            { id: 63, team: "WIN2", name: "KIMMY", code: "250923602", type: "Office", shift: "S12", rank: "S2", offs: [], leaves: [] },
-            { id: 64, team: "WIN2", name: "CHEKI", code: "251223602", type: "WFH", shift: "S12", rank: "S2", offs: [], leaves: [] },
-            { id: 65, team: "WIN2", name: "IVY", code: "260203610", type: "WFH", shift: "S12", rank: "S2", offs: [], leaves: [] },
-            { id: 66, team: "WIN2", name: "BB", code: "260310601", type: "WFH", shift: "S12", rank: "S2", offs: [], leaves: [] },
-            { id: 67, team: "WIN2", name: "LUCY1", code: "260129603", type: "WFH", shift: "S12", rank: "S2", offs: [], leaves: [] },
-            { id: 68, team: "WIN2", name: "CHEKI99", code: "251223602", type: "WFH", shift: "S12", rank: "S2", offs: [], leaves: [] },
-            { id: 69, team: "WIN2", name: "LEGO", code: "250915601", type: "Office", shift: "S12", rank: "S2", offs: [], leaves: [] },
-            { id: 70, team: "WIN2", name: "WHISKEY", code: "250923601", type: "Office", shift: "S12", rank: "S2", offs: [], leaves: [] },
-            { id: 71, team: "WIN2", name: "RAY", code: "251125602", type: "Office", shift: "S12", rank: "S2", offs: [], leaves: [] },
-            { id: 72, team: "WIN2", name: "JANE", code: "251213605", type: "Office", shift: "S12", rank: "S2", offs: [], leaves: [] },
-            { id: 73, team: "WIN2", name: "POSH", code: "251210602", type: "WFH", shift: "S12", rank: "S2", offs: [], leaves: [] },
-            { id: 74, team: "WIN2", name: "NYE", code: "251225601", type: "WFH", shift: "S12", rank: "S2", offs: [], leaves: [] },
-            { id: 75, team: "WIN2", name: "NEKO", code: "260228604", type: "WFH", shift: "S12", rank: "S2", offs: [], leaves: [] },
-
-            // WIN3
-            { id: 76, team: "WIN3", name: "MILLI", code: "250305604", type: "Office", shift: "S21", rank: "S2", offs: [], leaves: [] },
-            { id: 77, team: "WIN3", name: "NAT", code: "250305603", type: "Office", shift: "S21", rank: "S2", offs: [], leaves: [] },
-            { id: 78, team: "WIN3", name: "FENDI", code: "250620601", type: "Office", shift: "S21", rank: "S2", offs: [], leaves: [] },
-            { id: 79, team: "WIN3", name: "FABIE", code: "240423601", type: "Office", shift: "S21", rank: "S2", offs: [], leaves: [] },
-            { id: 80, team: "WIN3", name: "WIN", code: "260104604", type: "Office", shift: "S21", rank: "S2", offs: [], leaves: [] },
-            { id: 81, team: "WIN3", name: "OSAMA", code: "251214602", type: "Office", shift: "S21", rank: "S2", offs: [], leaves: [] },
-            { id: 82, team: "WIN3", name: "CHARLIE", code: "260117604", type: "Office", shift: "S9", rank: "S2", offs: [], leaves: [] },
-            { id: 83, team: "WIN3", name: "ING", code: "260324601", type: "WFH", shift: "S12", rank: "S2", offs: [], leaves: [] }
-        ];
-
+            {
+                        "id": 1,
+                        "team": "WIN1",
+                        "rank": "S2",
+                        "name": "IMAGE",
+                        "code": "251003601",
+                        "type": "Office",
+                        "shift": "S9",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 2,
+                        "team": "WIN1",
+                        "rank": "S2",
+                        "name": "DARIN",
+                        "code": "251015602",
+                        "type": "Office",
+                        "shift": "S9",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 3,
+                        "team": "WIN1",
+                        "rank": "S2",
+                        "name": "SANDO",
+                        "code": "260120607",
+                        "type": "WFH",
+                        "shift": "S9",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 4,
+                        "team": "WIN1",
+                        "rank": "S2",
+                        "name": "TAXTAR",
+                        "code": "260312602",
+                        "type": "WFH",
+                        "shift": "S9",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 5,
+                        "team": "WIN1",
+                        "rank": "S2",
+                        "name": "PURE",
+                        "code": "260321601",
+                        "type": "WFH",
+                        "shift": "S9",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 6,
+                        "team": "WIN1",
+                        "rank": "S2",
+                        "name": "OLIVTTA",
+                        "code": "251215601",
+                        "type": "Office",
+                        "shift": "S9",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 7,
+                        "team": "WIN1",
+                        "rank": "S2",
+                        "name": "ETHAN",
+                        "code": "251220601",
+                        "type": "WFH",
+                        "shift": "S9",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 8,
+                        "team": "WIN1",
+                        "rank": "S2",
+                        "name": "SNACK",
+                        "code": "260127603",
+                        "type": "WFH",
+                        "shift": "S9",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 9,
+                        "team": "WIN1",
+                        "rank": "S2",
+                        "name": "CHARLOTTE",
+                        "code": "260115601",
+                        "type": "Office",
+                        "shift": "S9",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 10,
+                        "team": "WIN1",
+                        "rank": "S2",
+                        "name": "TAWAN",
+                        "code": "251213601",
+                        "type": "Office",
+                        "shift": "S9",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 11,
+                        "team": "WIN1",
+                        "rank": "S2",
+                        "name": "YUTA",
+                        "code": "251218601",
+                        "type": "WFH",
+                        "shift": "S9",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 12,
+                        "team": "WIN1",
+                        "rank": "S2",
+                        "name": "MIKEE",
+                        "code": "260203605",
+                        "type": "WFH",
+                        "shift": "S9",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 13,
+                        "team": "WIN1",
+                        "rank": "S2",
+                        "name": "BOONPERM",
+                        "code": "260407602",
+                        "type": "WFH",
+                        "shift": "S9",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 14,
+                        "team": "WIN1",
+                        "rank": "S2",
+                        "name": "FAREEN",
+                        "code": "260507601",
+                        "type": "WFH",
+                        "shift": "S9",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 15,
+                        "team": "WIN1",
+                        "rank": "S2",
+                        "name": "ARNOLD",
+                        "code": "250711601",
+                        "type": "Office",
+                        "shift": "S12",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 16,
+                        "team": "WIN1",
+                        "rank": "S2",
+                        "name": "NANNYS",
+                        "code": "241030605",
+                        "type": "Office",
+                        "shift": "S12",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 17,
+                        "team": "WIN1",
+                        "rank": "S2",
+                        "name": "NOVA",
+                        "code": "251214601",
+                        "type": "Office",
+                        "shift": "S12",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 18,
+                        "team": "WIN1",
+                        "rank": "S2",
+                        "name": "ALAN",
+                        "code": "241030606",
+                        "type": "Office",
+                        "shift": "S12",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 19,
+                        "team": "WIN1",
+                        "rank": "S2",
+                        "name": "AILEEN",
+                        "code": "250225604",
+                        "type": "Office",
+                        "shift": "S12",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 20,
+                        "team": "WIN1",
+                        "rank": "S2",
+                        "name": "TIGER",
+                        "code": "250901601",
+                        "type": "Office",
+                        "shift": "S12",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 21,
+                        "team": "WIN1",
+                        "rank": "S2",
+                        "name": "SLEEP",
+                        "code": "251001601",
+                        "type": "Office",
+                        "shift": "S12",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 22,
+                        "team": "WIN1",
+                        "rank": "S2",
+                        "name": "HANI",
+                        "code": "250530601",
+                        "type": "Office",
+                        "shift": "S12",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 23,
+                        "team": "WIN1",
+                        "rank": "S2",
+                        "name": "DARA",
+                        "code": "260106603",
+                        "type": "WFH",
+                        "shift": "S12",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 24,
+                        "team": "WIN1",
+                        "rank": "S2",
+                        "name": "LINMI",
+                        "code": "251125601",
+                        "type": "WFH",
+                        "shift": "S12",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 25,
+                        "team": "WIN1",
+                        "rank": "S2",
+                        "name": "DRAGON",
+                        "code": "260102603",
+                        "type": "Office",
+                        "shift": "S12",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 26,
+                        "team": "WIN1",
+                        "rank": "S2",
+                        "name": "MOON",
+                        "code": "260127601",
+                        "type": "Office",
+                        "shift": "S12",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 27,
+                        "team": "WIN1",
+                        "rank": "S2",
+                        "name": "JULLY",
+                        "code": "260103601",
+                        "type": "Office",
+                        "shift": "S12",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 28,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "YADA",
+                        "code": "251017603",
+                        "type": "Office",
+                        "shift": "S9",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 29,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "GIFTZII",
+                        "code": "250425602",
+                        "type": "Office",
+                        "shift": "S9",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 30,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "MEME",
+                        "code": "250425601",
+                        "type": "Office",
+                        "shift": "S9",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 31,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "NEW",
+                        "code": "251001602",
+                        "type": "Office",
+                        "shift": "S9",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 32,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "ROSALIA",
+                        "code": "251201602",
+                        "type": "Office",
+                        "shift": "S9",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 33,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "SHAWTY",
+                        "code": "251114601",
+                        "type": "Office",
+                        "shift": "S9",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 34,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "TOP1",
+                        "code": "250927602",
+                        "type": "Office",
+                        "shift": "S9",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 35,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "BAKA",
+                        "code": "250922601",
+                        "type": "WFH",
+                        "shift": "S9",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 36,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "DINO",
+                        "code": "251223604",
+                        "type": "Office",
+                        "shift": "S9",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 37,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "ISLA",
+                        "code": "260120608",
+                        "type": "WFH",
+                        "shift": "S9",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 38,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "MIKEY",
+                        "code": "251223603",
+                        "type": "WFH",
+                        "shift": "S9",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 39,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "PANDA",
+                        "code": "260203608",
+                        "type": "WFH",
+                        "shift": "S9",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 40,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "PEE",
+                        "code": "260108601",
+                        "type": "WFH",
+                        "shift": "S9",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 41,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "SEE",
+                        "code": "260129602",
+                        "type": "WFH",
+                        "shift": "S9",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 42,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "SUN",
+                        "code": "260129601",
+                        "type": "WFH",
+                        "shift": "S9",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 43,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "ZERO",
+                        "code": "260210601",
+                        "type": "WFH",
+                        "shift": "S9",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 44,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "RUCHA",
+                        "code": "240412602",
+                        "type": "WFH",
+                        "shift": "S9",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 45,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "JUJU",
+                        "code": "260303602",
+                        "type": "WFH",
+                        "shift": "S9",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 46,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "BAOBEI",
+                        "code": "260124601",
+                        "type": "WFH",
+                        "shift": "S9",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 47,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "BANK",
+                        "code": "260303603",
+                        "type": "WFH",
+                        "shift": "S9",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 48,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "TONLIW",
+                        "code": "251012602",
+                        "type": "Office",
+                        "shift": "S9",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 49,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "VESPER",
+                        "code": "260228605",
+                        "type": "WFH",
+                        "shift": "S9",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 50,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "RJ",
+                        "code": "260210603",
+                        "type": "WFH",
+                        "shift": "S9",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 51,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "DEEDO",
+                        "code": "260221601",
+                        "type": "WFH",
+                        "shift": "S9",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 52,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "CAT",
+                        "code": "251225602",
+                        "type": "WFH",
+                        "shift": "S9",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 53,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "CHERLYN",
+                        "code": "260217601",
+                        "type": "WFH",
+                        "shift": "S9",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 54,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "MIND",
+                        "code": "251014601",
+                        "type": "WFH",
+                        "shift": "S9",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 55,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "TIYA",
+                        "code": "260228602",
+                        "type": "WFH",
+                        "shift": "S9",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 56,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "NOAH",
+                        "code": "240412603",
+                        "type": "Office",
+                        "shift": "S12",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 57,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "NADIR",
+                        "code": "250422604",
+                        "type": "Office",
+                        "shift": "S12",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 58,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "ALPHA",
+                        "code": "250915602",
+                        "type": "Office",
+                        "shift": "S12",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 59,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "BIRD",
+                        "code": "250916604",
+                        "type": "Office",
+                        "shift": "S12",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 60,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "LEMON",
+                        "code": "260205602",
+                        "type": "WFH",
+                        "shift": "S12",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 61,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "PIM",
+                        "code": "260112604",
+                        "type": "WFH",
+                        "shift": "S12",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 62,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "HUNNY",
+                        "code": "251012603",
+                        "type": "Office",
+                        "shift": "S12",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 63,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "KIMMY",
+                        "code": "250923602",
+                        "type": "Office",
+                        "shift": "S12",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 64,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "CHEKI",
+                        "code": "251223602",
+                        "type": "WFH",
+                        "shift": "S12",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 65,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "IVY",
+                        "code": "260203610",
+                        "type": "WFH",
+                        "shift": "S12",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 66,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "BB",
+                        "code": "260310601",
+                        "type": "WFH",
+                        "shift": "S12",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 67,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "LUCY1",
+                        "code": "260129603",
+                        "type": "WFH",
+                        "shift": "S12",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 68,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "CHEKI99",
+                        "code": "251223602",
+                        "type": "WFH",
+                        "shift": "S12",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 69,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "LEGO",
+                        "code": "250915601",
+                        "type": "Office",
+                        "shift": "S12",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 70,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "WHISKEY",
+                        "code": "250923601",
+                        "type": "Office",
+                        "shift": "S12",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 71,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "RAY",
+                        "code": "251125602",
+                        "type": "Office",
+                        "shift": "S12",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 72,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "JANE",
+                        "code": "251213605",
+                        "type": "Office",
+                        "shift": "S12",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 73,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "POSH",
+                        "code": "251210602",
+                        "type": "WFH",
+                        "shift": "S12",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 74,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "NYE",
+                        "code": "251225601",
+                        "type": "WFH",
+                        "shift": "S12",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 75,
+                        "team": "WIN2",
+                        "rank": "S2",
+                        "name": "NEKO",
+                        "code": "260228604",
+                        "type": "WFH",
+                        "shift": "S12",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 76,
+                        "team": "WIN3",
+                        "rank": "S2",
+                        "name": "MILLI",
+                        "code": "250305604",
+                        "type": "Office",
+                        "shift": "S21",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 77,
+                        "team": "WIN3",
+                        "rank": "S2",
+                        "name": "NAT",
+                        "code": "250305603",
+                        "type": "Office",
+                        "shift": "S21",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 78,
+                        "team": "WIN3",
+                        "rank": "S2",
+                        "name": "FENDI",
+                        "code": "250620601",
+                        "type": "Office",
+                        "shift": "S21",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 79,
+                        "team": "WIN3",
+                        "rank": "S2",
+                        "name": "FABIE",
+                        "code": "240423601",
+                        "type": "Office",
+                        "shift": "S21",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 80,
+                        "team": "WIN3",
+                        "rank": "S2",
+                        "name": "WIN",
+                        "code": "260104604",
+                        "type": "Office",
+                        "shift": "S21",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 81,
+                        "team": "WIN3",
+                        "rank": "S2",
+                        "name": "OSAMA",
+                        "code": "251214602",
+                        "type": "Office",
+                        "shift": "S21",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 82,
+                        "team": "WIN3",
+                        "rank": "S2",
+                        "name": "CHARLIE",
+                        "code": "260117604",
+                        "type": "Office",
+                        "shift": "S9",
+                        "offs": [],
+                        "leaves": []
+            },
+            {
+                        "id": 83,
+                        "team": "WIN3",
+                        "rank": "S2",
+                        "name": "ING",
+                        "code": "260324601",
+                        "type": "WFH",
+                        "shift": "S12",
+                        "offs": [],
+                        "leaves": []
+            }
+];
         const defaultShiftTimes = {
-            "S9":  { login: "09.30-18.30", rest: "14.00-15.00" },
-            "S12": { login: "12.30-21.30", rest: "17.00-18.00" },
-            "S21": { login: "21.00-05.00", rest: "21.00-05.00" }
-        };
+            "S9": {
+                        "login": "09.30-18.30",
+                        "rest": "14.00-15.00"
+            },
+            "S12": {
+                        "login": "12.30-21.30",
+                        "rest": "17.00-18.00"
+            },
+            "S21": {
+                        "login": "21.00-05.00",
+                        "rest": "21.00-05.00"
+            }
+};
 
         window.currentStaffList = JSON.parse(JSON.stringify(defaultStaff));
         window.shiftTimes = JSON.parse(JSON.stringify(defaultShiftTimes));
-
-        // ==========================================
-        // ระบบ Login ด้วยรหัสพนักงาน / Admin
-        // ==========================================
-        const ADMIN_CODE = atob("QlJJR0hUT04=");
-
         window.currentUser = JSON.parse(sessionStorage.getItem("schedule_current_user") || "null");
 
-        function normalizeCode(code) {
-            return String(code || "").trim().toUpperCase();
-        }
+        const cloudDocId = "company_schedule_v2_clean";
+        let db = null, auth = null, isCloudMode = false, isApplyingSnapshot = false;
 
-        function findEmployeeByCode(code) {
-            const target = normalizeCode(code);
-            return window.currentStaffList.find(p => normalizeCode(p.code) === target) || null;
+        function normalizeCode(code) { return String(code || "").trim().toUpperCase(); }
+        function ensureStaffShape(list) {
+            return (Array.isArray(list) ? list : []).map((p, idx) => ({
+                id: p.id || Date.now() + idx,
+                team: p.team || "WIN1",
+                rank: p.rank || "S2",
+                name: normalizeCode(p.name || ""),
+                code: String(p.code || ""),
+                type: p.type || "Office",
+                shift: p.shift || "S9",
+                offs: Array.isArray(p.offs) ? p.offs : [],
+                leaves: Array.isArray(p.leaves) ? p.leaves : []
+            }));
         }
-
-        function getAllowedTeam() {
-            return window.currentUser ? window.currentUser.team : null;
-        }
-
-        function canViewTeam(team) {
-            if (!window.currentUser) return false;
-            return window.currentUser.team === "ALL" || window.currentUser.team === team;
-        }
-
-        function canEditTeam(team) {
-            if (!window.currentUser) return false;
-            if (window.currentUser.team === "ALL") return true;
-            return window.currentUser.rank === "S4" && window.currentUser.team === team;
-        }
-
+        function findEmployeeByCode(code) { return window.currentStaffList.find(p => normalizeCode(p.code) === normalizeCode(code)) || null; }
+        function canViewTeam(team) { return !!window.currentUser && (window.currentUser.team === "ALL" || window.currentUser.team === team); }
+        function canEditTeam(team) { return !!window.currentUser && (window.currentUser.team === "ALL" || (window.currentUser.rank === "S4" && window.currentUser.team === team)); }
         function getUserEditTeams() {
             if (!window.currentUser) return [];
-            if (window.currentUser.team === "ALL") return ["WIN1", "WIN2", "WIN3"];
-            if (window.currentUser.rank === "S4") return [window.currentUser.team];
-            return [];
+            if (window.currentUser.team === "ALL") return ["WIN1","WIN2","WIN3"];
+            return window.currentUser.rank === "S4" ? [window.currentUser.team] : [];
+        }
+        function getRankLabel(rank) { return rank === "S4" ? "หัวหน้าทีม" : "พนักงาน"; }
+        function getRankOrder(rank) { return rank === "S4" ? 1 : 2; }
+
+        function setSyncStatus(mode, msg) {
+            const el = document.getElementById("sync-status");
+            const styles = {
+                loading: "bg-slate-800 text-slate-400 border-slate-700",
+                online: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+                local: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+                error: "bg-rose-500/10 text-rose-400 border-rose-500/20"
+            };
+            const dots = {
+                loading: "bg-slate-500",
+                online: "bg-emerald-400 animate-pulse",
+                local: "bg-amber-400",
+                error: "bg-rose-400"
+            };
+            el.innerHTML = `<span class="px-2 py-1 ${styles[mode] || styles.loading} border rounded-lg text-xs font-semibold flex items-center gap-1.5"><span class="w-2 h-2 rounded-full ${dots[mode] || dots.loading}"></span>${msg}</span>`;
+        }
+
+        function saveLocalBackup() {
+            localStorage.setItem("staff_v2_clean", JSON.stringify(window.currentStaffList));
+            localStorage.setItem("shift_v2_clean", JSON.stringify(window.shiftTimes));
+        }
+        function loadLocalBackup() {
+            const s1 = localStorage.getItem("staff_v2_clean");
+            const s2 = localStorage.getItem("shift_v2_clean");
+            if (s1) {
+                const parsed = ensureStaffShape(JSON.parse(s1));
+                if (parsed.length) window.currentStaffList = parsed;
+            }
+            if (s2) {
+                const parsedShift = JSON.parse(s2);
+                if (parsedShift && Object.keys(parsedShift).length) window.shiftTimes = parsedShift;
+            }
         }
 
         function refreshCurrentUserFromStaff() {
@@ -488,25 +1300,16 @@
             const newEmpTeam = document.getElementById("new-emp-team");
 
             if (!window.currentUser) {
-                if (modal) {
-                    modal.classList.remove("hidden");
-                    modal.classList.add("flex");
-                }
-                if (bar) bar.classList.add("hidden");
+                modal.classList.remove("hidden");
+                modal.classList.add("flex");
+                bar.classList.add("hidden");
                 return;
             }
 
-            if (modal) {
-                modal.classList.add("hidden");
-                modal.classList.remove("flex");
-            }
-            if (bar) bar.classList.remove("hidden");
-
-            if (textEl) {
-                textEl.innerText = window.currentUser.team === "ALL"
-                    ? `👤 ${window.currentUser.name} | FULL ACCESS`
-                    : `👤 ${window.currentUser.name} | ${window.currentUser.team} | ${window.currentUser.rank}`;
-            }
+            modal.classList.add("hidden");
+            modal.classList.remove("flex");
+            bar.classList.remove("hidden");
+            textEl.innerText = window.currentUser.team === "ALL" ? `👤 ${window.currentUser.name} | FULL ACCESS` : `👤 ${window.currentUser.name} | ${window.currentUser.team} | ${window.currentUser.rank}`;
 
             if (teamFilter) {
                 if (window.currentUser.team !== "ALL") {
@@ -516,7 +1319,6 @@
                     Array.from(teamFilter.options).forEach(opt => opt.disabled = false);
                 }
             }
-
             if (newEmpTeam) {
                 if (window.currentUser.team !== "ALL") {
                     newEmpTeam.value = window.currentUser.team;
@@ -528,657 +1330,425 @@
         }
 
         window.loginUser = function() {
-            const codeInput = document.getElementById("login-code");
+            const code = normalizeCode(document.getElementById("login-code").value);
             const error = document.getElementById("login-error");
-            const code = normalizeCode(codeInput ? codeInput.value : "");
-
             if (!code) {
-                if (error) {
-                    error.innerText = "กรุณากรอกรหัสเข้าสู่ระบบ";
-                    error.classList.remove("hidden");
-                }
+                error.innerText = "กรุณากรอกรหัสเข้าสู่ระบบ";
+                error.classList.remove("hidden");
                 return;
             }
-
             if (code === ADMIN_CODE) {
-                window.currentUser = {
-                    code: ADMIN_CODE,
-                    name: "ADMIN",
-                    role: "ADMIN",
-                    rank: "ADMIN",
-                    team: "ALL",
-                    editableTeams: ["WIN1", "WIN2", "WIN3"]
-                };
-                sessionStorage.setItem("schedule_current_user", JSON.stringify(window.currentUser));
-                if (error) error.classList.add("hidden");
-                refreshLoginUI();
-                updateDynamicUI();
-                showToast("เข้าสู่ระบบสำเร็จ");
-                return;
-            }
-
-            const emp = findEmployeeByCode(code);
-            if (!emp) {
-                if (error) {
+                window.currentUser = { code: ADMIN_CODE, name: "ADMIN", role: "ADMIN", rank: "ADMIN", team: "ALL", editableTeams: ["WIN1","WIN2","WIN3"] };
+            } else {
+                const emp = findEmployeeByCode(code);
+                if (!emp) {
                     error.innerText = "รหัสไม่ถูกต้อง";
                     error.classList.remove("hidden");
+                    return;
                 }
-                return;
+                const rank = emp.rank || "S2";
+                window.currentUser = { code: emp.code, name: emp.name, role: rank === "S4" ? "LEADER" : "STAFF", rank, team: emp.team, editableTeams: rank === "S4" ? [emp.team] : [] };
             }
-
-            const rank = emp.rank || "S2";
-            window.currentUser = {
-                code: emp.code,
-                name: emp.name,
-                role: rank === "S4" ? "LEADER" : "STAFF",
-                rank,
-                team: emp.team,
-                editableTeams: rank === "S4" ? [emp.team] : []
-            };
-
             sessionStorage.setItem("schedule_current_user", JSON.stringify(window.currentUser));
-            if (error) error.classList.add("hidden");
-            refreshLoginUI();
+            error.classList.add("hidden");
             updateDynamicUI();
-            showToast(`เข้าสู่ระบบสำเร็จ: ${emp.name}`);
+            showToast("เข้าสู่ระบบสำเร็จ");
         };
-
         window.logoutUser = function() {
             sessionStorage.removeItem("schedule_current_user");
             window.currentUser = null;
-            refreshLoginUI();
             updateDynamicUI();
         };
 
-        window.reloadFromCloud = function() {
-            location.reload();
-        };
-
-        document.addEventListener("keydown", function(e) {
-            const modal = document.getElementById("login-modal");
-            if (e.key === "Enter" && modal && !modal.classList.contains("hidden")) {
-                window.loginUser();
-            }
-        });
-
-
-        // Global Window Methods
-        window.autoSort = autoSort; window.exportData = exportData; window.resetToDefault = resetToDefault; window.reloadFromCloud = window.reloadFromCloud || (() => location.reload());
-        window.applyFilters = applyFilters; window.closeExportModal = closeExportModal; window.copyExportText = copyExportText;
-        window.changeShift = changeShift; window.editName = editName; window.toggleDayOff = toggleDayOff; window.deleteSelectedEmployee = deleteSelectedEmployee;
-        window.openAddEmployeeModal = () => {
-            if (!window.currentUser) return alert("กรุณาเข้าสู่ระบบก่อน");
-            if (getUserEditTeams().length === 0) return alert("บัญชีนี้ไม่มีสิทธิ์เพิ่ม/ลบข้อมูล");
-            updateShiftSelects();
-            if (typeof updateDeleteEmployeeSelect === "function") updateDeleteEmployeeSelect();
-            refreshLoginUI();
-            document.getElementById('add-employee-modal').classList.remove('hidden');
-        };
-        window.closeAddEmployeeModal = () => document.getElementById('add-employee-modal').classList.add('hidden');
-        window.openAddShiftModal = () => document.getElementById('add-shift-modal').classList.remove('hidden');
-        window.closeAddShiftModal = () => document.getElementById('add-shift-modal').classList.add('hidden');
-
-        window.saveNewEmployee = () => {
-            const name = document.getElementById('new-emp-name').value.trim().toUpperCase();
-            const code = document.getElementById('new-emp-code').value.trim();
-            let team = document.getElementById('new-emp-team').value;
-            if (window.currentUser && window.currentUser.team !== "ALL") team = window.currentUser.team;
-            if (!canEditTeam(team)) return alert("คุณไม่มีสิทธิ์เพิ่มพนักงานในทีมนี้ หรือบัญชีของคุณเป็น S2 ดูได้อย่างเดียว");
-            const shift = document.getElementById('new-emp-shift').value;
-            const type = document.getElementById('new-emp-type').value;
-            const rank = document.getElementById('new-emp-rank')?.value || "S2";
-            if(!name || !code) return alert("กรุณากรอกชื่อและรหัสพนักงาน");
-            window.currentStaffList.push({ id: new Date().getTime(), team, name, code, type, shift, rank, offs: [], leaves: [] });
-            document.getElementById('new-emp-name').value = '';
-            document.getElementById('new-emp-code').value = '';
-            commitData(); updateEmployeeDeleteSelect(); showToast("เพิ่มพนักงานสำเร็จ!");
-        };
-
-        window.saveNewShift = () => {
-            const code = document.getElementById('new-shift-code').value.trim().toUpperCase();
-            const login = document.getElementById('new-shift-login').value.trim();
-            const rest = document.getElementById('new-shift-rest').value.trim();
-            if(!code || !login) return alert("กรุณากรอกรหัสกะและเวลาเข้างาน");
-            window.shiftTimes[code] = { login, rest };
-            commitData(); closeAddShiftModal(); showToast("เพิ่มกะสำเร็จ!");
-        };
-
-
-        function setSyncStatus(mode, msg) {
-            const el = document.getElementById("sync-status");
-            if (!el) return;
-
-            const styles = {
-                loading: "bg-slate-800 text-slate-400 border-slate-700",
-                online: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-                local: "bg-amber-500/10 text-amber-400 border-amber-500/20",
-                error: "bg-rose-500/10 text-rose-400 border-rose-500/20"
-            };
-
-            const dots = {
-                loading: "bg-slate-500",
-                online: "bg-emerald-400 animate-pulse",
-                local: "bg-amber-400",
-                error: "bg-rose-400"
-            };
-
-            el.innerHTML = `<span class="px-2 py-1 ${styles[mode] || styles.loading} border rounded-lg text-xs font-semibold flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full ${dots[mode] || dots.loading}"></span>${msg}
-            </span>`;
-        }
-
-        function saveLocalBackup() {
-            localStorage.setItem("staff_v6", JSON.stringify(window.currentStaffList || []));
-            localStorage.setItem("shift_v6", JSON.stringify(window.shiftTimes || {}));
-            localStorage.setItem("schedule_backup_time", new Date().toISOString());
-        }
-
-        function loadLocalBackupOnly() {
-            const s1 = localStorage.getItem("staff_v6");
-            const s2 = localStorage.getItem("shift_v6");
-            if (s1) {
-                const parsedStaff = JSON.parse(s1);
-                if (Array.isArray(parsedStaff) && parsedStaff.length > 0) {
-                    window.currentStaffList = parsedStaff.map(p => ({ rank: "S2", ...p }));
-                }
-            }
-            if (s2) {
-                const parsedShift = JSON.parse(s2);
-                if (parsedShift && Object.keys(parsedShift).length > 0) window.shiftTimes = parsedShift;
-            }
-        }
-
-        // ==========================================
-        // ระบบซิงค์ข้อมูลคลาวด์ผ่าน Firebase
-        // ==========================================
-        const isFirebaseConfigured = true;
-        const cloudDocId = 'company_schedule_v1';
-        let db = null;
-        let auth = null;
-        let isCloudMode = false;
-        let cloudReady = false;
-        let isApplyingSnapshot = false;
-
-        try {
-            const app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            db = getFirestore(app);
-            isCloudMode = true;
-            setSyncStatus("loading", "กำลังเชื่อมต่อคลาวด์...");
-        } catch (err) {
-            console.error("Firebase Init Error:", err);
-            isCloudMode = false;
-            setSyncStatus("error", "เชื่อมต่อ Firebase ไม่ได้");
-        }
-
         async function startCloudSync() {
-            if (!isCloudMode) {
-                loadLocalData();
-                return;
-            }
-
             try {
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                isCloudMode = true;
+                setSyncStatus("loading", "กำลังเชื่อมต่อคลาวด์...");
                 await signInAnonymously(auth);
-            } catch (error) {
-                console.error("Firebase Auth Error:", error);
-                setSyncStatus("local", "ออฟไลน์: บันทึกในเครื่อง");
-                loadLocalData();
-                return;
-            }
-
-            const ref = doc(db, 'schedule_db', cloudDocId);
-
-            try {
+                const ref = doc(db, "schedule_db", cloudDocId);
                 const snap = await getDoc(ref);
-
                 if (snap.exists()) {
                     const data = snap.data();
-                    if (Array.isArray(data.staffList) && data.staffList.length > 0) {
-                        window.currentStaffList = data.staffList.map(p => ({ rank: "S2", ...p }));
-                    }
-                    if (data.shiftTimes && Object.keys(data.shiftTimes).length > 0) {
-                        window.shiftTimes = data.shiftTimes;
-                    }
-                    saveLocalBackup();
+                    if (Array.isArray(data.staffList) && data.staffList.length) window.currentStaffList = ensureStaffShape(data.staffList);
+                    if (data.shiftTimes && Object.keys(data.shiftTimes).length) window.shiftTimes = data.shiftTimes;
                 } else {
-                    // สร้างเอกสารครั้งแรกเท่านั้น ห้ามรีเซ็ตทับถ้ามีข้อมูล cloud อยู่แล้ว
-                    await setDoc(ref, {
-                        staffList: window.currentStaffList,
-                        shiftTimes: window.shiftTimes,
-                        updatedAt: serverTimestamp()
-                    }, { merge: true });
-                    saveLocalBackup();
+                    await setDoc(ref, { staffList: window.currentStaffList, shiftTimes: window.shiftTimes, updatedAt: serverTimestamp() }, { merge: true });
                 }
-
-                cloudReady = true;
+                saveLocalBackup();
                 setSyncStatus("online", "ออนไลน์: ซิงค์ออโต้");
                 updateDynamicUI();
 
                 onSnapshot(ref, (docSnap) => {
                     if (!docSnap.exists()) return;
-
                     const data = docSnap.data();
                     isApplyingSnapshot = true;
-
-                    if (Array.isArray(data.staffList) && data.staffList.length > 0) {
-                        window.currentStaffList = data.staffList.map(p => ({ rank: "S2", ...p }));
-                    }
-                    if (data.shiftTimes && Object.keys(data.shiftTimes).length > 0) {
-                        window.shiftTimes = data.shiftTimes;
-                    }
-
+                    if (Array.isArray(data.staffList) && data.staffList.length) window.currentStaffList = ensureStaffShape(data.staffList);
+                    if (data.shiftTimes && Object.keys(data.shiftTimes).length) window.shiftTimes = data.shiftTimes;
                     saveLocalBackup();
                     updateDynamicUI();
                     setSyncStatus("online", "ออนไลน์: ซิงค์ล่าสุดแล้ว");
-
-                    setTimeout(() => {
-                        isApplyingSnapshot = false;
-                    }, 100);
+                    setTimeout(() => isApplyingSnapshot = false, 100);
                 }, (error) => {
-                    console.error("Firestore Listen Error:", error);
+                    console.error(error);
                     setSyncStatus("error", "ซิงค์ผิดพลาด: ใช้ข้อมูลสำรอง");
-                    loadLocalBackupOnly();
+                    loadLocalBackup();
                     updateDynamicUI();
                 });
-
-            } catch (error) {
-                console.error("Firestore Load Error:", error);
-                setSyncStatus("local", "โหลดคลาวด์ไม่ได้: ใช้ข้อมูลในเครื่อง");
-                loadLocalData();
-            }
-        }
-
-        startCloudSync();
-
-        function loadLocalData() {
-            try {
-                loadLocalBackupOnly();
             } catch (e) {
-                console.error("Local load error:", e);
+                console.error(e);
+                setSyncStatus("local", "โหลดคลาวด์ไม่ได้: ใช้ข้อมูลในเครื่อง");
+                loadLocalBackup();
+                updateDynamicUI();
             }
-            setSyncStatus("local", "ออฟไลน์: บันทึกในเครื่อง");
-            updateDynamicUI();
         }
 
         async function commitData() {
             saveLocalBackup();
-
-            if (isApplyingSnapshot) {
-                updateDynamicUI();
-                return;
-            }
-
-            if (isCloudMode && auth && auth.currentUser && db) {
+            if (!isApplyingSnapshot && isCloudMode && auth?.currentUser && db) {
                 try {
                     setSyncStatus("loading", "กำลังบันทึก...");
-                    await setDoc(doc(db, 'schedule_db', cloudDocId), {
-                        staffList: window.currentStaffList,
-                        shiftTimes: window.shiftTimes,
-                        updatedAt: serverTimestamp()
-                    }, { merge: true });
-                    cloudReady = true;
+                    await setDoc(doc(db, "schedule_db", cloudDocId), { staffList: window.currentStaffList, shiftTimes: window.shiftTimes, updatedAt: serverTimestamp() }, { merge: true });
                     setSyncStatus("online", "บันทึกและซิงค์แล้ว");
                 } catch (e) {
-                    console.error("Error writing document:", e);
+                    console.error(e);
                     setSyncStatus("error", "บันทึก Cloud ไม่สำเร็จ: เก็บในเครื่องแล้ว");
-                    alert("บันทึกลง Cloud ไม่สำเร็จ แต่ระบบเก็บสำรองในเครื่องนี้แล้ว\\n\\nให้ตรวจสอบ Firebase Rules / อินเทอร์เน็ต / โดเมนที่อนุญาต");
                 }
             } else {
                 setSyncStatus("local", "บันทึกในเครื่อง");
             }
-
             updateDynamicUI();
         }
 
-        function updateShiftSelects() {
-            const filterShift = document.getElementById("filter-shift"); const modalShift = document.getElementById("new-emp-shift");
-            const currentFilterVal = filterShift.value;
-            filterShift.innerHTML = '<option value="ALL">แสดงทุกกะ</option>'; modalShift.innerHTML = '';
-            Object.keys(window.shiftTimes).forEach(shift => {
-                filterShift.innerHTML += `<option value="${shift}">เฉพาะกะ ${shift}</option>`;
-                modalShift.innerHTML += `<option value="${shift}">${shift}</option>`;
+        function sortedStaff(list) {
+            const sk = Object.keys(window.shiftTimes);
+            return [...list].sort((a,b) => {
+                if (a.team !== b.team) return a.team.localeCompare(b.team);
+                const ra = getRankOrder(a.rank), rb = getRankOrder(b.rank);
+                if (ra !== rb) return ra - rb;
+                const sa = sk.indexOf(a.shift) >= 0 ? sk.indexOf(a.shift) : 99;
+                const sb = sk.indexOf(b.shift) >= 0 ? sk.indexOf(b.shift) : 99;
+                if (sa !== sb) return sa - sb;
+                return a.name.localeCompare(b.name);
             });
-            if (Object.keys(window.shiftTimes).includes(currentFilterVal)) filterShift.value = currentFilterVal;
-        }
-        function updateEmployeeDeleteSelect() {
-            const sel = document.getElementById("delete-emp-select");
-            if (!sel) return;
-            sel.innerHTML = '';
-            if (!window.currentStaffList || window.currentStaffList.length === 0) {
-                sel.innerHTML = '<option value="">ไม่มีพนักงานในระบบ</option>';
-                return;
-            }
-            window.currentStaffList
-                .slice()
-                .sort((a, b) => `${a.team}-${a.name}`.localeCompare(`${b.team}-${b.name}`))
-                .forEach(p => {
-                    sel.innerHTML += `<option value="${p.id}">${p.team} | ${p.name} | ${p.code}</option>`;
-                });
         }
 
-        function deleteSelectedEmployee() {
-            const sel = document.getElementById("delete-emp-select");
-            if (!sel || !sel.value) return alert("กรุณาเลือกพนักงานที่ต้องการลบ");
-            const empId = Number(sel.value);
-            const emp = window.currentStaffList.find(p => Number(p.id) === empId);
-            if (!emp) return alert("ไม่พบข้อมูลพนักงานที่เลือก");
-            if (!confirm(`ยืนยันลบพนักงาน ${emp.name} (${emp.code}) ออกจากระบบ?`)) return;
-            window.currentStaffList = window.currentStaffList.filter(p => Number(p.id) !== empId);
-            commitData();
-            updateEmployeeDeleteSelect();
-            showToast("ลบพนักงานสำเร็จ!");
+        function updateShiftSelects() {
+            const filterShift = document.getElementById("filter-shift");
+            const modalShift = document.getElementById("new-emp-shift");
+            const current = filterShift.value;
+            filterShift.innerHTML = '<option value="ALL">แสดงทุกกะ</option>';
+            modalShift.innerHTML = "";
+            Object.keys(window.shiftTimes).forEach(s => {
+                filterShift.innerHTML += `<option value="${s}">เฉพาะกะ ${s}</option>`;
+                modalShift.innerHTML += `<option value="${s}">${s}</option>`;
+            });
+            if (window.shiftTimes[current]) filterShift.value = current;
         }
-
-
 
         function updateDeleteEmployeeSelect() {
             const sel = document.getElementById("delete-emp-id");
-            if (!sel) return;
-            const allowedTeam = getAllowedTeam();
+            const teams = getUserEditTeams();
             sel.innerHTML = "";
-
-            const list = window.currentStaffList
-                .filter(p => allowedTeam === "ALL" || p.team === allowedTeam)
-                .sort((a,b) => {
-                    if(a.team !== b.team) return a.team.localeCompare(b.team);
-                    const ra = getRankOrder(a.rank || "S2");
-                    const rb = getRankOrder(b.rank || "S2");
-                    if(ra !== rb) return ra - rb;
-                    return a.name.localeCompare(b.name);
-                });
-
-            if (list.length === 0) {
-                sel.innerHTML = `<option value="">ไม่มีพนักงานให้ลบ</option>`;
+            const list = sortedStaff(window.currentStaffList.filter(p => teams.includes(p.team)));
+            if (!list.length) {
+                sel.innerHTML = `<option value="">ไม่มีสิทธิ์ลบพนักงาน</option>`;
                 return;
             }
-
-            list.forEach(p => {
-                sel.innerHTML += `<option value="${p.id}">${p.team} | ${p.rank || "S2"} ${getRankLabel(p.rank || "S2")} | ${p.name} (${p.code})</option>`;
-            });
+            list.forEach(p => sel.innerHTML += `<option value="${p.id}">${p.team} | ${p.rank} ${getRankLabel(p.rank)} | ${p.name} (${p.code})</option>`);
         }
-
-        window.deleteEmployee = function() {
-            const id = Number(document.getElementById("delete-emp-id")?.value);
-            if (!id) return alert("กรุณาเลือกพนักงานที่ต้องการลบ");
-
-            const idx = window.currentStaffList.findIndex(p => p.id === id);
-            if (idx === -1) return alert("ไม่พบข้อมูลพนักงาน");
-
-            const p = window.currentStaffList[idx];
-            if (!canEditTeam(p.team)) return alert("คุณไม่มีสิทธิ์ลบพนักงานทีมนี้ หรือบัญชีของคุณเป็น S2 ดูได้อย่างเดียว");
-
-            if (!confirm(`ยืนยันลบพนักงาน ${p.name} (${p.team}) ออกจากระบบ?`)) return;
-
-            window.currentStaffList.splice(idx, 1);
-            commitData();
-            showToast("ลบพนักงานเรียบร้อย");
-        };
 
         function updateDynamicUI() {
             updateShiftSelects();
             refreshCurrentUserFromStaff();
-            if (typeof updateDeleteEmployeeSelect === "function") updateDeleteEmployeeSelect();
+            updateDeleteEmployeeSelect();
             refreshLoginUI();
             renderTable();
             updateStats();
         }
 
-
-        function getRankLabel(rank) {
-            return rank === "S4" ? "หัวหน้าทีม" : "พนักงาน";
-        }
-
-        function getRankOrder(rank) {
-            return rank === "S4" ? 1 : 2;
-        }
-
-        function getRankBadge(rank) {
-            if (rank === "S4") {
-                return `<span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/30">S4</span>`;
-            }
-            return `<span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/30">S2</span>`;
-        }
-
         function renderTable() {
             const tbody = document.getElementById("staff-table-body");
-            const fTeam = document.getElementById("filter-team").value; const fShift = document.getElementById("filter-shift").value; const sName = document.getElementById("search-name").value.toLowerCase().trim();
-            tbody.innerHTML = ""; let count = 0; let filtered = [];
-            let lastGroupKey = "";
+            const fTeam = document.getElementById("filter-team").value;
+            const fShift = document.getElementById("filter-shift").value;
+            const q = document.getElementById("search-name").value.toLowerCase().trim();
+            tbody.innerHTML = "";
+            let count = 0, filtered = [], lastGroup = "";
+            const list = sortedStaff(window.currentStaffList);
 
-            const sortedStaffForRender = [...window.currentStaffList].sort((a,b) => {
-                if(a.team !== b.team) return a.team.localeCompare(b.team);
-                const ra = getRankOrder(a.rank || "S2");
-                const rb = getRankOrder(b.rank || "S2");
-                if(ra !== rb) return ra - rb;
-                const sk = Object.keys(window.shiftTimes);
-                const sa = sk.indexOf(a.shift)!==-1 ? sk.indexOf(a.shift) : 99;
-                const sb = sk.indexOf(b.shift)!==-1 ? sk.indexOf(b.shift) : 99;
-                if(sa !== sb) return sa - sb;
-                return a.name.localeCompare(b.name);
-            });
-
-            sortedStaffForRender.forEach((p, i) => {
-                const allowedTeam = getAllowedTeam();
-                if (!allowedTeam) return;
-                if (!canViewTeam(p.team)) return;
+            list.forEach((p) => {
+                if (!window.currentUser || !canViewTeam(p.team)) return;
                 if (fTeam !== "ALL" && p.team !== fTeam) return;
                 if (fShift !== "ALL" && p.shift !== fShift) return;
-                if (sName !== "" && !p.name.toLowerCase().includes(sName) && !p.code.includes(sName)) return;
-                count++; filtered.push(p);
+                if (q && !p.name.toLowerCase().includes(q) && !String(p.code).includes(q)) return;
 
-                const groupKey = `${p.team}-${p.rank || "S2"}`;
-                if (groupKey !== lastGroupKey) {
-                    const groupRow = document.createElement("tr");
-                    const groupColor = (p.rank || "S2") === "S4" ? "bg-purple-950/30 text-purple-300 border-purple-500/20" : "bg-blue-950/20 text-blue-300 border-blue-500/20";
-                    groupRow.className = `border-y ${groupColor}`;
-                    groupRow.innerHTML = `<td colspan="41" class="py-2 px-4 text-xs font-bold tracking-wide">
-                        ${p.team} | ${(p.rank || "S2")} ${getRankLabel(p.rank || "S2")}
-                    </td>`;
-                    tbody.appendChild(groupRow);
-                    lastGroupKey = groupKey;
+                const groupKey = `${p.team}-${p.rank}`;
+                if (groupKey !== lastGroup) {
+                    const gr = document.createElement("tr");
+                    const cls = p.rank === "S4" ? "bg-purple-950/30 text-purple-300 border-purple-500/20" : "bg-blue-950/20 text-blue-300 border-blue-500/20";
+                    gr.className = `border-y ${cls}`;
+                    gr.innerHTML = `<td colspan="42" class="py-2 px-4 text-xs font-bold tracking-wide">${p.team} | ${p.rank} ${getRankLabel(p.rank)}</td>`;
+                    tbody.appendChild(gr);
+                    lastGroup = groupKey;
                 }
 
-                const times = window.shiftTimes[p.shift] || { login: "", rest: "" };
-                const tOffs = p.offs ? p.offs.length : 0; const tLeaves = p.leaves ? p.leaves.length : 0;
-                const rank = p.rank || "S2";
-                let tCol = p.team === "WIN2" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : p.team === "WIN3" ? "bg-indigo-500/10 text-indigo-400 border-indigo-500/20" : "bg-rose-500/10 text-rose-400 border-rose-500/20";
-                let typeCol = p.type === "WFH" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-indigo-500/10 text-indigo-400 border-indigo-500/20";
-                let dCol = p.shift === "S9" ? "text-emerald-400 bg-emerald-950/40" : p.shift === "S12" ? "text-amber-400 bg-amber-950/40" : p.shift === "S21" ? "text-indigo-400 bg-indigo-950/40" : "text-fuchsia-400 bg-fuchsia-950/40";
+                count++;
+                filtered.push(p);
+                const i = count;
                 const editable = canEditTeam(p.team);
-                let sOpts = Object.keys(window.shiftTimes).map(s => `<option value="${s}" ${p.shift === s ? 'selected' : ''}>${s}</option>`).join('');
-                const disabledAttr = editable ? "" : "disabled";
-                const nameDblClick = editable ? `ondblclick="editName(${p.id}, this)"` : "";
+                const times = window.shiftTimes[p.shift] || { login: "", rest: "" };
+                const tOffs = p.offs.length, tLeaves = p.leaves.length;
+                const tCol = p.team === "WIN2" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : p.team === "WIN3" ? "bg-indigo-500/10 text-indigo-400 border-indigo-500/20" : "bg-rose-500/10 text-rose-400 border-rose-500/20";
+                const typeCol = p.type === "WFH" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-indigo-500/10 text-indigo-400 border-indigo-500/20";
+                const shiftCol = p.shift === "S9" ? "text-emerald-400 bg-emerald-950/40" : p.shift === "S12" ? "text-amber-400 bg-amber-950/40" : p.shift === "S21" ? "text-indigo-400 bg-indigo-950/40" : "text-fuchsia-400 bg-fuchsia-950/40";
+                const disabled = editable ? "" : "disabled";
+                const sOpts = Object.keys(window.shiftTimes).map(s => `<option value="${s}" ${p.shift === s ? "selected" : ""}>${s}</option>`).join("");
 
-                let html = `<td class="py-2 px-2 text-center text-slate-500 sticky left-0 bg-slate-900/90 border-r border-slate-800 z-10">${i + 1}</td>
+                let html = `<td class="py-2 px-2 text-center text-slate-500 sticky left-0 bg-slate-900/90 border-r border-slate-800 z-10 sticky-left">${i}</td>
                     <td class="py-2 px-1 text-center"><span class="px-2 py-0.5 text-[10px] font-bold border rounded ${tCol}">${p.team}</span></td>
                     <td class="py-2 px-1 text-center">
-                        <select ${disabledAttr} onchange="changeRank(${p.id}, this.value)" class="bg-slate-950 border border-slate-700 rounded px-1 py-0.5 text-[10px] outline-none ${rank === 'S4' ? 'text-purple-400' : 'text-blue-400'} disabled:opacity-50 disabled:cursor-not-allowed">
-                            <option value="S2" ${rank === "S2" ? "selected" : ""}>S2</option>
-                            <option value="S4" ${rank === "S4" ? "selected" : ""}>S4</option>
+                        <select ${disabled} onchange="changeRank(${p.id}, this.value)" class="bg-slate-950 border border-slate-700 rounded px-1 py-0.5 text-[10px] outline-none ${p.rank === "S4" ? "text-purple-400" : "text-blue-400"} disabled:opacity-50 disabled:cursor-not-allowed">
+                            <option value="S2" ${p.rank === "S2" ? "selected" : ""}>S2</option>
+                            <option value="S4" ${p.rank === "S4" ? "selected" : ""}>S4</option>
                         </select>
                     </td>
-                    <td class="py-2 px-3 text-slate-200"><span class="${editable ? 'cursor-edit hover:text-indigo-400' : 'text-slate-400'}" ${nameDblClick}>${p.name}</span></td>
+                    <td class="py-2 px-3 text-slate-200"><span class="${editable ? "cursor-edit hover:text-indigo-400" : "text-slate-300"}" ${editable ? `ondblclick="editName(${p.id}, this)"` : ""}>${p.name}</span></td>
                     <td class="py-2 px-3 text-slate-400 text-xs font-mono">${p.code}</td>
                     <td class="py-2 px-2 text-center"><span class="px-2 py-0.5 text-[10px] rounded-full ${typeCol}">${p.type}</span></td>
-                    <td class="py-2 px-1 text-center"><select ${disabledAttr} onchange="changeShift(${p.id}, this.value)" class="border px-2 py-0.5 rounded text-xs outline-none ${dCol} border-slate-700 disabled:opacity-40 disabled:cursor-not-allowed">${sOpts}</select></td>
-                    <td class="py-2 px-2 text-center text-xs text-slate-300 font-mono">${times.login}</td><td class="py-2 px-2 text-center text-xs text-slate-400 font-mono">${times.rest}</td>
+                    <td class="py-2 px-1 text-center"><select ${disabled} onchange="changeShift(${p.id}, this.value)" class="border px-2 py-0.5 rounded text-xs outline-none ${shiftCol} border-slate-700 disabled:opacity-50 disabled:cursor-not-allowed">${sOpts}</select></td>
+                    <td class="py-2 px-2 text-center text-xs text-slate-300 font-mono">${times.login}</td>
+                    <td class="py-2 px-2 text-center text-xs text-slate-400 font-mono">${times.rest}</td>
                     <td class="py-2 px-2 text-center font-bold text-xs text-blue-400 bg-blue-950/5 border-x border-slate-800">${tOffs}</td>
                     <td class="py-2 px-2 text-center font-bold text-xs text-amber-500 bg-amber-950/5 border-r border-slate-800">${tLeaves}</td>`;
 
-                for (let d = 1; d <= 31; d++) {
-                    const isO = p.offs && p.offs.includes(d); const isL = p.leaves && p.leaves.includes(d);
-                    const isW = (["ส", "อา"].includes(["จ", "อ", "พ", "พฤ", "ศ", "ส", "อา"][(d-1) % 7]));
-                    let bg = isW ? "bg-indigo-950/10" : "bg-slate-900/10"; let txt = "";
-                    if (isO) { bg = "bg-blue-600 text-white font-bold"; txt = "O"; } else if (isL) { bg = "bg-amber-500 text-white font-bold"; txt = "L"; }
-                    html += `<td ${editable ? `onclick="toggleDayOff(${p.id}, ${d})"` : ""} data-day="${d}" data-name="${p.name}" data-team="${p.team}" class="day-cell text-center ${editable ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'} p-0.5 border-l border-slate-800/40 text-[11px] ${bg}"><div class="w-7 h-7 flex items-center justify-center mx-auto rounded-md">${txt}</div></td>`;
+                for (let d=1; d<=31; d++) {
+                    const isO = p.offs.includes(d);
+                    const isL = p.leaves.includes(d);
+                    const isW = ["ส","อา"].includes(daysOfWeek[(d-1)%7]);
+                    let bg = isW ? "bg-indigo-950/10" : "bg-slate-900/10";
+                    let txt = "•", color = "text-blue-400";
+                    if (isO) { bg = "bg-rose-950/30"; txt = "O"; color = "text-red-400 font-bold"; }
+                    else if (isL) { bg = "bg-purple-950/30"; txt = "L"; color = "text-purple-400 font-bold"; }
+                    html += `<td onclick="toggleDayOff(${p.id}, ${d})" data-day="${d}" data-name="${p.name}" data-team="${p.team}" class="day-cell text-center ${editable ? "cursor-pointer" : "cursor-not-allowed opacity-70"} p-0.5 border-l border-slate-800/40 text-[11px] ${bg}"><div class="w-7 h-7 flex items-center justify-center mx-auto rounded-md ${color}">${txt}</div></td>`;
                 }
-                const tr = document.createElement("tr"); tr.className = "border-b border-slate-800"; tr.innerHTML = html; tbody.appendChild(tr);
+                const tr = document.createElement("tr");
+                tr.className = "data-row border-b border-slate-800";
+                tr.innerHTML = html;
+                tbody.appendChild(tr);
             });
-            renderDailySummary(filtered); document.getElementById("empty-state").classList.toggle("hidden", count > 0);
+
+            renderDailySummary(filtered);
+            document.getElementById("empty-state").classList.toggle("hidden", count > 0);
         }
 
         function renderDailySummary(filtered) {
-            const tfoot = document.getElementById("table-summary-footer"); tfoot.innerHTML = "";
-            if (filtered.length === 0) return;
-            const ds = {}; Object.keys(window.shiftTimes).forEach(s => ds[s] = Array(32).fill(0));
-            const doff = Array(32).fill(0); const dl = Array(32).fill(0);
+            const tfoot = document.getElementById("table-summary-footer");
+            tfoot.innerHTML = "";
+            if (!filtered.length) return;
+            const ds = {};
+            Object.keys(window.shiftTimes).forEach(s => ds[s] = Array(32).fill(0));
+            const doff = Array(32).fill(0), dl = Array(32).fill(0);
+
             filtered.forEach(p => {
-                for (let d = 1; d <= 31; d++) {
-                    if (p.offs && p.offs.includes(d)) doff[d]++; else if (p.leaves && p.leaves.includes(d)) dl[d]++; else if (ds[p.shift]) ds[p.shift][d]++;
+                for (let d=1; d<=31; d++) {
+                    if (p.offs.includes(d)) doff[d]++;
+                    else if (p.leaves.includes(d)) dl[d]++;
+                    else if (ds[p.shift]) ds[p.shift][d]++;
                 }
             });
-            const cr = (lbl, cnts, col, bg) => {
-                let h = `<tr class="${bg} text-slate-300 border-b border-slate-900"><td colspan="9" class="py-2 px-3 text-right font-bold text-[10px] sticky left-0 ${bg} z-10 border-r border-slate-800">${lbl}</td><td colspan="2" class="border-r border-slate-800 bg-slate-950"></td>`;
-                for (let d=1; d<=31; d++) h += `<td class="text-center font-bold text-[11px] p-1 border-l border-slate-800/60 ${col}">${cnts[d]||'-'}</td>`; return h + `</tr>`;
+
+            const row = (label, arr, color, bg) => {
+                let h = `<tr class="${bg} text-slate-300"><td colspan="9" class="py-2 px-3 text-right font-bold text-[10px] sticky left-0 ${bg} z-10 border-r border-slate-800">${label}</td><td colspan="2" class="border-r border-slate-800 bg-slate-950"></td>`;
+                for (let d=1; d<=31; d++) h += `<td class="text-center font-bold text-[11px] p-1 border-l border-slate-800/60 ${color}">${arr[d] || "-"}</td>`;
+                return h + "</tr>";
             };
-            const c = ["text-emerald-400", "text-amber-400", "text-indigo-400", "text-pink-400", "text-cyan-400"]; let i = 0;
-            Object.keys(window.shiftTimes).forEach(s => { tfoot.innerHTML += cr(`รวมกะ ${s}`, ds[s], c[i%c.length], "bg-slate-900/60"); i++; });
-            tfoot.innerHTML += cr("รวมหยุด (O)", doff, "text-blue-400", "bg-blue-950/20"); tfoot.innerHTML += cr("รวมลา (L)", dl, "text-orange-400", "bg-amber-950/20");
+            const colors = ["text-emerald-400","text-amber-400","text-indigo-400","text-pink-400","text-cyan-400"];
+            let i = 0;
+            Object.keys(window.shiftTimes).forEach(s => tfoot.innerHTML += row(`รวมกะ ${s}`, ds[s], colors[i++ % colors.length], "bg-slate-900/60"));
+            tfoot.innerHTML += row("รวมหยุด (O)", doff, "text-red-400", "bg-rose-950/20");
+            tfoot.innerHTML += row("รวมลา (L)", dl, "text-purple-400", "bg-purple-950/20");
         }
 
         function updateStats() {
-            const allowedTeam = getAllowedTeam();
-            const statList = window.currentStaffList.filter(p => window.currentUser && (window.currentUser.team === "ALL" || p.team === window.currentUser.team));
-            document.getElementById("stat-total").innerText = `${statList.length} คน`;
-            document.getElementById("stat-sub-types").innerText = `Office: ${statList.filter(p=>p.type==="Office").length} | WFH: ${statList.filter(p=>p.type==="WFH").length}`;
-            const cont = document.getElementById("dashboard-widgets"); while(cont.children.length > 1) cont.removeChild(cont.lastChild);
-            const c = ["emerald", "amber", "indigo", "pink", "cyan"]; let i = 0;
-            Object.keys(window.shiftTimes).slice(0, 3).forEach(s => {
-                const w = document.createElement('div'); w.className = "bg-slate-900 border border-slate-800 p-5 rounded-2xl flex items-center justify-between shadow-md";
-                w.innerHTML = `<div><p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">กะ ${s}</p><h3 class="text-2xl font-bold text-${c[i%c.length]}-400 mt-1">${statList.filter(p=>p.shift===s).length} คน</h3><p class="text-[11px] text-slate-500 mt-1">เข้า ${window.shiftTimes[s].login}</p></div><div class="w-12 h-12 rounded-xl bg-${c[i%c.length]}-500/10 border border-${c[i%c.length]}-500/20 flex items-center justify-center text-${c[i%c.length]}-400"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>`;
-                cont.appendChild(w); i++;
+            const list = window.currentStaffList.filter(p => window.currentUser && canViewTeam(p.team));
+            document.getElementById("stat-total").innerText = `${list.length} คน`;
+            document.getElementById("stat-sub-types").innerText = `Office: ${list.filter(p=>p.type==="Office").length} | WFH: ${list.filter(p=>p.type==="WFH").length}`;
+            const cont = document.getElementById("dashboard-widgets");
+            while (cont.children.length > 1) cont.removeChild(cont.lastChild);
+            const colors = ["emerald","amber","indigo"];
+            Object.keys(window.shiftTimes).slice(0,3).forEach((s,idx) => {
+                const w = document.createElement("div");
+                w.className = "bg-slate-900 border border-slate-800 p-5 rounded-2xl flex items-center justify-between shadow-md";
+                w.innerHTML = `<div><p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">กะ ${s}</p><h3 class="text-2xl font-bold text-${colors[idx]}-400 mt-1">${list.filter(p=>p.shift===s).length} คน</h3><p class="text-[11px] text-slate-500 mt-1">เข้า ${window.shiftTimes[s].login}</p></div><div class="w-12 h-12 rounded-xl bg-${colors[idx]}-500/10 border border-${colors[idx]}-500/20 flex items-center justify-center text-${colors[idx]}-400">⏱</div>`;
+                cont.appendChild(w);
             });
         }
 
-        function editName(id, el) {
-            const person = window.currentStaffList.find(p => p.id === id);
-            if (!person || !canEditTeam(person.team)) return alert("คุณไม่มีสิทธิ์แก้ไขข้อมูลทีมนี้ หรือบัญชีของคุณเป็น S2 ดูได้อย่างเดียว");
-            const old = el.innerText; const inp = document.createElement("input"); inp.value = old; inp.className = "bg-slate-950 border border-indigo-500 text-slate-200 px-1 py-0.5 rounded text-sm w-32 outline-none";
-            el.parentNode.replaceChild(inp, el); inp.focus();
-            const save = () => {
-                const nw = inp.value.trim().toUpperCase(); const sp = document.createElement("span"); sp.className = "cursor-edit hover:text-indigo-400"; sp.ondblclick = () => editName(id, sp);
-                if (nw && nw !== old) { sp.innerText = nw; const idx = window.currentStaffList.findIndex(p=>p.id===id); if(idx!==-1){ window.currentStaffList[idx].name = nw; commitData(); } } else sp.innerText = old;
-                inp.parentNode.replaceChild(sp, inp);
-            };
-            inp.onblur = save; inp.onkeydown = (e) => { if (e.key === 'Enter') save(); if (e.key === 'Escape') { const sp = document.createElement("span"); sp.className = "cursor-edit"; sp.ondblclick = () => editName(id, sp); sp.innerText = old; inp.parentNode.replaceChild(sp, inp); } };
-        }
-
-        function changeRank(id, val) {
-            const idx = window.currentStaffList.findIndex(p=>p.id===id);
-            if(idx!==-1) {
-                if(!canEditTeam(window.currentStaffList[idx].team)) return alert("คุณไม่มีสิทธิ์แก้ไขข้อมูลทีมนี้ หรือบัญชีของคุณเป็น S2 ดูได้อย่างเดียว");
-                window.currentStaffList[idx].rank = val;
-                commitData();
-                showToast("อัปเดตยศเรียบร้อย");
-            }
-        }
-        window.changeRank = changeRank;
-
-        function changeShift(id, val) { const idx = window.currentStaffList.findIndex(p=>p.id===id); if(idx!==-1) { if(!canEditTeam(window.currentStaffList[idx].team)) return alert("คุณไม่มีสิทธิ์แก้ไขข้อมูลทีมนี้ หรือบัญชีของคุณเป็น S2 ดูได้อย่างเดียว"); window.currentStaffList[idx].shift = val; commitData(); showToast("อัปเดตเรียบร้อย"); } }
-        function toggleDayOff(id, d) {
-            const idx = window.currentStaffList.findIndex(p => p.id === id);
-            if (idx !== -1) {
-                const p = window.currentStaffList[idx];
-                if (!canEditTeam(p.team)) return alert("บัญชีนี้ไม่มีสิทธิ์แก้ไขวันหยุด");
-
-                if (!p.offs) p.offs = [];
-                if (!p.leaves) p.leaves = [];
-
-                const io = p.offs.indexOf(d);
-                const il = p.leaves.indexOf(d);
-
-                if (io === -1 && il === -1) {
-                    p.offs.push(d);
-                    p.offs.sort((a,b)=>a-b);
-                } else if (io !== -1) {
-                    p.offs.splice(io, 1);
-                    p.leaves.push(d);
-                    p.leaves.sort((a,b)=>a-b);
-                } else {
-                    p.leaves.splice(il, 1);
-                }
-
-                commitData();
-                showToast("อัปเดตวันหยุด/วันลาแล้ว");
-            }
-        }
-        function autoSort() {
-            const sk = Object.keys(window.shiftTimes);
-            window.currentStaffList.sort((a, b) => {
-                if(a.team !== b.team) return a.team.localeCompare(b.team);
-                const ra = getRankOrder(a.rank || "S2");
-                const rb = getRankOrder(b.rank || "S2");
-                if(ra !== rb) return ra - rb;
-                const sa = sk.indexOf(a.shift)!==-1 ? sk.indexOf(a.shift) : 99;
-                const sb = sk.indexOf(b.shift)!==-1 ? sk.indexOf(b.shift) : 99;
-                if(sa !== sb) return sa - sb;
-                return a.name.localeCompare(b.name);
-            });
-            commitData(); showToast("เรียงเรียบร้อย");
-        }
-        function resetToDefault() {
-            if(!window.currentUser || window.currentUser.team !== "ALL") return alert("รีเซ็ตข้อมูลได้เฉพาะ Admin เท่านั้น");
-            if(confirm("ข้อมูลในเซิร์ฟเวอร์จะถูกรีเซ็ตทั้งหมด ยืนยันการรีเซ็ตเป็นค่าเริ่มต้น?")){
-                window.currentStaffList = JSON.parse(JSON.stringify(defaultStaff));
-                commitData();
-            }
-        }
-        function applyFilters() { renderTable(); }
-        function showToast(msg) { const t = document.getElementById("toast"); document.getElementById("toast-text").innerText = msg; t.classList.replace("translate-y-[-100px]", "translate-y-0"); t.classList.replace("opacity-0", "opacity-100"); setTimeout(() => { t.classList.replace("translate-y-0", "translate-y-[-100px]"); t.classList.replace("opacity-100", "opacity-0"); }, 3000); }
-        function exportData() {
-            const filterTeam = document.getElementById("filter-team").value; const filterShift = document.getElementById("filter-shift").value; const searchName = document.getElementById("search-name").value.toLowerCase().trim();
-            let txt = `ยศ    ชื่อพนักงาน      รหัสพนักงาน  ลักษณะงาน  กะ     เวลาทำงาน\n`; txt += `----------------------------------------------------------------\n`; let count = 0;
-            window.currentStaffList.forEach((p) => {
-                if (filterTeam !== "ALL" && p.team !== filterTeam) return; if (filterShift !== "ALL" && p.shift !== filterShift) return; if (searchName !== "" && !p.name.toLowerCase().includes(searchName) && !p.code.includes(searchName)) return;
-                count++; const times = window.shiftTimes[p.shift] || { login: "" };
-                txt += `${(p.rank || "S2").padEnd(5, ' ')} ${p.name.padEnd(14, ' ')} ${p.code.padEnd(12, ' ')} ${p.type.padEnd(10, ' ')} ${p.shift.padEnd(6, ' ')} ${times.login}\n`;
-            });
-            if (count === 0) txt = "ไม่พบข้อมูล"; document.getElementById("export-textarea").value = txt; document.getElementById("export-modal").classList.remove("hidden");
-        }
-        function closeExportModal() { document.getElementById("export-modal").classList.add("hidden"); }
-        function copyExportText() { document.getElementById("export-textarea").select(); document.execCommand('copy'); closeExportModal(); showToast("คัดลอกข้อความทั้งหมดแล้ว!"); }
-    
-        // Tooltip วันที่เมื่อชี้เมาส์ในช่องวันที่
-        const dayTooltip = document.getElementById("day-tooltip");
-
-        document.addEventListener("mouseover", function(e) {
-            const cell = e.target.closest(".day-cell");
-            if (!cell || !dayTooltip) return;
-
-            const day = cell.dataset.day || "";
-            const name = cell.dataset.name || "";
-            const team = cell.dataset.team || "";
-
-            dayTooltip.innerText = `${team} ${name} | วันที่ ${day}`;
-            dayTooltip.style.display = "block";
-        });
-
-        document.addEventListener("mousemove", function(e) {
-            if (!dayTooltip || dayTooltip.style.display !== "block") return;
-            dayTooltip.style.left = (e.clientX + 14) + "px";
-            dayTooltip.style.top = (e.clientY + 14) + "px";
-        });
-
-        document.addEventListener("mouseout", function(e) {
-            const cell = e.target.closest(".day-cell");
-            if (!cell || !dayTooltip) return;
-            dayTooltip.style.display = "none";
-        });
-
-
-        refreshLoginUI();
-
-        setTimeout(refreshLoginUI, 0);
-
-        window.forceSaveCloud = async function() {
+        window.changeRank = async function(id, val) {
+            const p = window.currentStaffList.find(x => x.id === id);
+            if (!p) return;
+            if (!canEditTeam(p.team)) return alert("บัญชีนี้ไม่มีสิทธิ์แก้ไขข้อมูล");
+            p.rank = val;
             await commitData();
-            showToast("สั่งบันทึก Cloud แล้ว");
+            showToast("อัปเดตยศเรียบร้อย");
+        };
+        window.changeShift = async function(id, val) {
+            const p = window.currentStaffList.find(x => x.id === id);
+            if (!p) return;
+            if (!canEditTeam(p.team)) return alert("บัญชีนี้ไม่มีสิทธิ์แก้ไขข้อมูล");
+            p.shift = val;
+            await commitData();
+            showToast("อัปเดตกะเรียบร้อย");
+        };
+        window.toggleDayOff = async function(id, d) {
+            const p = window.currentStaffList.find(x => x.id === id);
+            if (!p) return;
+            if (!canEditTeam(p.team)) return alert("บัญชีนี้ไม่มีสิทธิ์แก้ไขวันหยุด");
+            const io = p.offs.indexOf(d), il = p.leaves.indexOf(d);
+            if (io === -1 && il === -1) p.offs.push(d);
+            else if (io !== -1) { p.offs.splice(io,1); p.leaves.push(d); }
+            else p.leaves.splice(il,1);
+            p.offs.sort((a,b)=>a-b); p.leaves.sort((a,b)=>a-b);
+            await commitData();
         };
 
-        window.forceReloadCloud = function() {
-            location.reload();
+        window.editName = function(id, el) {
+            const p = window.currentStaffList.find(x => x.id === id);
+            if (!p || !canEditTeam(p.team)) return alert("บัญชีนี้ไม่มีสิทธิ์แก้ไขข้อมูล");
+            const old = el.innerText;
+            const inp = document.createElement("input");
+            inp.value = old;
+            inp.className = "bg-slate-950 border border-indigo-500 text-slate-200 px-1 py-0.5 rounded text-sm w-32 outline-none";
+            el.parentNode.replaceChild(inp, el);
+            inp.focus();
+            const save = async () => {
+                const nw = normalizeCode(inp.value);
+                p.name = nw || old;
+                await commitData();
+            };
+            inp.onblur = save;
+            inp.onkeydown = e => { if (e.key === "Enter") save(); };
         };
 
-</script>
+        window.saveNewEmployee = async function() {
+            const name = normalizeCode(document.getElementById("new-emp-name").value);
+            const code = document.getElementById("new-emp-code").value.trim();
+            let team = document.getElementById("new-emp-team").value;
+            const shift = document.getElementById("new-emp-shift").value;
+            const type = document.getElementById("new-emp-type").value;
+            const rank = document.getElementById("new-emp-rank").value;
+            if (window.currentUser.team !== "ALL") team = window.currentUser.team;
+            if (!canEditTeam(team)) return alert("บัญชีนี้ไม่มีสิทธิ์เพิ่มข้อมูล");
+            if (!name || !code) return alert("กรุณากรอกชื่อและรหัสพนักงาน");
+            if (findEmployeeByCode(code)) return alert("รหัสพนักงานนี้มีอยู่แล้ว");
+            window.currentStaffList.push({ id: Date.now(), team, rank, name, code, type, shift, offs: [], leaves: [] });
+            await commitData();
+            closeAddEmployeeModal();
+            showToast("เพิ่มพนักงานสำเร็จ");
+        };
+        window.deleteEmployee = async function() {
+            const id = Number(document.getElementById("delete-emp-id").value);
+            const idx = window.currentStaffList.findIndex(p => p.id === id);
+            if (idx < 0) return alert("กรุณาเลือกพนักงาน");
+            const p = window.currentStaffList[idx];
+            if (!canEditTeam(p.team)) return alert("บัญชีนี้ไม่มีสิทธิ์ลบข้อมูล");
+            if (!confirm(`ยืนยันลบ ${p.name} (${p.team})?`)) return;
+            window.currentStaffList.splice(idx, 1);
+            await commitData();
+            showToast("ลบพนักงานเรียบร้อย");
+        };
+
+        window.saveNewShift = async function() {
+            if (!window.currentUser || window.currentUser.team !== "ALL") return alert("เพิ่มกะได้เฉพาะ Admin");
+            const code = normalizeCode(document.getElementById("new-shift-code").value);
+            const login = document.getElementById("new-shift-login").value.trim();
+            const rest = document.getElementById("new-shift-rest").value.trim();
+            if (!code || !login) return alert("กรุณากรอกรหัสกะและเวลาเข้างาน");
+            window.shiftTimes[code] = { login, rest };
+            await commitData();
+            closeAddShiftModal();
+            showToast("เพิ่มกะสำเร็จ");
+        };
+
+        window.autoSort = async function() { window.currentStaffList = sortedStaff(window.currentStaffList); await commitData(); showToast("เรียงเรียบร้อย"); };
+        window.resetToDefault = async function() {
+            if (!window.currentUser || window.currentUser.team !== "ALL") return alert("รีเซ็ตได้เฉพาะ Admin");
+            if (!confirm("ยืนยันรีเซ็ตข้อมูลทั้งหมด?")) return;
+            window.currentStaffList = JSON.parse(JSON.stringify(defaultStaff));
+            window.shiftTimes = JSON.parse(JSON.stringify(defaultShiftTimes));
+            await commitData();
+        };
+        window.forceSaveCloud = async function() { await commitData(); };
+        window.reloadFromCloud = function() { location.reload(); };
+        window.applyFilters = function() { renderTable(); };
+        window.openAddEmployeeModal = function() {
+            if (!window.currentUser) return alert("กรุณาเข้าสู่ระบบก่อน");
+            if (!getUserEditTeams().length) return alert("บัญชีนี้ไม่มีสิทธิ์เพิ่ม/ลบข้อมูล");
+            updateDeleteEmployeeSelect();
+            refreshLoginUI();
+            document.getElementById("add-employee-modal").classList.remove("hidden");
+        };
+        window.closeAddEmployeeModal = function() { document.getElementById("add-employee-modal").classList.add("hidden"); };
+        window.openAddShiftModal = function() {
+            if (!window.currentUser || window.currentUser.team !== "ALL") return alert("เพิ่มกะได้เฉพาะ Admin");
+            document.getElementById("add-shift-modal").classList.remove("hidden");
+        };
+        window.closeAddShiftModal = function() { document.getElementById("add-shift-modal").classList.add("hidden"); };
+        window.exportData = function() {
+            let txt = "ทีม\tยศ\tชื่อ\tรหัส\tลักษณะงาน\tกะ\tเวลา\n";
+            sortedStaff(window.currentStaffList).forEach(p => {
+                if (!canViewTeam(p.team)) return;
+                const t = window.shiftTimes[p.shift] || {};
+                txt += `${p.team}\t${p.rank}\t${p.name}\t${p.code}\t${p.type}\t${p.shift}\t${t.login || ""}\n`;
+            });
+            document.getElementById("export-textarea").value = txt;
+            document.getElementById("export-modal").classList.remove("hidden");
+        };
+        window.closeExportModal = function() { document.getElementById("export-modal").classList.add("hidden"); };
+        window.copyExportText = function() {
+            document.getElementById("export-textarea").select();
+            document.execCommand("copy");
+            closeExportModal();
+            showToast("คัดลอกแล้ว");
+        };
+
+        function showToast(msg) {
+            const t = document.getElementById("toast");
+            document.getElementById("toast-text").innerText = msg;
+            t.classList.replace("translate-y-[-100px]", "translate-y-0");
+            t.classList.replace("opacity-0", "opacity-100");
+            setTimeout(() => {
+                t.classList.replace("translate-y-0", "translate-y-[-100px]");
+                t.classList.replace("opacity-100", "opacity-0");
+            }, 2500);
+        }
+
+        document.addEventListener("keydown", e => {
+            const modal = document.getElementById("login-modal");
+            if (e.key === "Enter" && modal && !modal.classList.contains("hidden")) loginUser();
+        });
+        document.addEventListener("mouseover", e => {
+            const cell = e.target.closest(".day-cell");
+            const tooltip = document.getElementById("day-tooltip");
+            if (!cell) return;
+            tooltip.innerText = `${cell.dataset.team} ${cell.dataset.name} | วันที่ ${cell.dataset.day}`;
+            tooltip.style.display = "block";
+        });
+        document.addEventListener("mousemove", e => {
+            const tooltip = document.getElementById("day-tooltip");
+            if (tooltip.style.display === "block") {
+                tooltip.style.left = (e.clientX + 14) + "px";
+                tooltip.style.top = (e.clientY + 14) + "px";
+            }
+        });
+        document.addEventListener("mouseout", e => {
+            if (e.target.closest(".day-cell")) document.getElementById("day-tooltip").style.display = "none";
+        });
+
+        startCloudSync();
+        updateDynamicUI();
+    </script>
 </body>
 </html>
