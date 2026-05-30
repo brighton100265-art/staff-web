@@ -197,7 +197,7 @@
             <div class="space-y-3">
                 <div>
                     <label class="text-xs text-slate-400 font-medium">รหัสเข้าสู่ระบบ</label>
-                    <input id="login-code" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" name="login_code_no_save" placeholder="กรอกรหัสเข้าสู่ระบบ" class="w-full mt-1 bg-slate-950 border border-slate-800 focus:border-indigo-500 text-slate-200 px-3 py-2 rounded-xl text-sm outline-none uppercase" autocomplete="off" autocapitalize="off" spellcheck="false" name="login_code_no_save">
+                    <input id="login-code" type="password" autocomplete="new-password" autocapitalize="off" spellcheck="false" name="login_code_no_save" placeholder="กรอกรหัสเข้าสู่ระบบ" class="w-full mt-1 bg-slate-950 border border-slate-800 focus:border-indigo-500 text-slate-200 px-3 py-2 rounded-xl text-sm outline-none uppercase" autocomplete="new-password" autocapitalize="off" spellcheck="false" name="login_code_no_save" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" readonly onfocus="this.removeAttribute('readonly')" onblur="this.setAttribute('readonly', true)">
                 </div>
                 <p id="login-error" class="hidden text-xs text-rose-400">รหัสไม่ถูกต้อง</p>
             </div>
@@ -304,7 +304,7 @@
                 </div>
                 <div class="flex flex-col gap-1.5 w-full pt-2 border-t border-slate-800/70">
                     <label class="text-xs text-slate-400 font-medium">ค้นหาชื่อพนักงาน / รหัส</label>
-                    <input type="text" id="search-name" oninput="applyFilters()" placeholder="พิมพ์ชื่อหรือรหัส..." class="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 text-slate-200 px-4 py-2 rounded-xl text-sm outline-none transition-all placeholder:text-slate-600">
+                    <input type="text" id="search-name" oninput="applyFilters()" placeholder="พิมพ์ชื่อหรือรหัส..." class="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 text-slate-200 px-4 py-2 rounded-xl text-sm outline-none transition-all placeholder:text-slate-600" autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" spellcheck="false">
                 </div>
 
                 <div class="pt-2 border-t border-slate-800/70 space-y-2">
@@ -566,7 +566,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
 
                 <div>
                     <label class="text-xs text-slate-400 font-medium">รหัสพนักงาน</label>
-                    <input id="delete-emp-code" type="text" oninput="previewDeleteEmployeeByCode()" placeholder="กรอกรหัสพนักงานเท่านั้น" class="w-full mt-1 bg-slate-950 border border-slate-800 focus:border-rose-500 text-slate-200 px-3 py-2 rounded-xl text-sm outline-none placeholder:text-slate-600" autocomplete="off" autocapitalize="off" spellcheck="false">
+                    <input id="delete-emp-code" type="text" oninput="previewDeleteEmployeeByCode()" placeholder="กรอกรหัสพนักงานเท่านั้น" class="w-full mt-1 bg-slate-950 border border-slate-800 focus:border-rose-500 text-slate-200 px-3 py-2 rounded-xl text-sm outline-none placeholder:text-slate-600" autocomplete="new-password" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true">
                     <input id="delete-emp-id" type="hidden">
                     <input id="delete-emp-confirmed" type="hidden" value="0">
                     <p id="delete-emp-result-count" class="text-[11px] text-slate-500 mt-1">กรอกรหัสพนักงานเพื่อค้นหา</p>
@@ -593,7 +593,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
             </div>
             <div class="space-y-3">
                 <div><label class="text-xs text-slate-400 font-medium">รหัสกะ</label><input type="text" id="new-shift-code" placeholder="S15" class="w-full mt-1 bg-slate-950 border border-slate-800 text-slate-200 px-3 py-2 rounded-xl text-sm uppercase"></div>
-                <div><label class="text-xs text-slate-400 font-medium">เวลาเข้างาน</label><input type="text" id="new-shift-login" placeholder="15.00-00.00" class="w-full mt-1 bg-slate-950 border border-slate-800 text-slate-200 px-3 py-2 rounded-xl text-sm"></div>
+                <div><label class="text-xs text-slate-400 font-medium">เวลาเข้างาน</label><input type="text" id="new-shift-login" placeholder="15.00-00.00" class="w-full mt-1 bg-slate-950 border border-slate-800 text-slate-200 px-3 py-2 rounded-xl text-sm" autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" spellcheck="false"></div>
                 <div><label class="text-xs text-slate-400 font-medium">เวลาพัก</label><input type="text" id="new-shift-rest" placeholder="19.00-20.00" class="w-full mt-1 bg-slate-950 border border-slate-800 text-slate-200 px-3 py-2 rounded-xl text-sm"></div>
                 <button onclick="saveNewShift()" class="w-full px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium rounded-xl">บันทึกกะ</button>
 
@@ -704,7 +704,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
 
                     <div>
                         <label class="text-[10px] text-slate-500">รหัสพนักงาน</label>
-                        <input id="resign-code" type="text" oninput="previewResignEmployee()" autocomplete="off" placeholder="กรอกรหัสพนักงาน เช่น 251223602" class="w-full bg-slate-950 border border-slate-800 focus:border-rose-500 text-slate-200 px-3 py-2 rounded-xl text-sm outline-none">
+                        <input id="resign-code" type="text" oninput="previewResignEmployee()" autocomplete="new-password" placeholder="กรอกรหัสพนักงาน เช่น 251223602" class="w-full bg-slate-950 border border-slate-800 focus:border-rose-500 text-slate-200 px-3 py-2 rounded-xl text-sm outline-none" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" spellcheck="false">
                     </div>
 
                     <input id="resign-name" type="hidden">
@@ -1985,7 +1985,8 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
             await setDoc(ref, {
                 staffList: window.currentStaffList,
                 shiftTimes: window.shiftTimes,
-                        deletedShiftCodes: window.deletedShiftCodes || [],
+                       deletedShiftCodes: window.deletedShiftCodes || [],
+                         deletedShiftCodes: window.deletedShiftCodes || [],
                 month: window.selectedMonth,
                 year: window.selectedYear,
                 migratedFromLegacy: migrated,
@@ -2069,6 +2070,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                     await setDoc(doc(db, "schedule_db", cloudDocId), {
                         staffList: window.currentStaffList,
                         shiftTimes: window.shiftTimes,
+                        deletedShiftCodes: window.deletedShiftCodes || [],
                         attendanceChecks: window.attendanceChecks || {},
                         resignedRecords: window.resignedRecords || {},
                         month: window.selectedMonth,
@@ -2079,6 +2081,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                     await setDoc(doc(db, "schedule_db", "company_schedule_latest"), {
                         staffList: window.currentStaffList,
                         shiftTimes: window.shiftTimes,
+                        deletedShiftCodes: window.deletedShiftCodes || [],
                         attendanceChecks: window.attendanceChecks || {},
                         resignedRecords: window.resignedRecords || {},
                         month: window.selectedMonth,
@@ -2313,6 +2316,7 @@ window.previewDeleteEmployeeByCode = function() {
         }
 
         function updateDynamicUI() {
+            applyDeletedShiftFilter();
             renderResignedHistory();
             updateMonthUI();
             updateShiftSelects();
@@ -3279,7 +3283,7 @@ window.generateWFHOffReport = function() {
                                 ${checked ? "checked" : ""}
                                 ${admin ? "" : "disabled"}
                                 onchange="toggleAttendanceVerified(${p.id}, this.checked)"
-                                class="w-4 h-4 accent-emerald-500 ${admin ? "cursor-pointer" : "cursor-not-allowed"}">
+                                class="w-4 h-4 accent-emerald-500 ${admin ? "cursor-pointer" : "cursor-not-allowed"}" autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" spellcheck="false">
                         </div>
                     </div>
                 `;
@@ -3493,7 +3497,7 @@ function renderWFHPresentInline(people, day) {
                                 ${checked ? "checked" : ""}
                                 ${admin && !resigned ? "" : "disabled"}
                                 onchange="toggleAttendanceVerified(${p.id}, this.checked, this)"
-                                class="w-4 h-4 accent-emerald-500 ${admin && !resigned ? "cursor-pointer" : "cursor-not-allowed"}">
+                                class="w-4 h-4 accent-emerald-500 ${admin && !resigned ? "cursor-pointer" : "cursor-not-allowed"}" autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" spellcheck="false">
                         </td>
                         <td class="px-4 py-3 text-slate-300">${checker}</td>
                         <td class="px-4 py-3 text-slate-300">${checkedTime}</td>
@@ -3889,6 +3893,25 @@ window.generateWFHPresentToday = function() {
 
         
 
+
+        
+
+        
+
+        
+
+        
+
+        
+
+
+        
+
+        
+
+        
+
+        
 
         
 
