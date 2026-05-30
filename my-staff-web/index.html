@@ -211,36 +211,13 @@
                 <div class="pt-2 border-t border-slate-800/70 space-y-2">
                     <div class="flex items-center justify-between gap-2">
                         <div>
-                            <div class="text-xs text-slate-400 font-medium">ค้นหา WFH มาทำงานย้อนหลัง</div>
-                            <div id="wfh-today-date-label" class="text-[11px] text-slate-500">เลือกวันที่ที่ต้องการตรวจสอบ</div>
+                            <div class="text-xs text-slate-400 font-medium">ค้นหา WFH มาทำงาน</div>
+                            <div id="wfh-today-date-label" class="text-[11px] text-slate-500">กดค้นหาเพื่อดูรายชื่อ</div>
                         </div>
                         <button onclick="generateWFHPresentToday()" class="px-3 py-2 bg-emerald-600/20 hover:bg-emerald-600/35 text-emerald-400 border border-emerald-500/30 font-semibold text-xs rounded-xl transition-all">
                             ค้นหา
                         </button>
                     </div>
-
-                    <div class="grid grid-cols-3 gap-2">
-                        <div>
-                            <label class="text-[10px] text-slate-500">วัน</label>
-                            <select id="wfh-present-day" class="w-full bg-slate-950 border border-slate-800 text-slate-200 px-2 py-2 rounded-xl text-xs outline-none"></select>
-                        </div>
-                        <div>
-                            <label class="text-[10px] text-slate-500">เดือน</label>
-                            <select id="wfh-present-month" class="w-full bg-slate-950 border border-slate-800 text-slate-200 px-2 py-2 rounded-xl text-xs outline-none">
-                                <option value="1">ม.ค.</option><option value="2">ก.พ.</option><option value="3">มี.ค.</option><option value="4">เม.ย.</option>
-                                <option value="5">พ.ค.</option><option value="6">มิ.ย.</option><option value="7">ก.ค.</option><option value="8">ส.ค.</option>
-                                <option value="9">ก.ย.</option><option value="10">ต.ค.</option><option value="11">พ.ย.</option><option value="12">ธ.ค.</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="text-[10px] text-slate-500">ปี</label>
-                            <select id="wfh-present-year" class="w-full bg-slate-950 border border-slate-800 text-slate-200 px-2 py-2 rounded-xl text-xs outline-none"></select>
-                        </div>
-                    </div>
-                    <label class="flex items-center gap-2 text-[11px] text-slate-400">
-                        <input id="wfh-present-only-unchecked" type="checkbox" onchange="generateWFHPresentToday()" class="accent-emerald-500">
-                        แสดงเฉพาะคนยังไม่ตรวจ
-                    </label>
 
                 </div>
 
@@ -318,20 +295,45 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
             <div>
                 <div class="flex items-center gap-2">
                     <span class="text-lg">👥</span>
-                    <h3 class="text-base font-bold text-slate-100">รายชื่อพนักงาน WFH มาทำงานวันนี้</h3>
+                    <h3 class="text-base font-bold text-slate-100">รายชื่อพนักงาน WFH มาทำงาน</h3>
                     <span class="px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/30 text-[11px] font-semibold">เฉพาะ WFH</span>
                 </div>
                 <div id="wfh-present-inline-date" class="text-[11px] text-slate-500 mt-1">ประจำวันที่</div>
             </div>
 
-            <div class="flex flex-wrap gap-2">
-                <button onclick="copyWFHPresentToday()" class="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-xl transition-all">
-                    คัดลอกผลลัพธ์
-                </button>
-                <button onclick="clearWFHPresentToday()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-semibold text-xs rounded-xl transition-all">
-                    ล้างผลลัพธ์
-                </button>
-            </div>
+            
+                <div class="flex flex-wrap items-end justify-end gap-2">
+                    <div>
+                        <label class="block text-[10px] text-slate-500 mb-1">วัน</label>
+                        <select id="wfh-present-day" class="bg-slate-950 border border-slate-800 text-slate-200 px-3 py-2 rounded-xl text-xs outline-none min-w-[70px]"></select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-slate-500 mb-1">เดือน</label>
+                        <select id="wfh-present-month" class="bg-slate-950 border border-slate-800 text-slate-200 px-3 py-2 rounded-xl text-xs outline-none min-w-[90px]">
+                            <option value="1">ม.ค.</option><option value="2">ก.พ.</option><option value="3">มี.ค.</option><option value="4">เม.ย.</option>
+                            <option value="5">พ.ค.</option><option value="6">มิ.ย.</option><option value="7">ก.ค.</option><option value="8">ส.ค.</option>
+                            <option value="9">ก.ย.</option><option value="10">ต.ค.</option><option value="11">พ.ย.</option><option value="12">ธ.ค.</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-slate-500 mb-1">ปี</label>
+                        <select id="wfh-present-year" class="bg-slate-950 border border-slate-800 text-slate-200 px-3 py-2 rounded-xl text-xs outline-none min-w-[90px]"></select>
+                    </div>
+                    <label class="flex items-center gap-2 text-[11px] text-slate-400 pb-2">
+                        <input id="wfh-present-only-unchecked" type="checkbox" onchange="generateWFHPresentToday()" class="accent-emerald-500">
+                        ยังไม่ตรวจ
+                    </label>
+                    <button onclick="generateWFHPresentToday()" class="px-4 py-2 bg-emerald-600/20 hover:bg-emerald-600/35 text-emerald-400 border border-emerald-500/30 font-semibold text-xs rounded-xl transition-all">
+                        ค้นหา
+                    </button>
+                    <button onclick="copyWFHPresentToday()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-xl transition-all">
+                        คัดลอกผลลัพธ์
+                    </button>
+                    <button onclick="clearWFHPresentToday()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-semibold text-xs rounded-xl transition-all">
+                        ล้างผลลัพธ์
+                    </button>
+                </div>
+
         </div>
 
         <div id="wfh-present-summary" class="grid grid-cols-1 md:grid-cols-3 gap-3 px-5 py-4 border-b border-slate-800 bg-slate-950/25"></div>
@@ -538,7 +540,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
         <div class="bg-slate-900/95 backdrop-blur-xl border border-emerald-500/30 rounded-2xl shadow-2xl overflow-hidden">
             <div class="flex items-center justify-between gap-3 px-4 py-3 border-b border-slate-800">
                 <div>
-                    <div class="text-sm font-bold text-emerald-300">WFH มาทำงานวันนี้</div>
+                    <div class="text-sm font-bold text-emerald-300">WFH มาทำงาน</div>
                     <div id="wfh-present-floating-date" class="text-[11px] text-slate-500"></div>
                 </div>
                 <div class="flex gap-2">
@@ -2894,7 +2896,7 @@ window.generateWFHOffReport = function() {
                 : (arr) => [...arr];
 
             const lines = [];
-            lines.push(`📅 พนักงาน WFH หยุดประจำวันที่ ${day}`);
+            lines.push(`📅 พนักงาน WFH หยุดกำลังดูข้อมูล : ${day}`);
             lines.push("");
 
             teams.forEach((team) => {
@@ -3105,7 +3107,7 @@ window.generateWFHOffReport = function() {
             if (!panel || !tbody) return;
 
             panel.classList.remove("hidden");
-            if (dateLabel) dateLabel.innerText = `ประจำวันที่ ${day}`;
+            if (dateLabel) dateLabel.innerText = `กำลังดูข้อมูล : ${day}`;
             if (countText) countText.innerText = `แสดง ${people.length} คน`;
 
             const teamCounts = { WIN1: 0, WIN2: 0, WIN3: 0 };
@@ -3186,7 +3188,7 @@ window.generateWFHPresentToday = function() {
 
             const allPeople = [];
             const lines = [];
-            lines.push(`📅 พนักงาน WFH มาทำงานประจำวันที่ ${day}/${pad2(month)}/${year}`);
+            lines.push(`📅 พนักงาน WFH มาทำงานกำลังดูข้อมูล : ${day}/${pad2(month)}/${year}`);
             lines.push("");
 
             teams.forEach(team => {
