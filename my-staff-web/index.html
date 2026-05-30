@@ -1696,6 +1696,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
         window.currentStaffList = JSON.parse(JSON.stringify(defaultStaff));
         window.shiftTimes = JSON.parse(JSON.stringify(defaultShiftTimes));
         window.currentUser = JSON.parse(sessionStorage.getItem("schedule_current_user") || "null");
+        window.deletedShiftCodes = [];
         window.resignedRecords = {};
 
         const monthNamesTH = ["", "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
@@ -1795,6 +1796,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
         function saveLocalBackup() {
             localStorage.setItem(`staff_${getScheduleDocId()}`, JSON.stringify(window.currentStaffList));
             localStorage.setItem(`shift_${getScheduleDocId()}`, JSON.stringify(window.shiftTimes));
+            localStorage.setItem(`deletedShiftCodes_${getScheduleDocId()}`, JSON.stringify(window.deletedShiftCodes || []));
             localStorage.setItem(`resigned_${getScheduleDocId()}`, JSON.stringify(window.resignedRecords || {}));
             localStorage.setItem(`attendance_${getScheduleDocId()}`, JSON.stringify(window.attendanceChecks || {}));
         }
@@ -1942,6 +1944,8 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                 window.shiftTimes = data.shiftTimes && Object.keys(data.shiftTimes).length
                     ? data.shiftTimes
                     : JSON.parse(JSON.stringify(defaultShiftTimes));
+                window.deletedShiftCodes = Array.isArray(data.deletedShiftCodes) ? data.deletedShiftCodes : [];
+                applyDeletedShiftFilter();
                 window.attendanceChecks = data.attendanceChecks && typeof data.attendanceChecks === "object" ? data.attendanceChecks : {};
                 window.resignedRecords = data.resignedRecords && typeof data.resignedRecords === "object" ? data.resignedRecords : {};
 
@@ -1981,6 +1985,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
             await setDoc(ref, {
                 staffList: window.currentStaffList,
                 shiftTimes: window.shiftTimes,
+                        deletedShiftCodes: window.deletedShiftCodes || [],
                 month: window.selectedMonth,
                 year: window.selectedYear,
                 migratedFromLegacy: migrated,
@@ -2011,6 +2016,8 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                 }
                 if (data.shiftTimes && Object.keys(data.shiftTimes).length) {
                     window.shiftTimes = data.shiftTimes;
+                window.deletedShiftCodes = Array.isArray(data.deletedShiftCodes) ? data.deletedShiftCodes : (window.deletedShiftCodes || []);
+                applyDeletedShiftFilter();
                 window.attendanceChecks = data.attendanceChecks && typeof data.attendanceChecks === "object" ? data.attendanceChecks : (window.attendanceChecks || {});
                 window.resignedRecords = data.resignedRecords && typeof data.resignedRecords === "object" ? data.resignedRecords : (window.resignedRecords || {});
                 }
@@ -2461,6 +2468,7 @@ function renderTable() {
         }
 
         function updateStats() {
+            applyDeletedShiftFilter();
             const list = window.currentStaffList.filter(p => window.currentUser && canViewTeam(p.team));
             document.getElementById("stat-total").innerText = `${list.length} คน`;
             document.getElementById("stat-sub-types").innerText = `Office: ${list.filter(p=>p.type==="Office").length} | WFH: ${list.filter(p=>p.type==="WFH").length}`;
@@ -2698,6 +2706,7 @@ window.toggleDayOff = function(id, d) {
 window.saveNewShift = async function() {
             if (!isLeaderUser()) return alert("เพิ่มกะได้เฉพาะหัวหน้า S4 หรือ Admin");
             const code = normalizeCode(document.getElementById("new-shift-code").value);
+            restoreShiftIfAdded(code);
             const login = document.getElementById("new-shift-login").value.trim();
             const rest = document.getElementById("new-shift-rest").value.trim();
             if (!code || !login) return alert("กรุณากรอกรหัสกะและเวลาเข้างาน");
@@ -3881,6 +3890,44 @@ window.generateWFHPresentToday = function() {
         
 
 
+        
+
+        
+
+        
+
+        
+
+        
+
+
+        function normalizeDeletedShiftCodes() {
+            if (!Array.isArray(window.deletedShiftCodes)) window.deletedShiftCodes = [];
+            window.deletedShiftCodes = [...new Set(window.deletedShiftCodes.map(x => String(x).trim()).filter(Boolean))];
+            return window.deletedShiftCodes;
+        }
+
+        function applyDeletedShiftFilter() {
+            normalizeDeletedShiftCodes().forEach(code => {
+                if (window.shiftTimes && Object.prototype.hasOwnProperty.call(window.shiftTimes, code)) {
+                    delete window.shiftTimes[code];
+                }
+            });
+        }
+
+        function markShiftDeleted(code) {
+            if (!Array.isArray(window.deletedShiftCodes)) window.deletedShiftCodes = [];
+            const c = String(code || "").trim();
+            if (c && !window.deletedShiftCodes.includes(c)) window.deletedShiftCodes.push(c);
+            applyDeletedShiftFilter();
+        }
+
+        function restoreShiftIfAdded(code) {
+            if (!Array.isArray(window.deletedShiftCodes)) window.deletedShiftCodes = [];
+            const c = String(code || "").trim();
+            window.deletedShiftCodes = window.deletedShiftCodes.filter(x => x !== c);
+        }
+
         function shiftSortValue(code) {
             const n = Number(String(code || "").replace(/[^0-9]/g, ""));
             return Number.isFinite(n) ? n : 9999;
@@ -3888,12 +3935,13 @@ window.generateWFHPresentToday = function() {
 
         function getShiftDisplayLabel(code) {
             const t = window.shiftTimes?.[code] || {};
-            const login = (t.login || "").replace(/\s+/g, "");
-            const rest = (t.rest || t.break || "").replace(/\s+/g, "");
-            return rest ? `${code} (${login})` : `${code} (${login})`;
+            const login = String(t.login || "").replace(/\s+/g, "");
+            return `${code}${login ? ` (${login})` : ""}`;
         }
 
         function updateShiftSelects() {
+            applyDeletedShiftFilter();
+
             const filterShift = document.getElementById("filter-shift");
             const modalShift = document.getElementById("new-emp-shift");
             const deleteShiftSelect = document.getElementById("delete-shift-code");
@@ -3940,17 +3988,13 @@ window.generateWFHPresentToday = function() {
         window.deleteShift = async function() {
             if (!isLeaderUser()) return alert("ลบกะได้เฉพาะหัวหน้า S4 หรือ Admin");
 
+            applyDeletedShiftFilter();
+
             const sel = document.getElementById("delete-shift-code");
             const code = String(sel?.value || "").trim();
             if (!code) return alert("กรุณาเลือกกะที่ต้องการลบ");
 
-            if (!window.shiftTimes || !window.shiftTimes[code]) {
-                updateShiftSelects();
-                return alert("ไม่พบกะนี้ หรือกะนี้ถูกลบไปแล้ว");
-            }
-
             const usedBy = (window.currentStaffList || []).filter(p => p.shift === code);
-
             if (usedBy.length > 0) {
                 const sample = usedBy.slice(0, 15).map(p => `- ${p.name} (${p.team})`).join("\\n");
                 return alert(
@@ -3960,14 +4004,16 @@ window.generateWFHPresentToday = function() {
                 );
             }
 
-            if (!confirm(`ยืนยันลบกะ ${code}?\\n\\nกะนี้จะหายจากตัวเลือกทั้งหมด`)) return;
+            if (!confirm(`ยืนยันลบกะ ${code}?\\n\\nกะนี้จะถูกซ่อนออกถาวรจากเดือนนี้`)) return;
 
-            delete window.shiftTimes[code];
+            markShiftDeleted(code);
 
             const filterShift = document.getElementById("filter-shift");
             if (filterShift && filterShift.value === code) filterShift.value = "ALL";
 
             await commitData();
+
+            applyDeletedShiftFilter();
             updateShiftSelects();
             updateDynamicUI();
             showToast(`ลบกะ ${code} แล้ว`);
