@@ -380,6 +380,8 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                         <th class="px-4 py-3 text-left">เวลาพัก</th>
                         <th class="px-4 py-3 text-left">สถานะ</th>
                         <th class="px-4 py-3 text-center">ตรวจแล้ว</th>
+                        <th class="px-4 py-3 text-left">ผู้ตรวจ</th>
+                        <th class="px-4 py-3 text-left">เวลาตรวจ</th>
                     </tr>
                 </thead>
                 <tbody id="wfh-present-table-body" class="divide-y divide-slate-800"></tbody>
@@ -2095,7 +2097,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
 
             const keys = typeof getSortedShiftKeys === "function"
                 ? getSortedShiftKeys()
-                : Object.keys(window.shiftTimes || {}).sort((a,b)=>String(a).localeCompare(String(b)));
+                : Object.keys(window.shiftTimes || {}).sort((a,b)=>String(a).localeCompare(String(b), "en"));
 
             keys.forEach(s => {
                 const label = typeof getShiftOptionLabel === "function" ? getShiftOptionLabel(s) : s;
@@ -2631,6 +2633,37 @@ window.toggleDayOff = function(id, d) {
             showToast(`ลบกะ ${code} แล้ว`);
         };
 
+
+        window.deleteShift = async function() {
+            if (!isLeaderUser()) return alert("ลบกะได้เฉพาะหัวหน้า S4 หรือ Admin");
+
+            const sel = document.getElementById("delete-shift-code");
+            const code = sel ? sel.value : "";
+            if (!code) return alert("กรุณาเลือกกะที่ต้องการลบ");
+
+            if (!window.shiftTimes || !window.shiftTimes[code]) {
+                updateShiftSelects();
+                return alert("ไม่พบกะนี้ หรือกะนี้ถูกลบไปแล้ว");
+            }
+
+            const usedBy = (window.currentStaffList || []).filter(p => p.shift === code);
+            if (usedBy.length) {
+                const sample = usedBy.slice(0, 10).map(p => `- ${p.name} (${p.team})`).join("\\n");
+                return alert(`ลบกะ ${code} ไม่ได้ เพราะยังมีพนักงานใช้อยู่ ${usedBy.length} คน\\n\\n${sample}${usedBy.length > 10 ? "\\n..." : ""}\\n\\nกรุณาเปลี่ยนกะพนักงานเหล่านี้ก่อน`);
+            }
+
+            if (!confirm(`ยืนยันลบกะ ${code}?`)) return;
+
+            delete window.shiftTimes[code];
+
+            const filterShift = document.getElementById("filter-shift");
+            if (filterShift && filterShift.value === code) filterShift.value = "ALL";
+
+            await commitData();
+            updateShiftSelects();
+            updateDynamicUI();
+            showToast(`ลบกะ ${code} แล้ว`);
+        };
 window.saveNewShift = async function() {
             if (!isLeaderUser()) return alert("เพิ่มกะได้เฉพาะหัวหน้า S4 หรือ Admin");
             const code = normalizeCode(document.getElementById("new-shift-code").value);
@@ -2741,7 +2774,7 @@ window.saveNewShift = async function() {
         window.closeAddEmployeeModal = function() { document.getElementById("add-employee-modal").classList.add("hidden"); };
         window.openAddShiftModal = function() {
             if (!window.currentUser) return alert("กรุณาเข้าสู่ระบบก่อน");
-            if (!isLeaderUser()) return alert("เพิ่มกะได้เฉพาะหัวหน้า S4 หรือ Admin");
+            if (!isLeaderUser()) return alert("เพิ่ม/ลบกะได้เฉพาะหัวหน้า S4 หรือ Admin");
             updateShiftSelects();
             document.getElementById("add-shift-modal").classList.remove("hidden");
         };
@@ -3220,7 +3253,26 @@ window.generateWFHOffReport = function() {
         }
 
 
-        function renderWFHPresentInline(people, day) {
+        
+        function getAttendanceRecord(id) {
+            const key = ensureAttendanceChecks();
+            return window.attendanceChecks?.[key]?.[String(id)] || null;
+        }
+
+        function getAttendanceCheckedTime(id) {
+            const rec = getAttendanceRecord(id);
+            if (!rec || !rec.checkedAt) return "-";
+            const t = new Date(rec.checkedAt);
+            if (Number.isNaN(t.getTime())) return "-";
+            return `${pad2(t.getHours())}:${pad2(t.getMinutes())}`;
+        }
+
+        function getAttendanceCheckerName(id) {
+            const rec = getAttendanceRecord(id);
+            return rec?.checkedBy || "-";
+        }
+
+function renderWFHPresentInline(people, day) {
             const panel = document.getElementById("wfh-present-inline-panel");
             const tbody = document.getElementById("wfh-present-table-body");
             const summary = document.getElementById("wfh-present-summary");
@@ -3238,6 +3290,8 @@ window.generateWFHOffReport = function() {
                 if (teamCounts[p.team] !== undefined) teamCounts[p.team]++;
             });
 
+            const checkedCount = people.filter(p => isAttendanceVerified(p.id)).length;
+
             if (summary) {
                 summary.innerHTML = `
                     <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
@@ -3250,7 +3304,11 @@ window.generateWFHOffReport = function() {
                     </div>
                     <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
                         <div class="text-[11px] text-slate-500">ตรวจแล้ว</div>
-                        <div class="text-sm font-bold text-slate-200">${people.filter(p => isAttendanceVerified(p.id)).length} / ${people.length} คน</div>
+                        <div class="text-sm font-bold text-slate-200">${checkedCount} / ${people.length} คน</div>
+                    </div>
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
+                        <div class="text-[11px] text-slate-500">ยังไม่ตรวจ</div>
+                        <div class="text-sm font-bold text-rose-400">${people.length - checkedCount} คน</div>
                     </div>
                 `;
             }
@@ -3258,7 +3316,7 @@ window.generateWFHOffReport = function() {
             if (!people.length) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="10" class="px-4 py-8 text-center text-slate-500">ไม่พบพนักงาน WFH ที่มาทำงานวันนี้</td>
+                        <td colspan="12" class="px-4 py-8 text-center text-slate-500">ไม่พบพนักงาน WFH ที่มาทำงานตามวันที่เลือก</td>
                     </tr>
                 `;
                 return;
@@ -3269,6 +3327,8 @@ window.generateWFHOffReport = function() {
                 const checked = isAttendanceVerified(p.id);
                 const admin = isAdminUser();
                 const shiftClass = typeof getShiftClass === "function" ? getShiftClass(p.shift) : "shift-other";
+                const checker = getAttendanceCheckerName(p.id);
+                const checkedTime = getAttendanceCheckedTime(p.id);
 
                 return `
                     <tr class="hover:bg-slate-800/40 transition-all">
@@ -3288,6 +3348,8 @@ window.generateWFHOffReport = function() {
                                 onchange="toggleAttendanceVerified(${p.id}, this.checked)"
                                 class="w-4 h-4 accent-emerald-500 ${admin ? "cursor-pointer" : "cursor-not-allowed"}">
                         </td>
+                        <td class="px-4 py-3 text-slate-300">${checker}</td>
+                        <td class="px-4 py-3 text-slate-300">${checkedTime}</td>
                     </tr>
                 `;
             }).join("");
@@ -3658,6 +3720,35 @@ window.generateWFHPresentToday = function() {
             renderResignedHistory();
             updateDynamicUI();
             showToast("บันทึกพนักงานออกแล้ว");
+        };
+
+        window.toggleAttendanceVerified = async function(id, checked) {
+            if (!isAdminUser()) {
+                alert("ตรวจสอบการเข้าดิสคอร์ได้เฉพาะ Admin");
+                updateDynamicUI();
+                return;
+            }
+
+            const key = ensureAttendanceChecks();
+            if (checked) {
+                window.attendanceChecks[key][String(id)] = {
+                    checked: true,
+                    checkedBy: getCurrentAdminLabel(),
+                    checkedAt: new Date().toISOString()
+                };
+            } else {
+                delete window.attendanceChecks[key][String(id)];
+            }
+
+            await commitData();
+
+            if (!document.getElementById("wfh-present-inline-panel")?.classList.contains("hidden")) {
+                generateWFHPresentToday();
+            } else {
+                updateDynamicUI();
+            }
+
+            showToast("บันทึกสถานะตรวจสอบแล้ว");
         };
         function showToast(msg) {
             const t = document.getElementById("toast");
