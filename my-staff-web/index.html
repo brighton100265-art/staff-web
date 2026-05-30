@@ -281,6 +281,128 @@
             font-size: 11px;
         }
 
+
+        /* v3.4 fit 31 days at 100% zoom */
+        .schedule-full-card {
+            width: calc(100vw - 18px) !important;
+            max-width: calc(100vw - 18px) !important;
+            margin-left: calc(50% - 50vw + 9px) !important;
+            margin-right: calc(50% - 50vw + 9px) !important;
+            border-radius: 16px !important;
+            overflow: hidden !important;
+        }
+
+        .schedule-full-card table {
+            table-layout: fixed !important;
+            width: 100% !important;
+            min-width: 100% !important;
+            border-collapse: collapse !important;
+        }
+
+        .schedule-full-card th,
+        .schedule-full-card td {
+            padding-left: 3px !important;
+            padding-right: 3px !important;
+            font-size: 11px !important;
+            line-height: 1.12 !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
+        }
+
+        .schedule-full-card th:nth-child(1),
+        .schedule-full-card td:nth-child(1) { width: 34px !important; min-width: 34px !important; max-width: 34px !important; }
+
+        .schedule-full-card th:nth-child(2),
+        .schedule-full-card td:nth-child(2) { width: 52px !important; min-width: 52px !important; max-width: 52px !important; }
+
+        .schedule-full-card th:nth-child(3),
+        .schedule-full-card td:nth-child(3) { width: 44px !important; min-width: 44px !important; max-width: 44px !important; }
+
+        .schedule-full-card th:nth-child(4),
+        .schedule-full-card td:nth-child(4) { width: 128px !important; min-width: 128px !important; max-width: 128px !important; }
+
+        .schedule-full-card th:nth-child(5),
+        .schedule-full-card td:nth-child(5) { width: 90px !important; min-width: 90px !important; max-width: 90px !important; }
+
+        .schedule-full-card th:nth-child(6),
+        .schedule-full-card td:nth-child(6) { width: 86px !important; min-width: 86px !important; max-width: 86px !important; }
+
+        .schedule-full-card th:nth-child(7),
+        .schedule-full-card td:nth-child(7) { width: 62px !important; min-width: 62px !important; max-width: 62px !important; }
+
+        .schedule-full-card th:nth-child(8),
+        .schedule-full-card td:nth-child(8) { width: 82px !important; min-width: 82px !important; max-width: 82px !important; }
+
+        .schedule-full-card th:nth-child(9),
+        .schedule-full-card td:nth-child(9) { width: 82px !important; min-width: 82px !important; max-width: 82px !important; }
+
+        .schedule-full-card th:nth-child(10),
+        .schedule-full-card td:nth-child(10),
+        .schedule-full-card th:nth-child(11),
+        .schedule-full-card td:nth-child(11) { width: 48px !important; min-width: 48px !important; max-width: 48px !important; }
+
+        /* Day columns: 12th column onward */
+        .schedule-full-card th:nth-child(n+12),
+        .schedule-full-card td:nth-child(n+12) {
+            width: 28px !important;
+            min-width: 28px !important;
+            max-width: 28px !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+            text-align: center !important;
+        }
+
+        .schedule-full-card .day-cell > div,
+        .schedule-full-card td:nth-child(n+12) > div {
+            width: 22px !important;
+            height: 22px !important;
+            min-width: 22px !important;
+            max-width: 22px !important;
+            margin: 0 auto !important;
+            font-size: 10px !important;
+        }
+
+        .schedule-full-card select {
+            max-width: 100% !important;
+            min-width: 0 !important;
+            font-size: 10px !important;
+            padding-left: 4px !important;
+            padding-right: 4px !important;
+        }
+
+        .schedule-full-card .shift-select {
+            width: 56px !important;
+        }
+
+        .schedule-full-card .data-row td {
+            height: 36px !important;
+            padding-top: 4px !important;
+            padding-bottom: 4px !important;
+        }
+
+        .schedule-full-card tr[class*="bg-purple"],
+        .schedule-full-card tr[class*="bg-blue"] {
+            height: 30px !important;
+        }
+
+        .schedule-full-card .table-footer-summary th,
+        .schedule-full-card .table-footer-summary td {
+            font-size: 10px !important;
+            height: 26px !important;
+        }
+
+        /* Keep header compact */
+        .schedule-full-card > div:first-child {
+            padding: 12px 18px !important;
+            min-height: auto !important;
+        }
+
+        /* Hide horizontal overflow from page, table itself still fits */
+        body {
+            overflow-x: hidden !important;
+        }
+
 </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen antialiased selection:bg-indigo-500/30">
@@ -2466,6 +2588,8 @@ window.previewDeleteEmployeeByCode = function() {
             applyRolePermissions();
         
             applyLanguage();
+        
+            markMainScheduleFullWidth();
         }
 
         
@@ -2583,6 +2707,8 @@ function renderTable() {
             document.getElementById("empty-state").classList.toggle("hidden", count > 0);
         
             applyLanguage();
+        
+            markMainScheduleFullWidth();
         }
 
         function renderDailySummary(filtered) {
@@ -4565,8 +4691,18 @@ function applyLanguage(){
         function markMainScheduleFullWidth() {
             const tbody = document.getElementById("staff-table-body");
             if (!tbody) return;
+            const table = tbody.closest("table");
             const card = tbody.closest(".bg-slate-900") || tbody.closest("div");
-            if (card) card.classList.add("schedule-full-card");
+            if (card) {
+                card.classList.add("schedule-full-card");
+                card.style.width = "calc(100vw - 18px)";
+                card.style.maxWidth = "calc(100vw - 18px)";
+            }
+            if (table) {
+                table.style.tableLayout = "fixed";
+                table.style.width = "100%";
+                table.style.minWidth = "100%";
+            }
             let el = card?.parentElement;
             for (let i = 0; el && i < 4; i++, el = el.parentElement) {
                 el.style.maxWidth = "none";
