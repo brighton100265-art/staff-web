@@ -64,7 +64,6 @@
             color: #7dd3fc !important;
         }
 
-
         .resigned-row {
             position: relative;
             background: linear-gradient(90deg, rgba(239, 68, 68, 0.14), rgba(239, 68, 68, 0.045)) !important;
@@ -246,7 +245,6 @@
                             ค้นหา
                         </button>
                     </div>
-
                 </div>
 
             </div>
@@ -271,7 +269,7 @@
                             + เพิ่ม/ลบพนักงาน
                         </button>
                         <button onclick="openAddShiftModal()" class="leader-only px-3 py-2 bg-amber-600/20 hover:bg-amber-600/35 text-amber-400 border border-amber-500/30 font-semibold text-xs rounded-xl transition-all">
-                            เพิ่มกะ
+                            จัดการกะ
                         </button>
                     </div>
                 </div>
@@ -380,8 +378,6 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                         <th class="px-4 py-3 text-left">เวลาพัก</th>
                         <th class="px-4 py-3 text-left">สถานะ</th>
                         <th class="px-4 py-3 text-center">ตรวจแล้ว</th>
-                        <th class="px-4 py-3 text-left">ผู้ตรวจ</th>
-                        <th class="px-4 py-3 text-left">เวลาตรวจ</th>
                     </tr>
                 </thead>
                 <tbody id="wfh-present-table-body" class="divide-y divide-slate-800"></tbody>
@@ -410,17 +406,17 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
         <div id="resigned-mini-control" class="flex items-center justify-between gap-3 px-5 py-3 border-t border-slate-800 bg-slate-950/20">
             <label class="flex items-center gap-2 text-xs text-slate-300">
                 <input id="hide-resigned-toggle" type="checkbox" checked onchange="updateDynamicUI()" class="accent-rose-500">
-                ซ่อนพนักงานที่ออกแล้ว
+                ซ่อนพนักงานที่ออกแล้วจากตารางหลัก
             </label>
             <button onclick="openResignedModal()" class="px-4 py-2 rounded-xl bg-rose-600/10 hover:bg-rose-600/20 text-rose-400 border border-rose-500/40 font-semibold text-xs transition-all">
-                ⛔ ประวัติพนักงานออก
+                ⛔ จัดการประวัติพนักงานออก
             </button>
         </div>
 
         <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse table-auto min-w-[1450px]">
                     <thead>
-                        <tr class="${isResigned ? 'resigned-row' : ''} ${isResigned && document.getElementById('hide-resigned-toggle')?.checked ? 'hidden' : ''} bg-slate-950/80 text-xs text-slate-400 font-semibold tracking-wider border-b border-slate-800">
+                        <tr class="bg-slate-950/80 text-xs text-slate-400 font-semibold tracking-wider border-b border-slate-800">
                             <th class="py-3 px-3 text-center w-12 sticky left-0 bg-slate-950 z-20">ลำดับ</th>
                             <th class="py-3 px-2 text-center w-16">ทีม</th>
                             <th class="py-3 px-2 w-20 text-center">ยศ</th>
@@ -491,7 +487,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
             </div>
 
             <div class="border-t border-slate-800 pt-4 mt-4 space-y-3">
-                <h4 class="text-sm font-bold text-rose-400">ลบพนักงานที่ออก</h4>
+                <h4 class="text-sm font-bold text-rose-400">ลบพนักงานออกแบบถาวร</h4>
 
                 <div>
                     <label class="text-xs text-slate-400 font-medium">รหัสพนักงาน</label>
@@ -517,10 +513,11 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
     <div id="add-shift-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl">
             <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                <h3 class="text-base font-bold text-slate-200">เพิ่มกะใหม่</h3>
+                <h3 class="text-base font-bold text-slate-200">จัดการกะการทำงาน</h3>
                 <button onclick="closeAddShiftModal()" class="text-slate-400 hover:text-slate-200">ปิด</button>
             </div>
             <div class="space-y-3">
+                <h4 class="text-sm font-bold text-emerald-400">เพิ่มกะใหม่</h4>
                 <div><label class="text-xs text-slate-400 font-medium">รหัสกะ</label><input type="text" id="new-shift-code" placeholder="S15" class="w-full mt-1 bg-slate-950 border border-slate-800 text-slate-200 px-3 py-2 rounded-xl text-sm uppercase"></div>
                 <div><label class="text-xs text-slate-400 font-medium">เวลาเข้างาน</label><input type="text" id="new-shift-login" placeholder="15.00-00.00" class="w-full mt-1 bg-slate-950 border border-slate-800 text-slate-200 px-3 py-2 rounded-xl text-sm"></div>
                 <div><label class="text-xs text-slate-400 font-medium">เวลาพัก</label><input type="text" id="new-shift-rest" placeholder="19.00-20.00" class="w-full mt-1 bg-slate-950 border border-slate-800 text-slate-200 px-3 py-2 rounded-xl text-sm"></div>
@@ -530,7 +527,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                 <h4 class="text-sm font-bold text-rose-400">ลบกะที่ไม่ใช้</h4>
                 <p class="text-[11px] text-slate-500">เลือกกะที่ต้องการลบ ระบบจะไม่ให้ลบถ้ายังมีพนักงานใช้กะนั้นอยู่</p>
                 <select id="delete-shift-code" class="w-full bg-slate-950 border border-slate-800 text-slate-200 px-3 py-2 rounded-xl text-sm"></select>
-                <button onclick="deleteShift()" class="w-full px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white text-sm font-medium rounded-xl">ลบกะ</button>
+                <button onclick="deleteShift()" class="w-full px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white text-sm font-medium rounded-xl">ลบกะนี้</button>
             </div>
             </div>
         </div>
@@ -574,30 +571,6 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
             </div>
         </div>
     </div>
-
-
-
-    <div id="wfh-present-floating-panel" class="fixed right-6 bottom-6 z-[99990] w-[420px] max-w-[calc(100vw-2rem)] hidden">
-        <div class="bg-slate-900/95 backdrop-blur-xl border border-emerald-500/30 rounded-2xl shadow-2xl overflow-hidden">
-            <div class="flex items-center justify-between gap-3 px-4 py-3 border-b border-slate-800">
-                <div>
-                    <div class="text-sm font-bold text-emerald-300">WFH มาทำงาน</div>
-                    <div id="wfh-present-floating-date" class="text-[11px] text-slate-500"></div>
-                </div>
-                <div class="flex gap-2">
-                    <button onclick="copyWFHPresentToday()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-semibold text-xs rounded-xl">
-                        คัดลอก
-                    </button>
-                    <button onclick="closeWFHPresentPanel()" class="px-3 py-1.5 bg-rose-600/20 hover:bg-rose-600/35 text-rose-400 border border-rose-500/30 font-semibold text-xs rounded-xl">
-                        ปิด
-                    </button>
-                </div>
-            </div>
-            <div id="wfh-present-verify-list" class="max-h-96 overflow-y-auto bg-slate-950/90 text-slate-100 text-xs"></div>
-            <textarea id="wfh-present-output" readonly class="w-full h-40 bg-slate-950/90 text-slate-100 px-4 py-3 text-xs outline-none resize-y font-mono leading-5 border-t border-slate-800"></textarea>
-        </div>
-    </div>
-
 
 
     <div id="resigned-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-[999999] hidden">
@@ -725,888 +698,8 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                         "shift": "S9",
                         "offs": [],
                         "leaves": []
-            },
-            {
-                        "id": 4,
-                        "team": "WIN1",
-                        "rank": "S2",
-                        "name": "TAXTAR",
-                        "code": "260312602",
-                        "type": "WFH",
-                        "shift": "S9",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 5,
-                        "team": "WIN1",
-                        "rank": "S2",
-                        "name": "PURE",
-                        "code": "260321601",
-                        "type": "WFH",
-                        "shift": "S9",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 6,
-                        "team": "WIN1",
-                        "rank": "S2",
-                        "name": "OLIVTTA",
-                        "code": "251215601",
-                        "type": "Office",
-                        "shift": "S9",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 7,
-                        "team": "WIN1",
-                        "rank": "S2",
-                        "name": "ETHAN",
-                        "code": "251220601",
-                        "type": "WFH",
-                        "shift": "S9",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 8,
-                        "team": "WIN1",
-                        "rank": "S2",
-                        "name": "SNACK",
-                        "code": "260127603",
-                        "type": "WFH",
-                        "shift": "S9",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 9,
-                        "team": "WIN1",
-                        "rank": "S2",
-                        "name": "CHARLOTTE",
-                        "code": "260115601",
-                        "type": "Office",
-                        "shift": "S9",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 10,
-                        "team": "WIN1",
-                        "rank": "S2",
-                        "name": "TAWAN",
-                        "code": "251213601",
-                        "type": "Office",
-                        "shift": "S9",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 11,
-                        "team": "WIN1",
-                        "rank": "S2",
-                        "name": "YUTA",
-                        "code": "251218601",
-                        "type": "WFH",
-                        "shift": "S9",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 12,
-                        "team": "WIN1",
-                        "rank": "S2",
-                        "name": "MIKEE",
-                        "code": "260203605",
-                        "type": "WFH",
-                        "shift": "S9",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 13,
-                        "team": "WIN1",
-                        "rank": "S2",
-                        "name": "BOONPERM",
-                        "code": "260407602",
-                        "type": "WFH",
-                        "shift": "S9",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 14,
-                        "team": "WIN1",
-                        "rank": "S2",
-                        "name": "FAREEN",
-                        "code": "260507601",
-                        "type": "WFH",
-                        "shift": "S9",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 15,
-                        "team": "WIN1",
-                        "rank": "S2",
-                        "name": "ARNOLD",
-                        "code": "250711601",
-                        "type": "Office",
-                        "shift": "S12",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 16,
-                        "team": "WIN1",
-                        "rank": "S2",
-                        "name": "NANNYS",
-                        "code": "241030605",
-                        "type": "Office",
-                        "shift": "S12",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 17,
-                        "team": "WIN1",
-                        "rank": "S2",
-                        "name": "NOVA",
-                        "code": "251214601",
-                        "type": "Office",
-                        "shift": "S12",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 18,
-                        "team": "WIN1",
-                        "rank": "S2",
-                        "name": "ALAN",
-                        "code": "241030606",
-                        "type": "Office",
-                        "shift": "S12",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 19,
-                        "team": "WIN1",
-                        "rank": "S2",
-                        "name": "AILEEN",
-                        "code": "250225604",
-                        "type": "Office",
-                        "shift": "S12",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 20,
-                        "team": "WIN1",
-                        "rank": "S2",
-                        "name": "TIGER",
-                        "code": "250901601",
-                        "type": "Office",
-                        "shift": "S12",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 21,
-                        "team": "WIN1",
-                        "rank": "S2",
-                        "name": "SLEEP",
-                        "code": "251001601",
-                        "type": "Office",
-                        "shift": "S12",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 22,
-                        "team": "WIN1",
-                        "rank": "S2",
-                        "name": "HANI",
-                        "code": "250530601",
-                        "type": "Office",
-                        "shift": "S12",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 23,
-                        "team": "WIN1",
-                        "rank": "S2",
-                        "name": "DARA",
-                        "code": "260106603",
-                        "type": "WFH",
-                        "shift": "S12",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 24,
-                        "team": "WIN1",
-                        "rank": "S2",
-                        "name": "LINMI",
-                        "code": "251125601",
-                        "type": "WFH",
-                        "shift": "S12",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 25,
-                        "team": "WIN1",
-                        "rank": "S2",
-                        "name": "DRAGON",
-                        "code": "260102603",
-                        "type": "Office",
-                        "shift": "S12",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 26,
-                        "team": "WIN1",
-                        "rank": "S2",
-                        "name": "MOON",
-                        "code": "260127601",
-                        "type": "Office",
-                        "shift": "S12",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 27,
-                        "team": "WIN1",
-                        "rank": "S2",
-                        "name": "JULLY",
-                        "code": "260103601",
-                        "type": "Office",
-                        "shift": "S12",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 28,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "YADA",
-                        "code": "251017603",
-                        "type": "Office",
-                        "shift": "S9",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 29,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "GIFTZII",
-                        "code": "250425602",
-                        "type": "Office",
-                        "shift": "S9",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 30,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "MEME",
-                        "code": "250425601",
-                        "type": "Office",
-                        "shift": "S9",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 31,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "NEW",
-                        "code": "251001602",
-                        "type": "Office",
-                        "shift": "S9",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 32,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "ROSALIA",
-                        "code": "251201602",
-                        "type": "Office",
-                        "shift": "S9",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 33,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "SHAWTY",
-                        "code": "251114601",
-                        "type": "Office",
-                        "shift": "S9",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 34,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "TOP1",
-                        "code": "250927602",
-                        "type": "Office",
-                        "shift": "S9",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 35,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "BAKA",
-                        "code": "250922601",
-                        "type": "WFH",
-                        "shift": "S9",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 36,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "DINO",
-                        "code": "251223604",
-                        "type": "Office",
-                        "shift": "S9",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 37,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "ISLA",
-                        "code": "260120608",
-                        "type": "WFH",
-                        "shift": "S9",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 38,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "MIKEY",
-                        "code": "251223603",
-                        "type": "WFH",
-                        "shift": "S9",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 39,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "PANDA",
-                        "code": "260203608",
-                        "type": "WFH",
-                        "shift": "S9",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 40,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "PEE",
-                        "code": "260108601",
-                        "type": "WFH",
-                        "shift": "S9",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 41,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "SEE",
-                        "code": "260129602",
-                        "type": "WFH",
-                        "shift": "S9",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 42,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "SUN",
-                        "code": "260129601",
-                        "type": "WFH",
-                        "shift": "S9",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 43,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "ZERO",
-                        "code": "260210601",
-                        "type": "WFH",
-                        "shift": "S9",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 44,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "RUCHA",
-                        "code": "240412602",
-                        "type": "WFH",
-                        "shift": "S9",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 45,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "JUJU",
-                        "code": "260303602",
-                        "type": "WFH",
-                        "shift": "S9",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 46,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "BAOBEI",
-                        "code": "260124601",
-                        "type": "WFH",
-                        "shift": "S9",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 47,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "BANK",
-                        "code": "260303603",
-                        "type": "WFH",
-                        "shift": "S9",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 48,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "TONLIW",
-                        "code": "251012602",
-                        "type": "Office",
-                        "shift": "S9",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 49,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "VESPER",
-                        "code": "260228605",
-                        "type": "WFH",
-                        "shift": "S9",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 50,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "RJ",
-                        "code": "260210603",
-                        "type": "WFH",
-                        "shift": "S9",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 51,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "DEEDO",
-                        "code": "260221601",
-                        "type": "WFH",
-                        "shift": "S9",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 52,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "CAT",
-                        "code": "251225602",
-                        "type": "WFH",
-                        "shift": "S9",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 53,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "CHERLYN",
-                        "code": "260217601",
-                        "type": "WFH",
-                        "shift": "S9",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 54,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "MIND",
-                        "code": "251014601",
-                        "type": "WFH",
-                        "shift": "S9",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 55,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "TIYA",
-                        "code": "260228602",
-                        "type": "WFH",
-                        "shift": "S9",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 56,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "NOAH",
-                        "code": "240412603",
-                        "type": "Office",
-                        "shift": "S12",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 57,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "NADIR",
-                        "code": "250422604",
-                        "type": "Office",
-                        "shift": "S12",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 58,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "ALPHA",
-                        "code": "250915602",
-                        "type": "Office",
-                        "shift": "S12",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 59,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "BIRD",
-                        "code": "250916604",
-                        "type": "Office",
-                        "shift": "S12",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 60,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "LEMON",
-                        "code": "260205602",
-                        "type": "WFH",
-                        "shift": "S12",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 61,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "PIM",
-                        "code": "260112604",
-                        "type": "WFH",
-                        "shift": "S12",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 62,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "HUNNY",
-                        "code": "251012603",
-                        "type": "Office",
-                        "shift": "S12",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 63,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "KIMMY",
-                        "code": "250923602",
-                        "type": "Office",
-                        "shift": "S12",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 64,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "CHEKI",
-                        "code": "251223602",
-                        "type": "WFH",
-                        "shift": "S12",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 65,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "IVY",
-                        "code": "260203610",
-                        "type": "WFH",
-                        "shift": "S12",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 66,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "BB",
-                        "code": "260310601",
-                        "type": "WFH",
-                        "shift": "S12",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 67,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "LUCY1",
-                        "code": "260129603",
-                        "type": "WFH",
-                        "shift": "S12",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 68,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "CHEKI99",
-                        "code": "251223602",
-                        "type": "WFH",
-                        "shift": "S12",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 69,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "LEGO",
-                        "code": "250915601",
-                        "type": "Office",
-                        "shift": "S12",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 70,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "WHISKEY",
-                        "code": "250923601",
-                        "type": "Office",
-                        "shift": "S12",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 71,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "RAY",
-                        "code": "251125602",
-                        "type": "Office",
-                        "shift": "S12",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 72,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "JANE",
-                        "code": "251213605",
-                        "type": "Office",
-                        "shift": "S12",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 73,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "POSH",
-                        "code": "251210602",
-                        "type": "WFH",
-                        "shift": "S12",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 74,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "NYE",
-                        "code": "251225601",
-                        "type": "WFH",
-                        "shift": "S12",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 75,
-                        "team": "WIN2",
-                        "rank": "S2",
-                        "name": "NEKO",
-                        "code": "260228604",
-                        "type": "WFH",
-                        "shift": "S12",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 76,
-                        "team": "WIN3",
-                        "rank": "S2",
-                        "name": "MILLI",
-                        "code": "250305604",
-                        "type": "Office",
-                        "shift": "S21",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 77,
-                        "team": "WIN3",
-                        "rank": "S2",
-                        "name": "NAT",
-                        "code": "250305603",
-                        "type": "Office",
-                        "shift": "S21",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 78,
-                        "team": "WIN3",
-                        "rank": "S2",
-                        "name": "FENDI",
-                        "code": "250620601",
-                        "type": "Office",
-                        "shift": "S21",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 79,
-                        "team": "WIN3",
-                        "rank": "S2",
-                        "name": "FABIE",
-                        "code": "240423601",
-                        "type": "Office",
-                        "shift": "S21",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 80,
-                        "team": "WIN3",
-                        "rank": "S2",
-                        "name": "WIN",
-                        "code": "260104604",
-                        "type": "Office",
-                        "shift": "S21",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 81,
-                        "team": "WIN3",
-                        "rank": "S2",
-                        "name": "OSAMA",
-                        "code": "251214602",
-                        "type": "Office",
-                        "shift": "S21",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 82,
-                        "team": "WIN3",
-                        "rank": "S2",
-                        "name": "CHARLIE",
-                        "code": "260117604",
-                        "type": "Office",
-                        "shift": "S9",
-                        "offs": [],
-                        "leaves": []
-            },
-            {
-                        "id": 83,
-                        "team": "WIN3",
-                        "rank": "S2",
-                        "name": "ING",
-                        "code": "260324601",
-                        "type": "WFH",
-                        "shift": "S12",
-                        "offs": [],
-                        "leaves": []
             }
-];
+        ];
         const defaultShiftTimes = {
             "S9": {
                         "login": "09.30-18.30",
@@ -1620,7 +713,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                         "login": "21.00-05.00",
                         "rest": "21.00-05.00"
             }
-};
+        };
 
         window.currentStaffList = JSON.parse(JSON.stringify(defaultStaff));
         window.shiftTimes = JSON.parse(JSON.stringify(defaultShiftTimes));
@@ -1679,6 +772,22 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
         let db = null, auth = null, isCloudMode = false, isApplyingSnapshot = false;
 
         function normalizeCode(code) { return String(code || "").trim().toUpperCase(); }
+        
+        function cleanupInvalidShifts() {
+            if (window.shiftTimes) {
+                ["undefined", "null", "", "ALL"].forEach(k => {
+                    if (window.shiftTimes[k]) delete window.shiftTimes[k];
+                });
+            }
+            if (window.currentStaffList) {
+                window.currentStaffList.forEach(p => {
+                    if (!p.shift || p.shift === "undefined" || p.shift === "null" || p.shift.trim() === "") {
+                        p.shift = "S9"; 
+                    }
+                });
+            }
+        }
+
         function ensureStaffShape(list) {
             return (Array.isArray(list) ? list : []).map((p, idx) => ({
                 id: p.id || Date.now() + idx,
@@ -1738,6 +847,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                 const parsedShift = JSON.parse(s2);
                 if (parsedShift && Object.keys(parsedShift).length) window.shiftTimes = parsedShift;
             }
+            cleanupInvalidShifts();
         }
 
         function refreshCurrentUserFromStaff() {
@@ -1874,12 +984,12 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                 window.attendanceChecks = data.attendanceChecks && typeof data.attendanceChecks === "object" ? data.attendanceChecks : {};
                 window.resignedRecords = data.resignedRecords && typeof data.resignedRecords === "object" ? data.resignedRecords : {};
 
+                cleanupInvalidShifts();
                 ensureStaffPositions();
                 saveLocalBackup();
                 return;
             }
 
-            // ถ้าเดือนนี้ยังไม่มีข้อมูล ให้ดึงจากเอกสาร Cloud เดิมก่อน เพื่อไม่ให้ข้อมูลดูเหมือนหาย
             let migrated = false;
             for (const oldId of legacyCloudDocIds) {
                 try {
@@ -1905,6 +1015,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                 window.shiftTimes = JSON.parse(JSON.stringify(defaultShiftTimes));
             }
 
+            cleanupInvalidShifts();
             ensureStaffPositions();
 
             await setDoc(ref, {
@@ -1940,10 +1051,11 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                 }
                 if (data.shiftTimes && Object.keys(data.shiftTimes).length) {
                     window.shiftTimes = data.shiftTimes;
+                }
                 window.attendanceChecks = data.attendanceChecks && typeof data.attendanceChecks === "object" ? data.attendanceChecks : (window.attendanceChecks || {});
                 window.resignedRecords = data.resignedRecords && typeof data.resignedRecords === "object" ? data.resignedRecords : (window.resignedRecords || {});
-                }
-
+                
+                cleanupInvalidShifts();
                 ensureStaffPositions();
                 saveLocalBackup();
                 updateDynamicUI();
@@ -1982,6 +1094,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
         }
 
         async function commitData() {
+            cleanupInvalidShifts();
             ensureStaffPositions();
             saveLocalBackup();
             if (!isApplyingSnapshot && isCloudMode && auth?.currentUser && db) {
@@ -2050,12 +1163,14 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
         }
 
         function getSortedShiftKeys() {
-            return Object.keys(window.shiftTimes).sort((a, b) => {
-                const na = getShiftNumber(a);
-                const nb = getShiftNumber(b);
-                if (na !== nb) return na - nb;
-                return String(a).localeCompare(String(b));
-            });
+            return Object.keys(window.shiftTimes || {})
+                .filter(k => k && k !== "undefined" && k !== "null" && String(k).trim() !== "")
+                .sort((a, b) => {
+                    const na = getShiftNumber(a);
+                    const nb = getShiftNumber(b);
+                    if (na !== nb) return na - nb;
+                    return String(a).localeCompare(String(b));
+                });
         }
 
         function getShiftClass(shift) {
@@ -2095,12 +1210,10 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
             if (modalShift) modalShift.innerHTML = "";
             if (deleteShiftSelect) deleteShiftSelect.innerHTML = "";
 
-            const keys = typeof getSortedShiftKeys === "function"
-                ? getSortedShiftKeys()
-                : Object.keys(window.shiftTimes || {}).sort((a,b)=>String(a).localeCompare(String(b), "en"));
+            const keys = getSortedShiftKeys();
 
             keys.forEach(s => {
-                const label = typeof getShiftOptionLabel === "function" ? getShiftOptionLabel(s) : s;
+                const label = getShiftOptionLabel(s);
                 if (filterShift) filterShift.innerHTML += `<option value="${s}">เฉพาะกะ ${label}</option>`;
                 if (modalShift) modalShift.innerHTML += `<option value="${s}">${label}</option>`;
                 if (deleteShiftSelect) deleteShiftSelect.innerHTML += `<option value="${s}">${label}</option>`;
@@ -2276,38 +1389,42 @@ window.previewDeleteEmployeeByCode = function() {
             const fTeam = document.getElementById("filter-team").value;
             const fShift = document.getElementById("filter-shift").value;
             const q = document.getElementById("search-name").value.toLowerCase().trim();
+            const hideResigned = document.getElementById("hide-resigned-toggle")?.checked;
+            
             tbody.innerHTML = "";
-            let count = 0, filtered = [], lastGroup = "";
+            let count = 0, lastGroup = "";
             ensureStaffPositions();
-            const list = sortedStaffStable(window.currentStaffList);
+            
+            const allSorted = sortedStaffStable(window.currentStaffList);
+            const activeStaff = [];
+            const resignedStaff = [];
 
-            list.forEach((p) => {
-                if (!window.currentUser || !canViewTeam(p.team)) return;
-                if (fTeam !== "ALL" && p.team !== fTeam) return;
-                if (fShift !== "ALL" && p.shift !== fShift) return;
-                if (q && !p.name.toLowerCase().includes(q) && !String(p.code).includes(q)) return;
+            allSorted.forEach(p => {
+                if (isResignedEmployee(p)) resignedStaff.push(p);
+                else activeStaff.push(p);
+            });
 
-                const groupKey = `${p.team}-${p.rank}`;
-                if (groupKey !== lastGroup) {
-                    const gr = document.createElement("tr");
-                    const cls = p.rank === "S4" ? "bg-purple-950/30 text-purple-300 border-purple-500/20" : "bg-blue-950/20 text-blue-300 border-blue-500/20";
-                    gr.className = `border-y ${cls}`;
-                    gr.innerHTML = `<td colspan="42" class="py-2 px-4 text-xs font-bold tracking-wide">${p.team} | ${p.rank} ${getRankLabel(p.rank)}</td>`;
-                    tbody.appendChild(gr);
-                    lastGroup = groupKey;
-                }
+            const renderRowFn = (p, isResignedRow) => {
+                if (!window.currentUser || !canViewTeam(p.team)) return null;
+                if (fTeam !== "ALL" && p.team !== fTeam) return null;
+                if (fShift !== "ALL" && p.shift !== fShift) return null;
+                if (q && !p.name.toLowerCase().includes(q) && !String(p.code).includes(q)) return null;
 
                 count++;
-                filtered.push(p);
                 const i = count;
-                const editable = canEditTeam(p.team);
-                const times = window.shiftTimes[p.shift] || { login: "", rest: "" };
+                const editable = canEditTeam(p.team) && !isResignedRow;
+                const times = window.shiftTimes[p.shift] || { login: "-", rest: "-" };
                 const tOffs = p.offs.length, tLeaves = p.leaves.length;
                 const tCol = p.team === "WIN2" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : p.team === "WIN3" ? "bg-indigo-500/10 text-indigo-400 border-indigo-500/20" : "bg-rose-500/10 text-rose-400 border-rose-500/20";
                 const typeCol = p.type === "WFH" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-indigo-500/10 text-indigo-400 border-indigo-500/20";
                 const shiftCol = getShiftClass(p.shift);
                 const disabled = editable ? "" : "disabled";
                 const sOpts = getSortedShiftKeys().map(s => `<option value="${s}" ${p.shift === s ? "selected" : ""}>${s}</option>`).join("");
+                const trClass = isResignedRow ? "data-row border-b border-slate-800 resigned-row" : "data-row border-b border-slate-800";
+                
+                let nameDisplay = isResignedRow 
+                    ? `<span class="resigned-name">${p.name}</span> <span class="resigned-badge ml-1 text-[10px]">ออกแล้ว ${getResignDateText(getResignedRecordByStaff(p))}</span>`
+                    : `<span class="${editable ? 'cursor-edit hover:text-indigo-400' : 'text-slate-300'}" ${editable ? `ondblclick="editName(${p.id}, this)"` : ""}>${p.name}</span>`;
 
                 let html = `<td class="py-2 px-2 text-center text-slate-500 sticky left-0 bg-slate-900/90 border-r border-slate-800 z-10 sticky-left">${i}</td>
                     <td class="py-2 px-1 text-center"><span class="px-2 py-0.5 text-[10px] font-bold border rounded ${tCol}">${p.team}</span></td>
@@ -2317,9 +1434,9 @@ window.previewDeleteEmployeeByCode = function() {
                             <option value="S4" ${p.rank === "S4" ? "selected" : ""}>S4</option>
                         </select>
                     </td>
-                    <td class="py-2 px-3 text-slate-200"><span class="${editable ? "cursor-edit hover:text-indigo-400" : "text-slate-300"}" ${editable ? `ondblclick="editName(${p.id}, this)"` : ""}>${p.name}</span></td>
+                    <td class="py-2 px-3 text-slate-200">${nameDisplay}</td>
                     <td class="py-2 px-3 text-slate-400 text-xs font-mono">${p.code}</td>
-                    <td class="py-2 px-2 text-center"><select ${!canEditTeam(p.team) ? "disabled" : ""} onchange="changeWorkType(${p.id}, this.value)" class="border px-2 py-0.5 rounded-full text-[10px] font-semibold outline-none ${p.type === "WFH" ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" : "bg-indigo-500/15 text-indigo-400 border-indigo-500/30"} disabled:opacity-50 disabled:cursor-not-allowed">
+                    <td class="py-2 px-2 text-center"><select ${disabled} onchange="changeWorkType(${p.id}, this.value)" class="border px-2 py-0.5 rounded-full text-[10px] font-semibold outline-none ${p.type === "WFH" ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" : "bg-indigo-500/15 text-indigo-400 border-indigo-500/30"} disabled:opacity-50 disabled:cursor-not-allowed">
                                         <option value="Office" ${p.type === "Office" ? "selected" : ""}>Office</option>
                                         <option value="WFH" ${p.type === "WFH" ? "selected" : ""}>WFH</option>
                                     </select></td>
@@ -2337,16 +1454,55 @@ window.previewDeleteEmployeeByCode = function() {
                     let txt = "•", color = "text-blue-400";
                     if (isO) { bg = "bg-rose-950/30"; txt = "O"; color = "text-red-400 font-bold"; }
                     else if (isL) { bg = "bg-purple-950/30"; txt = "L"; color = "text-purple-400 font-bold"; }
-                    html += `<td onclick="toggleDayOff(${p.id}, ${d})" data-day="${d}" data-name="${p.name}" data-team="${p.team}" class="day-cell text-center ${editable ? "cursor-pointer" : "cursor-not-allowed opacity-70"} p-0.5 border-l border-slate-800/40 text-[11px] ${bg}"><div class="w-7 h-7 flex items-center justify-center mx-auto rounded-md ${color}">${txt}</div></td>`;
+                    html += `<td onclick="${editable ? `toggleDayOff(${p.id}, ${d})` : `void(0)`}" data-day="${d}" data-name="${p.name}" data-team="${p.team}" class="day-cell text-center ${editable ? "cursor-pointer" : "cursor-not-allowed opacity-70"} p-0.5 border-l border-slate-800/40 text-[11px] ${bg}"><div class="w-7 h-7 flex items-center justify-center mx-auto rounded-md ${color}">${txt}</div></td>`;
                 }
                 const tr = document.createElement("tr");
-                tr.className = "data-row border-b border-slate-800";
+                tr.className = trClass;
                 tr.innerHTML = html;
-                tbody.appendChild(tr);
+                return { tr, p };
+            };
+
+            const renderedFiltered = [];
+
+            // Render Active Staff
+            activeStaff.forEach(p => {
+                const res = renderRowFn(p, false);
+                if (!res) return;
+                
+                const groupKey = `${p.team}-${p.rank}`;
+                if (groupKey !== lastGroup) {
+                    const gr = document.createElement("tr");
+                    const cls = p.rank === "S4" ? "bg-purple-950/30 text-purple-300 border-purple-500/20" : "bg-blue-950/20 text-blue-300 border-blue-500/20";
+                    gr.className = `border-y ${cls}`;
+                    gr.innerHTML = `<td colspan="42" class="py-2 px-4 text-xs font-bold tracking-wide">${p.team} | ${p.rank} ${getRankLabel(p.rank)}</td>`;
+                    tbody.appendChild(gr);
+                    lastGroup = groupKey;
+                }
+                tbody.appendChild(res.tr);
+                renderedFiltered.push(res.p);
             });
 
-            renderDailySummary(filtered);
-            document.getElementById("empty-state").classList.toggle("hidden", count > 0);
+            // Render Resigned Staff at the Bottom
+            if (!hideResigned && resignedStaff.length > 0) {
+                let hasAppendedResignedHeader = false;
+                resignedStaff.forEach(p => {
+                    const res = renderRowFn(p, true);
+                    if (!res) return;
+                    
+                    if (!hasAppendedResignedHeader) {
+                        const gr = document.createElement("tr");
+                        gr.className = `border-y bg-rose-950/20 text-rose-300 border-rose-500/20`;
+                        gr.innerHTML = `<td colspan="42" class="py-3 px-4 text-xs font-bold tracking-wide flex items-center gap-2">⛔ พนักงานที่ลาออกแล้ว <span class="font-normal text-[10px] text-rose-400/80">(แสดงผลเพื่อดูประวัติ)</span></td>`;
+                        tbody.appendChild(gr);
+                        hasAppendedResignedHeader = true;
+                    }
+                    tbody.appendChild(res.tr);
+                    renderedFiltered.push(res.p);
+                });
+            }
+
+            renderDailySummary(renderedFiltered);
+            document.getElementById("empty-state").classList.toggle("hidden", renderedFiltered.length === 0);
         }
 
         function renderDailySummary(filtered) {
@@ -2354,14 +1510,16 @@ window.previewDeleteEmployeeByCode = function() {
             tfoot.innerHTML = "";
             if (!filtered.length) return;
             const ds = {};
-            getSortedShiftKeys().forEach(s => ds[s] = Array(32).fill(0));
+            const validShifts = getSortedShiftKeys();
+            validShifts.forEach(s => ds[s] = Array(32).fill(0));
+            
             const doff = Array(32).fill(0), dl = Array(32).fill(0);
 
             filtered.forEach(p => {
                 for (let d=1; d<=31; d++) {
                     if (p.offs.includes(d)) doff[d]++;
                     else if (p.leaves.includes(d)) dl[d]++;
-                    else if (ds[p.shift]) ds[p.shift][d]++;
+                    else if (p.shift && ds[p.shift]) ds[p.shift][d]++;
                 }
             });
 
@@ -2372,13 +1530,13 @@ window.previewDeleteEmployeeByCode = function() {
             };
             const colors = ["text-emerald-400","text-amber-400","text-indigo-400","text-pink-400","text-cyan-400"];
             let i = 0;
-            getSortedShiftKeys().forEach(s => tfoot.innerHTML += row(`รวมกะ ${s}`, ds[s], colors[i++ % colors.length], "bg-slate-900/60"));
+            validShifts.forEach(s => tfoot.innerHTML += row(`รวมกะ ${s}`, ds[s], colors[i++ % colors.length], "bg-slate-900/60"));
             tfoot.innerHTML += row("รวมหยุด (O)", doff, "text-red-400", "bg-rose-950/20");
             tfoot.innerHTML += row("รวมลา (L)", dl, "text-purple-400", "bg-purple-950/20");
         }
 
         function updateStats() {
-            const list = window.currentStaffList.filter(p => window.currentUser && canViewTeam(p.team));
+            const list = window.currentStaffList.filter(p => window.currentUser && canViewTeam(p.team) && !isResignedEmployee(p));
             document.getElementById("stat-total").innerText = `${list.length} คน`;
             document.getElementById("stat-sub-types").innerText = `Office: ${list.filter(p=>p.type==="Office").length} | WFH: ${list.filter(p=>p.type==="WFH").length}`;
             const cont = document.getElementById("dashboard-widgets");
@@ -2597,12 +1755,12 @@ window.toggleDayOff = function(id, d) {
             const p = window.currentStaffList[idx];
             if (!canEditTeam(p.team)) return alert("บัญชีนี้ไม่มีสิทธิ์ลบพนักงานทีมนี้");
 
-            if (!confirm(`ยืนยันลบ ${p.name} (${p.code}) ออกจากระบบ?`)) return;
+            if (!confirm(`ยืนยันลบ ${p.name} (${p.code}) ออกจากระบบอย่างถาวร?`)) return;
 
             window.currentStaffList.splice(idx, 1);
             await commitData();
             resetDeleteEmployeePreview();
-            showToast("ลบพนักงานเรียบร้อย");
+            showToast("ลบพนักงานถาวรเรียบร้อย");
         }
 
         
@@ -2615,11 +1773,11 @@ window.toggleDayOff = function(id, d) {
 
             const usedBy = window.currentStaffList.filter(p => p.shift === code);
             if (usedBy.length) {
-                const sample = usedBy.slice(0, 8).map(p => `- ${p.name} (${p.team})`).join("\\n");
-                return alert(`ลบกะ ${code} ไม่ได้ เพราะยังมีพนักงานใช้อยู่ ${usedBy.length} คน\\n\\n${sample}${usedBy.length > 8 ? "\\n..." : ""}\\n\\nกรุณาเปลี่ยนกะพนักงานเหล่านี้ก่อน`);
+                const sample = usedBy.slice(0, 8).map(p => `- ${p.name} (${p.team})`).join("\n");
+                return alert(`ลบกะ ${code} ไม่ได้ เพราะยังมีพนักงานใช้อยู่ ${usedBy.length} คน\n\n${sample}${usedBy.length > 8 ? "\n..." : ""}\n\nกรุณาเปลี่ยนกะพนักงานเหล่านี้ก่อน`);
             }
 
-            if (!window.shiftTimes[code]) return alert("ไม่พบกะนี้");
+            if (!window.shiftTimes[code]) return alert("ไม่พบกะนี้ในระบบ");
             if (!confirm(`ยืนยันลบกะ ${code}?`)) return;
 
             delete window.shiftTimes[code];
@@ -2633,37 +1791,6 @@ window.toggleDayOff = function(id, d) {
             showToast(`ลบกะ ${code} แล้ว`);
         };
 
-
-        window.deleteShift = async function() {
-            if (!isLeaderUser()) return alert("ลบกะได้เฉพาะหัวหน้า S4 หรือ Admin");
-
-            const sel = document.getElementById("delete-shift-code");
-            const code = sel ? sel.value : "";
-            if (!code) return alert("กรุณาเลือกกะที่ต้องการลบ");
-
-            if (!window.shiftTimes || !window.shiftTimes[code]) {
-                updateShiftSelects();
-                return alert("ไม่พบกะนี้ หรือกะนี้ถูกลบไปแล้ว");
-            }
-
-            const usedBy = (window.currentStaffList || []).filter(p => p.shift === code);
-            if (usedBy.length) {
-                const sample = usedBy.slice(0, 10).map(p => `- ${p.name} (${p.team})`).join("\\n");
-                return alert(`ลบกะ ${code} ไม่ได้ เพราะยังมีพนักงานใช้อยู่ ${usedBy.length} คน\\n\\n${sample}${usedBy.length > 10 ? "\\n..." : ""}\\n\\nกรุณาเปลี่ยนกะพนักงานเหล่านี้ก่อน`);
-            }
-
-            if (!confirm(`ยืนยันลบกะ ${code}?`)) return;
-
-            delete window.shiftTimes[code];
-
-            const filterShift = document.getElementById("filter-shift");
-            if (filterShift && filterShift.value === code) filterShift.value = "ALL";
-
-            await commitData();
-            updateShiftSelects();
-            updateDynamicUI();
-            showToast(`ลบกะ ${code} แล้ว`);
-        };
 window.saveNewShift = async function() {
             if (!isLeaderUser()) return alert("เพิ่มกะได้เฉพาะหัวหน้า S4 หรือ Admin");
             const code = normalizeCode(document.getElementById("new-shift-code").value);
@@ -2774,7 +1901,7 @@ window.saveNewShift = async function() {
         window.closeAddEmployeeModal = function() { document.getElementById("add-employee-modal").classList.add("hidden"); };
         window.openAddShiftModal = function() {
             if (!window.currentUser) return alert("กรุณาเข้าสู่ระบบก่อน");
-            if (!isLeaderUser()) return alert("เพิ่ม/ลบกะได้เฉพาะหัวหน้า S4 หรือ Admin");
+            if (!isLeaderUser()) return alert("จัดการกะได้เฉพาะหัวหน้า S4 หรือ Admin");
             updateShiftSelects();
             document.getElementById("add-shift-modal").classList.remove("hidden");
         };
@@ -2930,7 +2057,7 @@ window.saveNewShift = async function() {
         function getWFHReportShiftLabelsV2() {
             const fixed = ["เช้า (09:30–18:30)", "บ่าย (12:30–21:30)", "ดึก (21:00–05:00)"];
             const extra = [];
-            const shiftKeys = typeof getSortedShiftKeys === "function" ? getSortedShiftKeys() : Object.keys(window.shiftTimes || {});
+            const shiftKeys = getSortedShiftKeys();
             shiftKeys.forEach(shift => {
                 const times = window.shiftTimes[shift] || {};
                 const label = getWFHReportShiftLabelV2(shift, times.login);
@@ -3066,7 +2193,8 @@ window.generateWFHOffReport = function() {
                 const wfhOffPeople = sortStaff(window.currentStaffList || [])
                     .filter(p => p.team === team)
                     .filter(p => isWFHForReportV4(p))
-                    .filter(p => isOffForReportV4(p, day));
+                    .filter(p => isOffForReportV4(p, day))
+                    .filter(p => !isResignedEmployee(p));
 
                 const shiftMap = {};
                 shiftLabels.forEach(label => shiftMap[label] = []);
@@ -3187,7 +2315,7 @@ window.generateWFHOffReport = function() {
             const order = ["เช้า (09:30–18:30)", "บ่าย (12:30–21:30)", "ดึก (21:00–05:00)"];
 
             (window.currentStaffList || [])
-                .filter(p => p.team === team && String(p.type || "").trim().toUpperCase() === "WFH")
+                .filter(p => p.team === team && String(p.type || "").trim().toUpperCase() === "WFH" && !isResignedEmployee(p))
                 .forEach(p => {
                     const times = window.shiftTimes[p.shift] || {};
                     const label = getWFHPresentShiftLabel(p.shift, times.login);
@@ -3206,73 +2334,7 @@ window.generateWFHOffReport = function() {
             if (panel) panel.classList.add("hidden");
         };
 
-
-        function renderWFHPresentVerifyList(people) {
-            const box = document.getElementById("wfh-present-verify-list");
-            if (!box) return;
-
-            if (!people.length) {
-                box.innerHTML = `<div class="p-4 text-slate-500">ไม่พบพนักงาน WFH ที่มาทำงานวันนี้</div>`;
-                return;
-            }
-
-            const admin = isAdminUser();
-            let html = `
-                <div class="grid grid-cols-[48px_80px_1fr_72px_86px] gap-2 px-4 py-2 bg-slate-900 border-b border-slate-800 text-slate-400 font-semibold">
-                    <div>ลำดับ</div>
-                    <div>ทีม</div>
-                    <div>ชื่อ</div>
-                    <div>กะ</div>
-                    <div>ตรวจแล้ว</div>
-                </div>
-            `;
-
-            people.forEach((p, idx) => {
-                const checked = isAttendanceVerified(p.id);
-                html += `
-                    <div class="grid grid-cols-[48px_80px_1fr_72px_86px] gap-2 px-4 py-2 border-b border-slate-800 items-center hover:bg-slate-900/70">
-                        <div class="text-slate-500">${idx + 1}</div>
-                        <div><span class="px-2 py-0.5 rounded bg-blue-500/15 text-blue-300 border border-blue-500/25">${p.team}</span></div>
-                        <div>
-                            <div class="font-semibold text-slate-100">${p.name}</div>
-                            <div class="text-[10px] text-slate-500">${p.code}</div>
-                        </div>
-                        <div class="text-slate-300">${p.shift}</div>
-                        <div>
-                            <input type="checkbox"
-                                ${checked ? "checked" : ""}
-                                ${admin ? "" : "disabled"}
-                                onchange="toggleAttendanceVerified(${p.id}, this.checked)"
-                                class="w-4 h-4 accent-emerald-500 ${admin ? "cursor-pointer" : "cursor-not-allowed"}">
-                        </div>
-                    </div>
-                `;
-            });
-
-            box.innerHTML = html;
-        }
-
-
-        
-        function getAttendanceRecord(id) {
-            const key = ensureAttendanceChecks();
-            return window.attendanceChecks?.[key]?.[String(id)] || null;
-        }
-
-        function getAttendanceCheckedTime(id) {
-            const rec = getAttendanceRecord(id);
-            if (!rec || !rec.checkedAt) return "-";
-            const t = new Date(rec.checkedAt);
-            if (Number.isNaN(t.getTime())) return "-";
-            return `${pad2(t.getHours())}:${pad2(t.getMinutes())}`;
-        }
-
-        function getAttendanceCheckerName(id) {
-            const rec = getAttendanceRecord(id);
-            return rec?.checkedBy || "-";
-        }
-
-function renderWFHPresentInline(people, day) {
+        function renderWFHPresentInline(people, day) {
             const panel = document.getElementById("wfh-present-inline-panel");
             const tbody = document.getElementById("wfh-present-table-body");
             const summary = document.getElementById("wfh-present-summary");
@@ -3290,8 +2352,6 @@ function renderWFHPresentInline(people, day) {
                 if (teamCounts[p.team] !== undefined) teamCounts[p.team]++;
             });
 
-            const checkedCount = people.filter(p => isAttendanceVerified(p.id)).length;
-
             if (summary) {
                 summary.innerHTML = `
                     <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
@@ -3304,11 +2364,7 @@ function renderWFHPresentInline(people, day) {
                     </div>
                     <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
                         <div class="text-[11px] text-slate-500">ตรวจแล้ว</div>
-                        <div class="text-sm font-bold text-slate-200">${checkedCount} / ${people.length} คน</div>
-                    </div>
-                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
-                        <div class="text-[11px] text-slate-500">ยังไม่ตรวจ</div>
-                        <div class="text-sm font-bold text-rose-400">${people.length - checkedCount} คน</div>
+                        <div class="text-sm font-bold text-slate-200">${people.filter(p => isAttendanceVerified(p.id)).length} / ${people.length} คน</div>
                     </div>
                 `;
             }
@@ -3316,7 +2372,7 @@ function renderWFHPresentInline(people, day) {
             if (!people.length) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="12" class="px-4 py-8 text-center text-slate-500">ไม่พบพนักงาน WFH ที่มาทำงานตามวันที่เลือก</td>
+                        <td colspan="10" class="px-4 py-8 text-center text-slate-500">ไม่พบพนักงาน WFH ที่มาทำงานวันนี้</td>
                     </tr>
                 `;
                 return;
@@ -3327,8 +2383,6 @@ function renderWFHPresentInline(people, day) {
                 const checked = isAttendanceVerified(p.id);
                 const admin = isAdminUser();
                 const shiftClass = typeof getShiftClass === "function" ? getShiftClass(p.shift) : "shift-other";
-                const checker = getAttendanceCheckerName(p.id);
-                const checkedTime = getAttendanceCheckedTime(p.id);
 
                 return `
                     <tr class="hover:bg-slate-800/40 transition-all">
@@ -3348,8 +2402,6 @@ function renderWFHPresentInline(people, day) {
                                 onchange="toggleAttendanceVerified(${p.id}, this.checked)"
                                 class="w-4 h-4 accent-emerald-500 ${admin ? "cursor-pointer" : "cursor-not-allowed"}">
                         </td>
-                        <td class="px-4 py-3 text-slate-300">${checker}</td>
-                        <td class="px-4 py-3 text-slate-300">${checkedTime}</td>
                     </tr>
                 `;
             }).join("");
@@ -3386,7 +2438,8 @@ window.generateWFHPresentToday = function() {
                 const shiftLabels = getPresentTeamShiftLabels(team);
                 let presentPeople = sortStaff(window.currentStaffList || [])
                     .filter(p => p.team === team)
-                    .filter(p => isWFHPresentToday(p, day));
+                    .filter(p => isWFHPresentToday(p, day))
+                    .filter(p => !isResignedEmployee(p));
 
                 if (onlyUnchecked) {
                     presentPeople = presentPeople.filter(p => !isAttendanceVerified(p.id));
@@ -3418,6 +2471,7 @@ window.generateWFHPresentToday = function() {
                 lines.push("");
             });
 
+            // out could be null since we removed floating panel, just in case
             if (out) out.value = lines.join("\n").replace(/\n{4,}/g, "\n\n\n").trim();
 
             renderWFHPresentInline(allPeople, `${day}/${pad2(month)}/${year}`);
@@ -3429,21 +2483,31 @@ window.generateWFHPresentToday = function() {
         };
 
         window.copyWFHPresentToday = function() {
-            const out = document.getElementById("wfh-present-output");
-            if (!out) return;
-            if (!out.value.trim()) generateWFHPresentToday();
-            out.focus();
-            out.select();
-            out.setSelectionRange(0, 999999);
+            const tbody = document.getElementById("wfh-present-table-body");
+            if (!tbody || tbody.children.length === 0) return generateWFHPresentToday();
+            
+            // Create a temp textarea to copy from if needed, but since we rely on clipboard API or temp element
+            let text = `📅 สรุปรายชื่อ WFH มาทำงาน\n\n`;
+            const rows = tbody.querySelectorAll("tr");
+            rows.forEach(tr => {
+                const cells = tr.querySelectorAll("td");
+                if (cells.length > 5) {
+                    text += `- ${cells[1].innerText} | ${cells[4].innerText} | กะ ${cells[5].innerText}\n`;
+                }
+            });
+            
+            const temp = document.createElement("textarea");
+            temp.value = text;
+            document.body.appendChild(temp);
+            temp.select();
             document.execCommand("copy");
-            showToast("คัดลอกรายงานแล้ว");
+            document.body.removeChild(temp);
+            showToast("คัดลอกรายชื่อสำเร็จ");
         };
 
         window.clearWFHPresentToday = function() {
-            const out = document.getElementById("wfh-present-output");
             const panel = document.getElementById("wfh-present-inline-panel");
             const tbody = document.getElementById("wfh-present-table-body");
-            if (out) out.value = "";
             if (tbody) tbody.innerHTML = "";
             if (panel) panel.classList.add("hidden");
             showToast("ล้างผลลัพธ์แล้ว");
@@ -3520,6 +2584,7 @@ window.generateWFHPresentToday = function() {
         }
 
         function getResignDateText(record) {
+            if (!record) return "";
             return `${pad2(record.day)}/${pad2(record.month)}/${record.year}`;
         }
 
@@ -3581,40 +2646,6 @@ window.generateWFHPresentToday = function() {
                 preview.classList.add("hidden");
                 preview.innerHTML = "";
             }
-        };
-
-        window.saveResignedEmployee = async function() {
-            if (!isAdminUser()) return alert("บันทึกพนักงานออกได้เฉพาะ Admin");
-
-            initResignDateControls();
-
-            const day = Number(document.getElementById("resign-day")?.value);
-            const month = Number(document.getElementById("resign-month")?.value);
-            const year = Number(document.getElementById("resign-year")?.value);
-            const code = String(document.getElementById("resign-code")?.value || "").trim();
-            const name = String(document.getElementById("resign-name")?.value || "").trim();
-
-            if (!day || !month || !year) return alert("กรุณาเลือกวันเดือนปีที่ออก");
-            if (!code) return alert("กรุณากรอกรหัสพนักงาน");
-            if (!name) return alert("กรุณากรอกชื่อพนักงาน");
-
-            if (!confirm(`ยืนยันบันทึกพนักงานออก\\n${name} (${code})\\nวันที่ออก ${pad2(day)}/${pad2(month)}/${year}?`)) return;
-
-            if (!window.resignedRecords) window.resignedRecords = {};
-            window.resignedRecords[String(code)] = {
-                code,
-                name,
-                day,
-                month,
-                year,
-                recordedBy: getCurrentAdminLabel(),
-                recordedAt: new Date().toISOString()
-            };
-
-            await commitData();
-            clearResignForm();
-            updateDynamicUI();
-            showToast("บันทึกพนักงานออกแล้ว");
         };
 
         window.cancelResignedEmployee = async function(code) {
@@ -3721,35 +2752,6 @@ window.generateWFHPresentToday = function() {
             updateDynamicUI();
             showToast("บันทึกพนักงานออกแล้ว");
         };
-
-        window.toggleAttendanceVerified = async function(id, checked) {
-            if (!isAdminUser()) {
-                alert("ตรวจสอบการเข้าดิสคอร์ได้เฉพาะ Admin");
-                updateDynamicUI();
-                return;
-            }
-
-            const key = ensureAttendanceChecks();
-            if (checked) {
-                window.attendanceChecks[key][String(id)] = {
-                    checked: true,
-                    checkedBy: getCurrentAdminLabel(),
-                    checkedAt: new Date().toISOString()
-                };
-            } else {
-                delete window.attendanceChecks[key][String(id)];
-            }
-
-            await commitData();
-
-            if (!document.getElementById("wfh-present-inline-panel")?.classList.contains("hidden")) {
-                generateWFHPresentToday();
-            } else {
-                updateDynamicUI();
-            }
-
-            showToast("บันทึกสถานะตรวจสอบแล้ว");
-        };
         function showToast(msg) {
             const t = document.getElementById("toast");
             document.getElementById("toast-text").innerText = msg;
@@ -3788,5 +2790,3 @@ window.generateWFHPresentToday = function() {
     </script>
 </body>
 </html>
-
-<!-- search moved above table -->
