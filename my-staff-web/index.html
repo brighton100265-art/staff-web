@@ -394,6 +394,13 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                 <div><label class="text-xs text-slate-400 font-medium">เวลาเข้างาน</label><input type="text" id="new-shift-login" placeholder="15.00-00.00" class="w-full mt-1 bg-slate-950 border border-slate-800 text-slate-200 px-3 py-2 rounded-xl text-sm"></div>
                 <div><label class="text-xs text-slate-400 font-medium">เวลาพัก</label><input type="text" id="new-shift-rest" placeholder="19.00-20.00" class="w-full mt-1 bg-slate-950 border border-slate-800 text-slate-200 px-3 py-2 rounded-xl text-sm"></div>
                 <button onclick="saveNewShift()" class="w-full px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium rounded-xl">บันทึกกะ</button>
+
+            <div class="border-t border-slate-800 pt-4 mt-4 space-y-3">
+                <h4 class="text-sm font-bold text-rose-400">ลบกะที่ไม่ใช้</h4>
+                <p class="text-[11px] text-slate-500">เลือกกะที่ต้องการลบ ระบบจะไม่ให้ลบถ้ายังมีพนักงานใช้กะนั้นอยู่</p>
+                <select id="delete-shift-code" class="w-full bg-slate-950 border border-slate-800 text-slate-200 px-3 py-2 rounded-xl text-sm"></select>
+                <button onclick="deleteShift()" class="w-full px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white text-sm font-medium rounded-xl">ลบกะ</button>
+            </div>
             </div>
         </div>
     </div>
@@ -1838,19 +1845,28 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
         function updateShiftSelects() {
             const filterShift = document.getElementById("filter-shift");
             const modalShift = document.getElementById("new-emp-shift");
-            if (!filterShift || !modalShift) return;
+            const deleteShiftSelect = document.getElementById("delete-shift-code");
 
-            const current = filterShift.value;
-            filterShift.innerHTML = '<option value="ALL">แสดงทุกกะ</option>';
-            modalShift.innerHTML = "";
+            const current = filterShift ? filterShift.value : "ALL";
 
-            getSortedShiftKeys().forEach(s => {
-                const label = getShiftOptionLabel(s);
-                filterShift.innerHTML += `<option value="${s}">เฉพาะกะ ${label}</option>`;
-                modalShift.innerHTML += `<option value="${s}">${label}</option>`;
+            if (filterShift) filterShift.innerHTML = '<option value="ALL">แสดงทุกกะ</option>';
+            if (modalShift) modalShift.innerHTML = "";
+            if (deleteShiftSelect) deleteShiftSelect.innerHTML = "";
+
+            const keys = typeof getSortedShiftKeys === "function"
+                ? getSortedShiftKeys()
+                : Object.keys(window.shiftTimes || {}).sort((a,b)=>String(a).localeCompare(String(b)));
+
+            keys.forEach(s => {
+                const label = typeof getShiftOptionLabel === "function" ? getShiftOptionLabel(s) : s;
+                if (filterShift) filterShift.innerHTML += `<option value="${s}">เฉพาะกะ ${label}</option>`;
+                if (modalShift) modalShift.innerHTML += `<option value="${s}">${label}</option>`;
+                if (deleteShiftSelect) deleteShiftSelect.innerHTML += `<option value="${s}">${label}</option>`;
             });
 
-            if (window.shiftTimes[current]) filterShift.value = current;
+            if (filterShift && (current === "ALL" || window.shiftTimes[current])) {
+                filterShift.value = current;
+            }
         }
 
 
@@ -2138,7 +2154,29 @@ window.previewDeleteEmployeeByCode = function() {
             await commitData();
             showToast("อัปเดตยศเรียบร้อย");
         };
-        window.changeShift = async function(id, val) {
+        
+        window.changeWorkType = async function(id, value) {
+            const idx = window.currentStaffList.findIndex(p => p.id === id);
+            if (idx === -1) return;
+
+            const p = window.currentStaffList[idx];
+            if (!canEditTeam(p.team)) return alert("บัญชีนี้ไม่มีสิทธิ์แก้ไขลักษณะงาน");
+
+            const oldValue = p.type;
+            if (oldValue === value) return;
+            if (!["Office", "WFH"].includes(value)) return alert("ลักษณะงานไม่ถูกต้อง");
+
+            if (!confirm(`ยืนยันเปลี่ยนลักษณะงานของ ${p.name}\\nจาก ${oldValue} เป็น ${value}?`)) {
+                updateDynamicUI();
+                return;
+            }
+
+            p.type = value;
+            await commitData();
+            showToast("อัปเดตลักษณะงานแล้ว");
+        };
+
+window.changeShift = async function(id, val) {
             const p = window.currentStaffList.find(x => x.id === id);
             if (!p) return;
             if (!canEditTeam(p.team)) return alert("บัญชีนี้ไม่มีสิทธิ์แก้ไขข้อมูล");
@@ -2321,7 +2359,35 @@ window.toggleDayOff = function(id, d) {
             showToast("ลบพนักงานเรียบร้อย");
         }
 
-        window.saveNewShift = async function() {
+        
+        window.deleteShift = async function() {
+            if (!isLeaderUser()) return alert("ลบกะได้เฉพาะหัวหน้า S4 หรือ Admin");
+
+            const sel = document.getElementById("delete-shift-code");
+            const code = sel ? sel.value : "";
+            if (!code) return alert("กรุณาเลือกกะที่ต้องการลบ");
+
+            const usedBy = window.currentStaffList.filter(p => p.shift === code);
+            if (usedBy.length) {
+                const sample = usedBy.slice(0, 8).map(p => `- ${p.name} (${p.team})`).join("\\n");
+                return alert(`ลบกะ ${code} ไม่ได้ เพราะยังมีพนักงานใช้อยู่ ${usedBy.length} คน\\n\\n${sample}${usedBy.length > 8 ? "\\n..." : ""}\\n\\nกรุณาเปลี่ยนกะพนักงานเหล่านี้ก่อน`);
+            }
+
+            if (!window.shiftTimes[code]) return alert("ไม่พบกะนี้");
+            if (!confirm(`ยืนยันลบกะ ${code}?`)) return;
+
+            delete window.shiftTimes[code];
+
+            const filterShift = document.getElementById("filter-shift");
+            if (filterShift && filterShift.value === code) filterShift.value = "ALL";
+
+            await commitData();
+            updateShiftSelects();
+            updateDynamicUI();
+            showToast(`ลบกะ ${code} แล้ว`);
+        };
+
+window.saveNewShift = async function() {
             if (!isLeaderUser()) return alert("เพิ่มกะได้เฉพาะหัวหน้า S4 หรือ Admin");
             const code = normalizeCode(document.getElementById("new-shift-code").value);
             const login = document.getElementById("new-shift-login").value.trim();
@@ -2432,6 +2498,7 @@ window.toggleDayOff = function(id, d) {
         window.openAddShiftModal = function() {
             if (!window.currentUser) return alert("กรุณาเข้าสู่ระบบก่อน");
             if (!isLeaderUser()) return alert("เพิ่มกะได้เฉพาะหัวหน้า S4 หรือ Admin");
+            updateShiftSelects();
             document.getElementById("add-shift-modal").classList.remove("hidden");
         };
         window.closeAddShiftModal = function() { document.getElementById("add-shift-modal").classList.add("hidden"); };
