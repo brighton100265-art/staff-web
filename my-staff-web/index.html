@@ -464,6 +464,21 @@
             border-top:1px solid rgba(51,65,85,.8);
         }
 
+
+        /* v3.6 lock table selects by permission */
+        select.permission-locked,
+        input.permission-locked,
+        button.permission-locked {
+            opacity: .45 !important;
+            cursor: not-allowed !important;
+            pointer-events: none !important;
+            filter: grayscale(.25);
+        }
+
+
+        /* v3.7 modal autosave close + safe i18n */
+        .auto-close-after-save {}
+
 </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen antialiased selection:bg-indigo-500/30">
@@ -2653,6 +2668,10 @@ window.previewDeleteEmployeeByCode = function() {
             applyLanguage();
         
             markMainScheduleFullWidth();
+        
+            lockTableControlsByPermission();
+        
+            fixWorkTypeLabels();
         }
 
         
@@ -2772,6 +2791,10 @@ function renderTable() {
             applyLanguage();
         
             markMainScheduleFullWidth();
+        
+            lockTableControlsByPermission();
+        
+            fixWorkTypeLabels();
         }
 
         function renderDailySummary(filtered) {
@@ -2823,6 +2846,10 @@ function renderTable() {
         }
 
         window.changeRank = async function(id, val) {
+            const __staffId = arguments[0];
+            const __selectEl = event?.target || null;
+            if (!requireFieldPermissionOrRevert(__staffId, "editRank", __selectEl)) return;
+
             const p = window.currentStaffList.find(x => x.id === id);
             if (!p) return;
             if (!canEditTeam(p.team)) return alert("บัญชีนี้ไม่มีสิทธิ์แก้ไขข้อมูล");
@@ -2832,6 +2859,10 @@ function renderTable() {
         };
         
         window.changeWorkType = async function(id, value) {
+            const __staffId = arguments[0];
+            const __selectEl = event?.target || null;
+            if (!requireFieldPermissionOrRevert(__staffId, "editWorkType", __selectEl)) return;
+
             const idx = window.currentStaffList.findIndex(p => p.id === id);
             if (idx === -1) return;
 
@@ -2853,6 +2884,10 @@ function renderTable() {
         };
 
 window.changeShift = async function(id, val) {
+            const __staffId = arguments[0];
+            const __selectEl = event?.target || null;
+            if (!requireFieldPermissionOrRevert(__staffId, "editShift", __selectEl)) return;
+
             const p = window.currentStaffList.find(x => x.id === id);
             if (!p) return;
             if (!canEditTeam(p.team)) return alert("บัญชีนี้ไม่มีสิทธิ์แก้ไขข้อมูล");
@@ -4432,6 +4467,7 @@ window.generateWFHPresentToday = function() {
             try {
                 await commitData();
                 showToast("บันทึกสิทธิ์แล้ว");
+                closePermissionModal();
             } catch (err) {
                 console.error(err);
                 alert("บันทึกสิทธิ์ไม่สำเร็จ");
@@ -4676,43 +4712,69 @@ const I18N = {
             return pack[lang] || pack.th;
         }
 
-        function translateStaticText() {
+        
+        function fixWorkTypeLabels() {
+            document.querySelectorAll("select").forEach(sel => {
+                Array.from(sel.options || []).forEach(opt => {
+                    const v = String(opt.value || "").trim();
+                    const t = String(opt.textContent || "").trim();
+                    if (v === "Office" || t === "Office" || t.includes("วันหยุดice")) opt.textContent = "Office";
+                    if (v === "WFH" || t === "WFH") opt.textContent = "WFH";
+                });
+                if (String(sel.value || "").trim() === "Office") {
+                    const selected = sel.options[sel.selectedIndex];
+                    if (selected) selected.textContent = "Office";
+                }
+            });
+        }
+
+        function closeParentModalFromButton(btn) {
+            const modal = btn?.closest?.(".fixed");
+            if (modal) modal.classList.add("hidden");
+        }
+
+function translateStaticText() {
             const dict = getI18nPack();
             const skipTags = new Set(["SCRIPT","STYLE","TEXTAREA","INPUT","SELECT","OPTION"]);
+            const normalize = (s) => String(s || "").replace(/\s+/g, " ").trim();
+
             const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
                 acceptNode(node) {
                     const p = node.parentElement;
                     if (!p || skipTags.has(p.tagName)) return NodeFilter.FILTER_REJECT;
-                    const text = node.nodeValue.trim();
+                    const text = normalize(node.nodeValue);
                     if (!text) return NodeFilter.FILTER_REJECT;
                     return NodeFilter.FILTER_ACCEPT;
                 }
             });
+
             const nodes = [];
             while (walker.nextNode()) nodes.push(walker.currentNode);
+
             nodes.forEach(node => {
-                let val = node.nodeValue;
-                Object.keys(dict).sort((a,b)=>b.length-a.length).forEach(k => {
-                    if (val.includes(k)) val = val.split(k).join(dict[k]);
-                });
-                node.nodeValue = val;
+                const raw = normalize(node.nodeValue);
+                if (Object.prototype.hasOwnProperty.call(dict, raw)) {
+                    node.nodeValue = node.nodeValue.replace(raw, dict[raw]);
+                }
             });
 
             document.querySelectorAll("input[placeholder], textarea[placeholder]").forEach(el => {
-                let ph = el.getAttribute("placeholder") || "";
-                Object.keys(dict).sort((a,b)=>b.length-a.length).forEach(k => {
-                    if (ph.includes(k)) ph = ph.split(k).join(dict[k]);
-                });
-                el.setAttribute("placeholder", ph);
+                const ph = normalize(el.getAttribute("placeholder") || "");
+                if (Object.prototype.hasOwnProperty.call(dict, ph)) {
+                    el.setAttribute("placeholder", dict[ph]);
+                }
             });
 
             document.querySelectorAll("option").forEach(el => {
-                let val = el.textContent || "";
-                Object.keys(dict).sort((a,b)=>b.length-a.length).forEach(k => {
-                    if (val.includes(k)) val = val.split(k).join(dict[k]);
-                });
-                el.textContent = val;
+                const raw = normalize(el.textContent);
+                // ห้ามแปลค่าข้อมูลจริง เช่น Office/WFH/S9/S12/S21/WIN
+                if (["Office","WFH","S9","S12","S21","WIN1","WIN2","WIN3"].includes(raw)) return;
+                if (Object.prototype.hasOwnProperty.call(dict, raw)) {
+                    el.textContent = dict[raw];
+                }
             });
+
+            fixWorkTypeLabels();
         }
 
         function applyFullPageLanguage() {
@@ -4799,6 +4861,8 @@ function applyLanguage(){
             updateLanguagePopupState();
         
             applyFullPageLanguage();
+        
+            fixWorkTypeLabels();
         }
 
         function renderPermissionModal(){
@@ -4839,7 +4903,7 @@ function applyLanguage(){
                 modal.insertAdjacentHTML("beforeend", `
                     <div id="perm-save-bar" class="perm-save-bar">
                         <button onclick="resetRolePermissions()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs font-bold text-slate-200">รีเซ็ตสิทธิ์</button>
-                        <button onclick="saveRolePermissions()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-xl text-xs font-bold text-white">บันทึกสิทธิ์</button>
+                        <button onclick="saveRolePermissions()" data-autoclose-save="true" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-xl text-xs font-bold text-white">บันทึกสิทธิ์</button>
                     </div>
                 `);
             }
@@ -4883,7 +4947,85 @@ function applyLanguage(){
                 if(txt.includes("บันทึก Cloud")||txt.includes("Save Cloud")||txt.includes("保存云端")||txt.includes("Lưu Cloud")) btn.classList.toggle("permission-hidden",!hasPermission("saveCloud"));
             });
             markMainScheduleFullWidth(); applyLanguage();
+        
+            lockTableControlsByPermission();
+        
+            fixWorkTypeLabels();
         }
+
+
+        function canEditStaffField(staff, permissionKey) {
+            if (!window.currentUser) return false;
+            if (!hasPermission(permissionKey)) return false;
+            if (getCurrentRoleKey() === "ADMIN") return true;
+            // S4 ทำได้เฉพาะทีมตัวเองเท่านั้น
+            if (getCurrentRoleKey() === "S4") {
+                const userTeam = String(window.currentUser.team || "").toUpperCase();
+                const staffTeam = String(staff?.team || "").toUpperCase();
+                return userTeam && staffTeam && userTeam === staffTeam;
+            }
+            return false;
+        }
+
+        
+        function requireFieldPermissionOrRevert(staffId, permissionKey, selectEl) {
+            const staff = (window.currentStaffList || []).find(p => String(p.id) === String(staffId));
+            if (!canEditStaffField(staff, permissionKey)) {
+                alert("ไม่มีสิทธิ์แก้ไขรายการนี้");
+                updateDynamicUI();
+                return false;
+            }
+            return true;
+        }
+
+function lockTableControlsByPermission() {
+            const tbody = document.getElementById("staff-table-body");
+            if (!tbody) return;
+
+            const rows = Array.from(tbody.querySelectorAll("tr"));
+            rows.forEach(row => {
+                const idText = row.querySelector("[data-staff-id]")?.dataset?.staffId;
+                const codeText = row.querySelector("[data-staff-code]")?.dataset?.staffCode;
+                let staff = null;
+
+                if (idText) staff = (window.currentStaffList || []).find(p => String(p.id) === String(idText));
+                if (!staff && codeText) staff = (window.currentStaffList || []).find(p => String(p.code) === String(codeText));
+
+                // fallback: หา code จาก cell
+                if (!staff) {
+                    const cells = row.querySelectorAll("td");
+                    const possibleCode = Array.from(cells).map(td => td.textContent.trim()).find(v => /^\d{6,}$/.test(v));
+                    if (possibleCode) staff = (window.currentStaffList || []).find(p => String(p.code) === possibleCode);
+                }
+
+                const selects = row.querySelectorAll("select");
+                selects.forEach(sel => {
+                    const html = sel.outerHTML || "";
+                    const txt = sel.textContent || "";
+                    let key = "editShift";
+
+                    if (txt.includes("Office") || txt.includes("WFH") || html.includes("workType") || html.includes("work-type")) {
+                        key = "editWorkType";
+                    } else if (txt.includes("S2") || txt.includes("S4") || html.includes("rank")) {
+                        key = "editRank";
+                    } else if (txt.includes("S9") || txt.includes("S12") || txt.includes("S21") || html.includes("shift")) {
+                        key = "editShift";
+                    }
+
+                    const allowed = staff ? canEditStaffField(staff, key) : hasPermission(key);
+                    sel.disabled = !allowed;
+                    sel.classList.toggle("permission-locked", !allowed);
+                    sel.title = allowed ? "" : "ไม่มีสิทธิ์แก้ไข";
+                });
+            });
+        }
+
+
+        document.addEventListener("click", function(e) {
+            const btn = e.target?.closest?.("[data-autoclose-save]");
+            if (!btn) return;
+            setTimeout(() => closeParentModalFromButton(btn), 250);
+        });
 
         function showToast(msg) {
             const t = document.getElementById("toast");
