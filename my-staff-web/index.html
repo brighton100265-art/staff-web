@@ -239,6 +239,48 @@
             border-radius: 18px;
         }
 
+
+        /* v3.3 layout cleanup + full i18n */
+        body { overflow-x: hidden !important; }
+        .schedule-full-card {
+            width: calc(100vw - 28px) !important;
+            max-width: calc(100vw - 28px) !important;
+            margin-left: calc(50% - 50vw + 14px) !important;
+            margin-right: calc(50% - 50vw + 14px) !important;
+            border-radius: 18px !important;
+            overflow: hidden !important;
+        }
+        .schedule-full-card .overflow-x-auto,
+        .schedule-full-card [class*="overflow-x-auto"] {
+            width: 100% !important;
+            max-width: 100% !important;
+            overflow-x: auto !important;
+        }
+        .schedule-full-card table {
+            width: max-content !important;
+            min-width: 100% !important;
+        }
+        .schedule-full-card th,
+        .schedule-full-card td {
+            white-space: nowrap;
+        }
+        .schedule-full-card .sticky-left,
+        .schedule-full-card .sticky {
+            z-index: 3;
+        }
+        #current-user-badge,
+        .session-badge {
+            position: fixed !important;
+            right: 18px !important;
+            bottom: 18px !important;
+            z-index: 99999 !important;
+        }
+        .table-footer-summary td,
+        .table-footer-summary th {
+            white-space: nowrap;
+            font-size: 11px;
+        }
+
 </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen antialiased selection:bg-indigo-500/30">
@@ -2569,6 +2611,8 @@ function renderTable() {
             getSortedShiftKeys().forEach(s => tfoot.innerHTML += row(`รวมกะ ${s}`, ds[s], colors[i++ % colors.length], "bg-slate-900/60"));
             tfoot.innerHTML += row("รวมหยุด (O)", doff, "text-red-400", "bg-rose-950/20");
             tfoot.innerHTML += row("รวมลา (L)", dl, "text-purple-400", "bg-purple-950/20");
+        
+            applyLanguage();
         }
 
         function updateStats() {
@@ -3882,6 +3926,8 @@ window.generateWFHPresentToday = function() {
                     </tr>
                 `;
             }).join("");
+        
+            applyLanguage();
         }
 
 
@@ -4258,7 +4304,174 @@ window.generateWFHPresentToday = function() {
 
         window.setLanguage=function(lang){ localStorage.setItem("schedule_lang",lang); applyLanguage(); closeLanguagePopup(); updateLanguagePopupState(); if(typeof showToast==="function") showToast(`Language: ${lang.toUpperCase()}`); };
 
-        function applyLanguage(){
+        
+        function getI18nPack() {
+            const lang = localStorage.getItem("schedule_lang") || "th";
+            const pack = {
+                th: {
+                    "Smart Vertical Schedule System":"ระบบจัดการตารางงานแนวตั้งอัจฉริยะ",
+                    "Manage shifts, days off, leave, ranks, and team-leader permissions in real time":"จัดการกะ วันหยุด/วันลา ยศพนักงาน และสิทธิ์หัวหน้าทีมแบบเรียลไทม์",
+                    "TOTAL EMPLOYEES":"พนักงานทั้งหมด", "Total Employees":"พนักงานทั้งหมด",
+                    "Month":"เดือน", "Year":"ปี", "Copy from previous month":"คัดลอกจากเดือนก่อน", "Current file":"กำลังใช้งาน",
+                    "Filter by team":"คัดกรองเฉพาะทีม", "Filter by shift":"คัดกรองเฉพาะกะ",
+                    "All teams":"แสดงทุกทีม", "All shifts":"แสดงทุกกะ",
+                    "Search employee / code":"ค้นหาชื่อพนักงาน / รหัส", "Type name or code...":"พิมพ์ชื่อหรือรหัส...",
+                    "Search WFH working today":"ค้นหา WFH มาทำงาน", "Click search to show list":"กดค้นหาเพื่อดูรายชื่อ",
+                    "Quick leave import":"นำเข้าวันหยุดแบบเร็ว", "Process leave":"ประมวลผลวันหยุด", "Clear draft":"ล้างช่อง",
+                    "+ Add/Delete employee":"+ เพิ่ม/ลบพนักงาน", "Add shift":"เพิ่มกะ",
+                    "Daily WFH off report":"สรุป WFH หยุดรายวัน", "For sending report":"สำหรับส่งรายงาน",
+                    "Date":"วันที่", "Create report":"สร้างรายงาน", "Copy":"คัดลอก", "Clear":"ล้าง",
+                    "Vertical Employee Schedule":"แผ่นงานตารางเวรพนักงานแนวตั้ง",
+                    "No.":"ลำดับ", "Team":"ทีม", "Rank":"ยศ", "Employee name":"ชื่อพนักงาน", "Employee code":"รหัสพนักงาน",
+                    "Work type":"ลักษณะงาน", "Shift code":"รหัสกะ", "Login time":"เวลาเข้างาน", "Break time":"เวลาพัก",
+                    "Total off":"รวมหยุด", "Total leave":"รวมลา", "Workday":"วันทำงาน", "Off":"วันหยุด", "Leave":"วันลา",
+                    "Checked":"ตรวจแล้ว", "Unchecked":"ยังไม่ตรวจ", "Checker":"ผู้ตรวจ", "Checked time":"เวลาตรวจ",
+                    "Status":"สถานะ", "Working":"มาทำงาน", "Save Cloud":"บันทึก Cloud", "Reload":"รีโหลด",
+                    "Export":"Export", "Reset":"รีเซ็ต", "Permission":"สิทธิ์", "Hide resigned employees":"ซ่อนพนักงานที่ออกแล้ว",
+                    "Resigned employee history":"ประวัติพนักงานออก"
+                },
+                zh: {
+                    "ระบบจัดการตารางงานแนวตั้งอัจฉริยะ":"智能排班管理系统", "Smart Vertical Schedule System":"智能排班管理系统",
+                    "จัดการกะ วันหยุด/วันลา ยศพนักงาน และสิทธิ์หัวหน้าทีมแบบเรียลไทม์":"实时管理班次、休假、员工级别与组长权限",
+                    "Manage shifts, days off, leave, ranks, and team-leader permissions in real time":"实时管理班次、休假、员工级别与组长权限",
+                    "พนักงานทั้งหมด":"员工总数", "TOTAL EMPLOYEES":"员工总数", "Total Employees":"员工总数",
+                    "เดือน":"月份", "Month":"月份", "ปี":"年份", "Year":"年份", "คัดลอกจากเดือนก่อน":"从上月复制", "Copy from previous month":"从上月复制",
+                    "กำลังใช้งาน":"当前使用", "Current file":"当前使用",
+                    "กะ":"班次", "Shift":"班次", "เข้า":"上班",
+                    "คัดกรองเฉพาะทีม":"按团队筛选", "Filter by team":"按团队筛选", "คัดกรองเฉพาะกะ":"按班次筛选", "Filter by shift":"按班次筛选",
+                    "แสดงทุกทีม":"显示全部团队", "All teams":"显示全部团队", "แสดงทุกกะ":"显示全部班次", "All shifts":"显示全部班次",
+                    "ค้นหาชื่อพนักงาน / รหัส":"搜索员工姓名 / 工号", "Search employee / code":"搜索员工姓名 / 工号",
+                    "พิมพ์ชื่อหรือรหัส...":"输入姓名或工号...", "Type name or code...":"输入姓名或工号...",
+                    "ค้นหา WFH มาทำงาน":"搜索今日 WFH 上班", "Search WFH working today":"搜索今日 WFH 上班",
+                    "กดค้นหาเพื่อดูรายชื่อ":"点击搜索查看名单", "Click search to show list":"点击搜索查看名单",
+                    "นำเข้าวันหยุดแบบเร็ว":"快速导入休假", "Quick leave import":"快速导入休假",
+                    "รูปแบบ: ชื่อพนักงาน ตามด้วยวันที่ เช่น NOAH 1 7 21 หรือวางจาก Excel ได้เลย":"格式：姓名 后接日期，例如 NOAH 1 7 21，也可从 Excel 粘贴",
+                    "ประมวลผลวันหยุด":"处理休假", "Process leave":"处理休假", "ล้างช่อง":"清空输入", "Clear draft":"清空输入",
+                    "+ เพิ่ม/ลบพนักงาน":"+ 添加/删除员工", "+ Add/Delete employee":"+ 添加/删除员工", "เพิ่มกะ":"添加班次", "Add shift":"添加班次",
+                    "สรุป WFH หยุดรายวัน":"每日 WFH 休假汇总", "Daily WFH off report":"每日 WFH 休假汇总", "สำหรับส่งรายงาน":"用于发送报告", "For sending report":"用于发送报告",
+                    "เลือกวันที่ แล้วระบบจะรวมรายชื่อพนักงาน WFH ที่หยุด แยกตามทีมและกะ":"选择日期后，系统会按团队和班次汇总 WFH 休假名单",
+                    "วันที่":"日期", "Date":"日期", "สร้างรายงาน":"生成报告", "Create report":"生成报告", "คัดลอก":"复制", "Copy":"复制", "ล้าง":"清空", "Clear":"清空",
+                    "แผ่นงานตารางเวรพนักงานแนวตั้ง":"员工纵向排班表", "Vertical Employee Schedule":"员工纵向排班表",
+                    "ซ่อนพนักงานที่ออกแล้ว":"隐藏已离职员工", "Hide resigned employees":"隐藏已离职员工", "ประวัติพนักงานออก":"离职员工记录", "Resigned employee history":"离职员工记录",
+                    "ลำดับ":"序号", "No.":"序号", "ทีม":"团队", "Team":"团队", "ยศ":"级别", "Rank":"级别",
+                    "ชื่อพนักงาน":"员工姓名", "Employee name":"员工姓名", "รหัสพนักงาน":"工号", "Employee code":"工号",
+                    "ลักษณะงาน":"工作类型", "Work type":"工作类型", "รหัสกะ":"班次代码", "Shift code":"班次代码",
+                    "เวลาเข้างาน":"上班时间", "Login time":"上班时间", "เวลาพัก":"休息时间", "Break time":"休息时间",
+                    "รวมหยุด":"休假合计", "Total off":"休假合计", "รวมลา":"请假合计", "Total leave":"请假合计",
+                    "วันทำงาน":"工作日", "Workday":"工作日", "วันหยุด":"休假", "Off":"休假", "วันลา":"请假", "Leave":"请假",
+                    "ตรวจแล้ว":"已检查", "Checked":"已检查", "ยังไม่ตรวจ":"未检查", "Unchecked":"未检查", "ผู้ตรวจ":"检查人", "Checker":"检查人", "เวลาตรวจ":"检查时间", "Checked time":"检查时间",
+                    "สถานะ":"状态", "Status":"状态", "มาทำงาน":"上班", "Working":"上班",
+                    "บันทึก Cloud":"保存云端", "Save Cloud":"保存云端", "รีโหลด":"重新加载", "Reload":"重新加载", "Export":"导出", "รีเซ็ต":"重置", "Reset":"重置", "Auto-Sort":"自动排序", "สิทธิ์":"权限", "Permission":"权限",
+                    "รวมหยุด (O)":"休假合计 (O)", "รวมลา (L)":"请假合计 (L)", "รวมกะ S9":"S9 合计", "รวมกะ S12":"S12 合计", "รวมกะ S21":"S21 合计"
+                },
+                en: {
+                    "ระบบจัดการตารางงานแนวตั้งอัจฉริยะ":"Smart Vertical Schedule System", "智能排班管理系统":"Smart Vertical Schedule System",
+                    "จัดการกะ วันหยุด/วันลา ยศพนักงาน และสิทธิ์หัวหน้าทีมแบบเรียลไทม์":"Manage shifts, days off, leave, ranks, and team-leader permissions in real time",
+                    "พนักงานทั้งหมด":"Total Employees", "员工总数":"Total Employees", "เดือน":"Month", "月份":"Month", "ปี":"Year", "年份":"Year",
+                    "คัดลอกจากเดือนก่อน":"Copy from previous month", "从上月复制":"Copy from previous month",
+                    "กำลังใช้งาน":"Current file", "当前使用":"Current file", "กะ":"Shift", "班次":"Shift", "เข้า":"Login",
+                    "คัดกรองเฉพาะทีม":"Filter by team", "按团队筛选":"Filter by team", "คัดกรองเฉพาะกะ":"Filter by shift", "按班次筛选":"Filter by shift",
+                    "แสดงทุกทีม":"All teams", "显示全部团队":"All teams", "แสดงทุกกะ":"All shifts", "显示全部班次":"All shifts",
+                    "ค้นหาชื่อพนักงาน / รหัส":"Search employee / code", "搜索员工姓名 / 工号":"Search employee / code",
+                    "พิมพ์ชื่อหรือรหัส...":"Type name or code...", "输入姓名或工号...":"Type name or code...",
+                    "ค้นหา WFH มาทำงาน":"Search WFH working today", "搜索今日 WFH 上班":"Search WFH working today",
+                    "กดค้นหาเพื่อดูรายชื่อ":"Click search to show list", "点击搜索查看名单":"Click search to show list",
+                    "นำเข้าวันหยุดแบบเร็ว":"Quick leave import", "快速导入休假":"Quick leave import",
+                    "ประมวลผลวันหยุด":"Process leave", "处理休假":"Process leave", "ล้างช่อง":"Clear draft", "清空输入":"Clear draft",
+                    "+ เพิ่ม/ลบพนักงาน":"+ Add/Delete employee", "+ 添加/删除员工":"+ Add/Delete employee", "เพิ่มกะ":"Add shift", "添加班次":"Add shift",
+                    "สรุป WFH หยุดรายวัน":"Daily WFH off report", "每日 WFH 休假汇总":"Daily WFH off report",
+                    "สำหรับส่งรายงาน":"For sending report", "用于发送报告":"For sending report", "วันที่":"Date", "日期":"Date",
+                    "สร้างรายงาน":"Create report", "生成报告":"Create report", "คัดลอก":"Copy", "复制":"Copy", "ล้าง":"Clear", "清空":"Clear",
+                    "แผ่นงานตารางเวรพนักงานแนวตั้ง":"Vertical Employee Schedule", "员工纵向排班表":"Vertical Employee Schedule",
+                    "ซ่อนพนักงานที่ออกแล้ว":"Hide resigned employees", "隐藏已离职员工":"Hide resigned employees",
+                    "ประวัติพนักงานออก":"Resigned employee history", "离职员工记录":"Resigned employee history",
+                    "ลำดับ":"No.", "序号":"No.", "ทีม":"Team", "团队":"Team", "ยศ":"Rank", "级别":"Rank",
+                    "ชื่อพนักงาน":"Employee name", "员工姓名":"Employee name", "รหัสพนักงาน":"Employee code", "工号":"Employee code",
+                    "ลักษณะงาน":"Work type", "工作类型":"Work type", "รหัสกะ":"Shift code", "班次代码":"Shift code",
+                    "เวลาเข้างาน":"Login time", "上班时间":"Login time", "เวลาพัก":"Break time", "休息时间":"Break time",
+                    "รวมหยุด":"Total off", "休假合计":"Total off", "รวมลา":"Total leave", "请假合计":"Total leave",
+                    "วันทำงาน":"Workday", "工作日":"Workday", "วันหยุด":"Off", "休假":"Off", "วันลา":"Leave", "请假":"Leave",
+                    "ตรวจแล้ว":"Checked", "已检查":"Checked", "ยังไม่ตรวจ":"Unchecked", "未检查":"Unchecked", "ผู้ตรวจ":"Checker", "检查人":"Checker", "เวลาตรวจ":"Checked time", "检查时间":"Checked time",
+                    "สถานะ":"Status", "状态":"Status", "มาทำงาน":"Working", "上班":"Working",
+                    "บันทึก Cloud":"Save Cloud", "保存云端":"Save Cloud", "รีโหลด":"Reload", "重新加载":"Reload", "รีเซ็ต":"Reset", "重置":"Reset", "Auto-Sort":"Auto-Sort", "สิทธิ์":"Permission", "权限":"Permission",
+                    "รวมหยุด (O)":"Total off (O)", "รวมลา (L)":"Total leave (L)", "รวมกะ S9":"Total S9", "รวมกะ S12":"Total S12", "รวมกะ S21":"Total S21"
+                },
+                vi: {
+                    "ระบบจัดการตารางงานแนวตั้งอัจฉริยะ":"Hệ thống quản lý lịch làm việc thông minh", "Smart Vertical Schedule System":"Hệ thống quản lý lịch làm việc thông minh", "智能排班管理系统":"Hệ thống quản lý lịch làm việc thông minh",
+                    "จัดการกะ วันหยุด/วันลา ยศพนักงาน และสิทธิ์หัวหน้าทีมแบบเรียลไทม์":"Quản lý ca, ngày nghỉ, nghỉ phép, cấp bậc và quyền trưởng nhóm theo thời gian thực",
+                    "Manage shifts, days off, leave, ranks, and team-leader permissions in real time":"Quản lý ca, ngày nghỉ, nghỉ phép, cấp bậc và quyền trưởng nhóm theo thời gian thực",
+                    "พนักงานทั้งหมด":"Tổng nhân viên", "Total Employees":"Tổng nhân viên", "员工总数":"Tổng nhân viên",
+                    "เดือน":"Tháng", "Month":"Tháng", "月份":"Tháng", "ปี":"Năm", "Year":"Năm", "年份":"Năm",
+                    "คัดลอกจากเดือนก่อน":"Sao chép từ tháng trước", "Copy from previous month":"Sao chép từ tháng trước",
+                    "กำลังใช้งาน":"Đang sử dụng", "Current file":"Đang sử dụng", "กะ":"Ca", "Shift":"Ca", "เข้า":"Giờ vào",
+                    "คัดกรองเฉพาะทีม":"Lọc theo đội", "Filter by team":"Lọc theo đội", "คัดกรองเฉพาะกะ":"Lọc theo ca", "Filter by shift":"Lọc theo ca",
+                    "แสดงทุกทีม":"Tất cả đội", "All teams":"Tất cả đội", "แสดงทุกกะ":"Tất cả ca", "All shifts":"Tất cả ca",
+                    "ค้นหาชื่อพนักงาน / รหัส":"Tìm nhân viên / mã", "Search employee / code":"Tìm nhân viên / mã", "พิมพ์ชื่อหรือรหัส...":"Nhập tên hoặc mã...", "Type name or code...":"Nhập tên hoặc mã...",
+                    "ค้นหา WFH มาทำงาน":"Tìm WFH đi làm hôm nay", "Search WFH working today":"Tìm WFH đi làm hôm nay", "กดค้นหาเพื่อดูรายชื่อ":"Bấm tìm để xem danh sách",
+                    "นำเข้าวันหยุดแบบเร็ว":"Nhập ngày nghỉ nhanh", "Quick leave import":"Nhập ngày nghỉ nhanh", "ประมวลผลวันหยุด":"Xử lý ngày nghỉ", "Process leave":"Xử lý ngày nghỉ", "ล้างช่อง":"Xóa ô", "Clear draft":"Xóa ô",
+                    "+ เพิ่ม/ลบพนักงาน":"+ Thêm/Xóa nhân viên", "+ Add/Delete employee":"+ Thêm/Xóa nhân viên", "เพิ่มกะ":"Thêm ca", "Add shift":"Thêm ca",
+                    "สรุป WFH หยุดรายวัน":"Báo cáo WFH nghỉ theo ngày", "Daily WFH off report":"Báo cáo WFH nghỉ theo ngày", "สำหรับส่งรายงาน":"Dùng để gửi báo cáo", "For sending report":"Dùng để gửi báo cáo",
+                    "วันที่":"Ngày", "Date":"Ngày", "สร้างรายงาน":"Tạo báo cáo", "Create report":"Tạo báo cáo", "คัดลอก":"Sao chép", "Copy":"Sao chép", "ล้าง":"Xóa", "Clear":"Xóa",
+                    "แผ่นงานตารางเวรพนักงานแนวตั้ง":"Bảng lịch nhân viên dạng dọc", "Vertical Employee Schedule":"Bảng lịch nhân viên dạng dọc",
+                    "ซ่อนพนักงานที่ออกแล้ว":"Ẩn nhân viên đã nghỉ", "Hide resigned employees":"Ẩn nhân viên đã nghỉ", "ประวัติพนักงานออก":"Lịch sử nhân viên nghỉ việc",
+                    "ลำดับ":"STT", "No.":"STT", "ทีม":"Đội", "Team":"Đội", "ยศ":"Cấp", "Rank":"Cấp", "ชื่อพนักงาน":"Tên nhân viên", "Employee name":"Tên nhân viên", "รหัสพนักงาน":"Mã nhân viên", "Employee code":"Mã nhân viên",
+                    "ลักษณะงาน":"Hình thức", "Work type":"Hình thức", "รหัสกะ":"Mã ca", "Shift code":"Mã ca", "เวลาเข้างาน":"Giờ vào", "Login time":"Giờ vào", "เวลาพัก":"Giờ nghỉ", "Break time":"Giờ nghỉ",
+                    "รวมหยุด":"Tổng nghỉ", "Total off":"Tổng nghỉ", "รวมลา":"Tổng phép", "Total leave":"Tổng phép",
+                    "วันทำงาน":"Ngày làm", "Workday":"Ngày làm", "วันหยุด":"Ngày nghỉ", "Off":"Ngày nghỉ", "วันลา":"Nghỉ phép", "Leave":"Nghỉ phép",
+                    "ตรวจแล้ว":"Đã kiểm tra", "Checked":"Đã kiểm tra", "ยังไม่ตรวจ":"Chưa kiểm tra", "Unchecked":"Chưa kiểm tra", "ผู้ตรวจ":"Người kiểm tra", "Checker":"Người kiểm tra", "เวลาตรวจ":"Giờ kiểm tra", "Checked time":"Giờ kiểm tra",
+                    "สถานะ":"Trạng thái", "Status":"Trạng thái", "มาทำงาน":"Đi làm", "Working":"Đi làm",
+                    "บันทึก Cloud":"Lưu Cloud", "Save Cloud":"Lưu Cloud", "รีโหลด":"Tải lại", "Reload":"Tải lại", "รีเซ็ต":"Đặt lại", "Reset":"Đặt lại", "Auto-Sort":"Tự sắp xếp", "สิทธิ์":"Quyền", "Permission":"Quyền",
+                    "รวมหยุด (O)":"Tổng nghỉ (O)", "รวมลา (L)":"Tổng phép (L)", "รวมกะ S9":"Tổng S9", "รวมกะ S12":"Tổng S12", "รวมกะ S21":"Tổng S21"
+                }
+            };
+            return pack[lang] || pack.th;
+        }
+
+        function translateStaticText() {
+            const dict = getI18nPack();
+            const skipTags = new Set(["SCRIPT","STYLE","TEXTAREA","INPUT","SELECT","OPTION"]);
+            const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+                acceptNode(node) {
+                    const p = node.parentElement;
+                    if (!p || skipTags.has(p.tagName)) return NodeFilter.FILTER_REJECT;
+                    const text = node.nodeValue.trim();
+                    if (!text) return NodeFilter.FILTER_REJECT;
+                    return NodeFilter.FILTER_ACCEPT;
+                }
+            });
+            const nodes = [];
+            while (walker.nextNode()) nodes.push(walker.currentNode);
+            nodes.forEach(node => {
+                let val = node.nodeValue;
+                Object.keys(dict).sort((a,b)=>b.length-a.length).forEach(k => {
+                    if (val.includes(k)) val = val.split(k).join(dict[k]);
+                });
+                node.nodeValue = val;
+            });
+
+            document.querySelectorAll("input[placeholder], textarea[placeholder]").forEach(el => {
+                let ph = el.getAttribute("placeholder") || "";
+                Object.keys(dict).sort((a,b)=>b.length-a.length).forEach(k => {
+                    if (ph.includes(k)) ph = ph.split(k).join(dict[k]);
+                });
+                el.setAttribute("placeholder", ph);
+            });
+
+            document.querySelectorAll("option").forEach(el => {
+                let val = el.textContent || "";
+                Object.keys(dict).sort((a,b)=>b.length-a.length).forEach(k => {
+                    if (val.includes(k)) val = val.split(k).join(dict[k]);
+                });
+                el.textContent = val;
+            });
+        }
+
+        function applyFullPageLanguage() {
+            translateStaticText();
+            updateLanguagePopupState();
+        }
+
+function applyLanguage(){
             const lang=localStorage.getItem("schedule_lang")||"th";
             const t=I18N[lang]||I18N.th;
             const replaceMap = {
@@ -4335,6 +4548,8 @@ window.generateWFHPresentToday = function() {
             });
 
             updateLanguagePopupState();
+        
+            applyFullPageLanguage();
         }
 
         function renderPermissionModal(){
@@ -4347,10 +4562,16 @@ window.generateWFHPresentToday = function() {
         window.openPermissionModal=function(){ if(!hasPermission("managePermissions")) return alert("เฉพาะ Admin เท่านั้น"); renderPermissionModal(); document.getElementById("permission-modal")?.classList.remove("hidden"); };
         window.closePermissionModal=function(){ document.getElementById("permission-modal")?.classList.add("hidden"); };
 
-        function markMainScheduleFullWidth(){
-            const tbody=document.getElementById("staff-table-body"); if(!tbody) return;
-            const card=tbody.closest(".bg-slate-900")||tbody.closest("div"); if(card) card.classList.add("schedule-full-card");
-            let el=card?.parentElement; for(let i=0;el&&i<4;i++,el=el.parentElement){ el.style.maxWidth="none"; el.style.width="100%"; }
+        function markMainScheduleFullWidth() {
+            const tbody = document.getElementById("staff-table-body");
+            if (!tbody) return;
+            const card = tbody.closest(".bg-slate-900") || tbody.closest("div");
+            if (card) card.classList.add("schedule-full-card");
+            let el = card?.parentElement;
+            for (let i = 0; el && i < 4; i++, el = el.parentElement) {
+                el.style.maxWidth = "none";
+                el.style.width = "100%";
+            }
         }
 
         function applyRolePermissions(){
