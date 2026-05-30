@@ -212,19 +212,10 @@
                     <div class="flex items-center justify-between gap-2">
                         <div>
                             <div class="text-xs text-slate-400 font-medium">ค้นหา WFH ที่มาทำงานวันนี้</div>
-                            <div id="wfh-today-date-label" class="text-[11px] text-slate-500">ยึดวันที่ปัจจุบัน</div>
+                            <div id="wfh-today-date-label" class="text-[11px] text-slate-500">วันที่ปัจจุบัน</div>
                         </div>
                         <button onclick="generateWFHPresentToday()" class="px-3 py-2 bg-emerald-600/20 hover:bg-emerald-600/35 text-emerald-400 border border-emerald-500/30 font-semibold text-xs rounded-xl transition-all">
                             ค้นหา
-                        </button>
-                    </div>
-                    <textarea id="wfh-present-output" readonly placeholder="กดค้นหาเพื่อแสดงพนักงาน WFH ที่มาทำงานวันนี้..." class="w-full h-28 bg-slate-950 border border-slate-800 focus:border-emerald-500 text-slate-200 px-3 py-2 rounded-xl text-xs outline-none resize-y placeholder:text-slate-600"></textarea>
-                    <div class="flex gap-2">
-                        <button onclick="copyWFHPresentToday()" class="flex-1 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-semibold text-xs rounded-xl transition-all">
-                            คัดลอก
-                        </button>
-                        <button onclick="clearWFHPresentToday()" class="px-3 py-2 bg-rose-600/20 hover:bg-rose-600/35 text-rose-400 border border-rose-500/30 font-semibold text-xs rounded-xl transition-all">
-                            ล้าง
                         </button>
                     </div>
                 </div>
@@ -465,6 +456,28 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                     ยืนยัน
                 </button>
             </div>
+        </div>
+    </div>
+
+
+
+    <div id="wfh-present-floating-panel" class="fixed right-6 bottom-6 z-[99990] w-[420px] max-w-[calc(100vw-2rem)] hidden">
+        <div class="bg-slate-900/95 backdrop-blur-xl border border-emerald-500/30 rounded-2xl shadow-2xl overflow-hidden">
+            <div class="flex items-center justify-between gap-3 px-4 py-3 border-b border-slate-800">
+                <div>
+                    <div class="text-sm font-bold text-emerald-300">WFH มาทำงานวันนี้</div>
+                    <div id="wfh-present-floating-date" class="text-[11px] text-slate-500"></div>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="copyWFHPresentToday()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-semibold text-xs rounded-xl">
+                        คัดลอก
+                    </button>
+                    <button onclick="closeWFHPresentPanel()" class="px-3 py-1.5 bg-rose-600/20 hover:bg-rose-600/35 text-rose-400 border border-rose-500/30 font-semibold text-xs rounded-xl">
+                        ปิด
+                    </button>
+                </div>
+            </div>
+            <textarea id="wfh-present-output" readonly class="w-full h-80 bg-slate-950/90 text-slate-100 px-4 py-3 text-xs outline-none resize-y font-mono leading-5"></textarea>
         </div>
     </div>
 
@@ -2912,13 +2925,22 @@ window.generateWFHOffReport = function() {
             ];
         }
 
-        window.generateWFHPresentToday = function() {
+        
+        window.closeWFHPresentPanel = function() {
+            const panel = document.getElementById("wfh-present-floating-panel");
+            if (panel) panel.classList.add("hidden");
+        };
+
+window.generateWFHPresentToday = function() {
             const day = getCurrentReportDay();
             const out = document.getElementById("wfh-present-output");
             const label = document.getElementById("wfh-today-date-label");
+            const floatingDate = document.getElementById("wfh-present-floating-date");
+            const panel = document.getElementById("wfh-present-floating-panel");
             if (!out) return;
 
             if (label) label.innerText = `วันที่ปัจจุบัน: ${day}`;
+            if (floatingDate) floatingDate.innerText = `ประจำวันที่ ${day}`;
 
             const teams = ["WIN1", "WIN2", "WIN3"];
             const teamIcon = { WIN1: "🟦", WIN2: "🟩", WIN3: "🟧" };
@@ -2973,6 +2995,8 @@ window.generateWFHOffReport = function() {
             });
 
             out.value = lines.join("\n").replace(/\n{4,}/g, "\n\n\n").trim();
+
+            if (panel) panel.classList.remove("hidden");
             showToast("สร้างรายงาน WFH มาทำงานวันนี้แล้ว");
         };
 
@@ -2990,6 +3014,7 @@ window.generateWFHOffReport = function() {
         window.clearWFHPresentToday = function() {
             const out = document.getElementById("wfh-present-output");
             if (out) out.value = "";
+            closeWFHPresentPanel();
             showToast("ล้างรายงานแล้ว");
         };
 
