@@ -64,6 +64,34 @@
             color: #7dd3fc !important;
         }
 
+
+        .resigned-row {
+            position: relative;
+            background: linear-gradient(90deg, rgba(239, 68, 68, 0.14), rgba(239, 68, 68, 0.045)) !important;
+            box-shadow: inset 4px 0 0 rgba(248, 113, 113, 0.95), inset 0 0 0 1px rgba(248, 113, 113, 0.18);
+            opacity: 0.88;
+        }
+        .resigned-row:hover {
+            background: linear-gradient(90deg, rgba(239, 68, 68, 0.20), rgba(239, 68, 68, 0.07)) !important;
+        }
+        .resigned-name {
+            color: #fca5a5 !important;
+            font-weight: 900;
+        }
+        .resigned-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+            border-radius: 999px;
+            border: 1px solid rgba(248, 113, 113, 0.35);
+            background: rgba(127, 29, 29, 0.32);
+            color: #fecaca;
+            padding: 4px 8px;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
         .day-tooltip {
             position: fixed;
             background: rgba(15, 23, 42, .98);
@@ -364,6 +392,87 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
         </div>
     </div>
 
+
+    <div id="resigned-panel" class="grid grid-cols-1 xl:grid-cols-[420px_1fr] gap-4 mb-6">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl p-5 space-y-4">
+            <div class="flex items-center gap-2">
+                <span class="text-rose-400 text-lg">⛔</span>
+                <div>
+                    <h3 class="text-base font-bold text-slate-100">บันทึกพนักงานออกจากการทำงาน</h3>
+                    <p class="text-[11px] text-slate-500">ใส่วันที่ออก ชื่อ และรหัสพนักงาน</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2">
+                <div>
+                    <label class="text-[10px] text-slate-500">วันออก</label>
+                    <select id="resign-day" class="w-full bg-slate-950 border border-slate-800 text-slate-200 px-2 py-2 rounded-xl text-xs"></select>
+                </div>
+                <div>
+                    <label class="text-[10px] text-slate-500">เดือน</label>
+                    <select id="resign-month" class="w-full bg-slate-950 border border-slate-800 text-slate-200 px-2 py-2 rounded-xl text-xs">
+                        <option value="1">ม.ค.</option><option value="2">ก.พ.</option><option value="3">มี.ค.</option><option value="4">เม.ย.</option>
+                        <option value="5">พ.ค.</option><option value="6">มิ.ย.</option><option value="7">ก.ค.</option><option value="8">ส.ค.</option>
+                        <option value="9">ก.ย.</option><option value="10">ต.ค.</option><option value="11">พ.ย.</option><option value="12">ธ.ค.</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-[10px] text-slate-500">ปี</label>
+                    <select id="resign-year" class="w-full bg-slate-950 border border-slate-800 text-slate-200 px-2 py-2 rounded-xl text-xs"></select>
+                </div>
+            </div>
+
+            <div>
+                <label class="text-[10px] text-slate-500">รหัสพนักงาน</label>
+                <input id="resign-code" type="text" oninput="previewResignEmployee()" autocomplete="off" placeholder="กรอกรหัสพนักงาน" class="w-full bg-slate-950 border border-slate-800 focus:border-rose-500 text-slate-200 px-3 py-2 rounded-xl text-sm outline-none">
+            </div>
+            <div>
+                <label class="text-[10px] text-slate-500">ชื่อพนักงาน</label>
+                <input id="resign-name" type="text" autocomplete="off" placeholder="กรอกชื่อพนักงาน" class="w-full bg-slate-950 border border-slate-800 focus:border-rose-500 text-slate-200 px-3 py-2 rounded-xl text-sm outline-none">
+            </div>
+
+            <div id="resign-preview" class="hidden bg-rose-950/15 border border-rose-500/25 rounded-xl p-3 text-xs text-rose-100"></div>
+
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="saveResignedEmployee()" class="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white text-sm font-bold rounded-xl">
+                    บันทึกออก
+                </button>
+                <button onclick="clearResignForm()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-sm font-bold rounded-xl">
+                    ล้าง
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+            <div class="flex items-center justify-between gap-3 px-5 py-4 border-b border-slate-800">
+                <div>
+                    <h3 class="text-base font-bold text-slate-100">ประวัติพนักงานที่ออกแล้ว</h3>
+                    <p class="text-[11px] text-slate-500">ผู้บันทึกจะใช้ Admin ที่ล็อกอินอยู่โดยอัตโนมัติ</p>
+                </div>
+                <label class="flex items-center gap-2 text-[11px] text-slate-400">
+                    <input id="hide-resigned-toggle" type="checkbox" checked onchange="updateDynamicUI()" class="accent-rose-500">
+                    ซ่อนพนักงานที่ออกแล้วในตารางหลัก
+                </label>
+            </div>
+            <div class="overflow-x-auto max-h-80 overflow-y-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-slate-950 text-slate-400 text-xs">
+                        <tr>
+                            <th class="px-4 py-3 text-left">ลำดับ</th>
+                            <th class="px-4 py-3 text-left">รหัสพนักงาน</th>
+                            <th class="px-4 py-3 text-left">ชื่อพนักงาน</th>
+                            <th class="px-4 py-3 text-left">วันที่ออก</th>
+                            <th class="px-4 py-3 text-left">ผู้บันทึก</th>
+                            <th class="px-4 py-3 text-left">เวลาบันทึก</th>
+                            <th class="px-4 py-3 text-center">จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resigned-history-body" class="divide-y divide-slate-800"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
 <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-800 bg-slate-900/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
 <div class="flex items-center gap-2 text-indigo-400">
@@ -379,7 +488,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse table-auto min-w-[1450px]">
                     <thead>
-                        <tr class="bg-slate-950/80 text-xs text-slate-400 font-semibold tracking-wider border-b border-slate-800">
+                        <tr class="${isResigned ? 'resigned-row' : ''} ${isResigned && document.getElementById('hide-resigned-toggle')?.checked ? 'hidden' : ''} bg-slate-950/80 text-xs text-slate-400 font-semibold tracking-wider border-b border-slate-800">
                             <th class="py-3 px-3 text-center w-12 sticky left-0 bg-slate-950 z-20">ลำดับ</th>
                             <th class="py-3 px-2 text-center w-16">ทีม</th>
                             <th class="py-3 px-2 w-20 text-center">ยศ</th>
@@ -1507,6 +1616,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
         window.currentStaffList = JSON.parse(JSON.stringify(defaultStaff));
         window.shiftTimes = JSON.parse(JSON.stringify(defaultShiftTimes));
         window.currentUser = JSON.parse(sessionStorage.getItem("schedule_current_user") || "null");
+        window.resignedRecords = {};
 
         const monthNamesTH = ["", "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
         const todayForSchedule = new Date();
@@ -1605,6 +1715,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
         function saveLocalBackup() {
             localStorage.setItem(`staff_${getScheduleDocId()}`, JSON.stringify(window.currentStaffList));
             localStorage.setItem(`shift_${getScheduleDocId()}`, JSON.stringify(window.shiftTimes));
+            localStorage.setItem(`resigned_${getScheduleDocId()}`, JSON.stringify(window.resignedRecords || {}));
             localStorage.setItem(`attendance_${getScheduleDocId()}`, JSON.stringify(window.attendanceChecks || {}));
         }
         function loadLocalBackup() {
@@ -1752,6 +1863,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                     ? data.shiftTimes
                     : JSON.parse(JSON.stringify(defaultShiftTimes));
                 window.attendanceChecks = data.attendanceChecks && typeof data.attendanceChecks === "object" ? data.attendanceChecks : {};
+                window.resignedRecords = data.resignedRecords && typeof data.resignedRecords === "object" ? data.resignedRecords : {};
 
                 ensureStaffPositions();
                 saveLocalBackup();
@@ -1820,6 +1932,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                 if (data.shiftTimes && Object.keys(data.shiftTimes).length) {
                     window.shiftTimes = data.shiftTimes;
                 window.attendanceChecks = data.attendanceChecks && typeof data.attendanceChecks === "object" ? data.attendanceChecks : (window.attendanceChecks || {});
+                window.resignedRecords = data.resignedRecords && typeof data.resignedRecords === "object" ? data.resignedRecords : (window.resignedRecords || {});
                 }
 
                 ensureStaffPositions();
@@ -1870,6 +1983,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                         staffList: window.currentStaffList,
                         shiftTimes: window.shiftTimes,
                         attendanceChecks: window.attendanceChecks || {},
+                        resignedRecords: window.resignedRecords || {},
                         month: window.selectedMonth,
                         year: window.selectedYear,
                         updatedAt: serverTimestamp()
@@ -1879,6 +1993,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                         staffList: window.currentStaffList,
                         shiftTimes: window.shiftTimes,
                         attendanceChecks: window.attendanceChecks || {},
+                        resignedRecords: window.resignedRecords || {},
                         month: window.selectedMonth,
                         year: window.selectedYear,
                         currentDocId: cloudDocId,
@@ -2136,6 +2251,7 @@ window.previewDeleteEmployeeByCode = function() {
         }
 
         function updateDynamicUI() {
+            renderResignedHistory();
             updateMonthUI();
             updateShiftSelects();
             refreshCurrentUserFromStaff();
@@ -3295,7 +3411,7 @@ window.generateWFHPresentToday = function() {
             if (checked) {
                 window.attendanceChecks[key][String(id)] = {
                     checked: true,
-                    checkedBy: window.currentUser?.name || "ADMIN",
+                    checkedBy: getCurrentAdminLabel(),
                     checkedAt: new Date().toISOString()
                 };
             } else {
@@ -3306,6 +3422,168 @@ window.generateWFHPresentToday = function() {
             if (!document.getElementById("wfh-present-inline-panel")?.classList.contains("hidden")) generateWFHPresentToday();
             showToast("บันทึกสถานะตรวจสอบแล้ว");
         };
+
+
+        function initResignDateControls() {
+            const d = document.getElementById("resign-day");
+            const m = document.getElementById("resign-month");
+            const y = document.getElementById("resign-year");
+            if (!d || !m || !y || d.dataset.ready === "1") return;
+
+            const now = new Date();
+            d.innerHTML = "";
+            for (let i = 1; i <= 31; i++) d.innerHTML += `<option value="${i}">${i}</option>`;
+
+            y.innerHTML = "";
+            const cy = now.getFullYear();
+            for (let yy = cy - 2; yy <= cy + 3; yy++) y.innerHTML += `<option value="${yy}">${yy}</option>`;
+
+            d.value = String(now.getDate());
+            m.value = String(window.selectedMonth || (now.getMonth() + 1));
+            y.value = String(window.selectedYear || cy);
+            d.dataset.ready = "1";
+        }
+
+        function getCurrentAdminLabel() {
+            if (!window.currentUser) return "UNKNOWN";
+            if (window.currentUser.role === "ADMIN") return window.currentUser.name || "ADMIN";
+            return `${window.currentUser.name || "USER"} (${window.currentUser.role || ""})`;
+        }
+
+        function getResignDateText(record) {
+            return `${pad2(record.day)}/${pad2(record.month)}/${record.year}`;
+        }
+
+        function isResignedEmployee(p) {
+            return !!(window.resignedRecords && window.resignedRecords[String(p.code)]);
+        }
+
+        function getResignedRecordByStaff(p) {
+            return window.resignedRecords ? window.resignedRecords[String(p.code)] : null;
+        }
+
+        window.previewResignEmployee = function() {
+            const code = String(document.getElementById("resign-code")?.value || "").trim();
+            const nameInput = document.getElementById("resign-name");
+            const preview = document.getElementById("resign-preview");
+            if (!preview) return;
+
+            if (!code) {
+                preview.classList.add("hidden");
+                preview.innerHTML = "";
+                return;
+            }
+
+            const matches = (window.currentStaffList || []).filter(p => String(p.code || "").trim() === code);
+
+            if (!matches.length) {
+                preview.classList.remove("hidden");
+                preview.innerHTML = `ไม่พบรหัสนี้ในรายชื่อปัจจุบัน สามารถกรอกชื่อเองเพื่อบันทึกประวัติได้`;
+                return;
+            }
+
+            const p = matches[0];
+            if (nameInput && !nameInput.value.trim()) nameInput.value = p.name;
+
+            preview.classList.remove("hidden");
+            preview.innerHTML = `
+                <div class="font-bold text-slate-100">${p.name}</div>
+                <div class="text-slate-300 mt-1">รหัส: <b>${p.code}</b> | ${p.team} | ${p.rank} | ${p.type} | ${p.shift}</div>
+            `;
+        };
+
+        window.clearResignForm = function() {
+            const code = document.getElementById("resign-code");
+            const name = document.getElementById("resign-name");
+            const preview = document.getElementById("resign-preview");
+            if (code) code.value = "";
+            if (name) name.value = "";
+            if (preview) {
+                preview.classList.add("hidden");
+                preview.innerHTML = "";
+            }
+        };
+
+        window.saveResignedEmployee = async function() {
+            if (!isAdminUser()) return alert("บันทึกพนักงานออกได้เฉพาะ Admin");
+
+            initResignDateControls();
+
+            const day = Number(document.getElementById("resign-day")?.value);
+            const month = Number(document.getElementById("resign-month")?.value);
+            const year = Number(document.getElementById("resign-year")?.value);
+            const code = String(document.getElementById("resign-code")?.value || "").trim();
+            const name = String(document.getElementById("resign-name")?.value || "").trim();
+
+            if (!day || !month || !year) return alert("กรุณาเลือกวันเดือนปีที่ออก");
+            if (!code) return alert("กรุณากรอกรหัสพนักงาน");
+            if (!name) return alert("กรุณากรอกชื่อพนักงาน");
+
+            if (!confirm(`ยืนยันบันทึกพนักงานออก\\n${name} (${code})\\nวันที่ออก ${pad2(day)}/${pad2(month)}/${year}?`)) return;
+
+            if (!window.resignedRecords) window.resignedRecords = {};
+            window.resignedRecords[String(code)] = {
+                code,
+                name,
+                day,
+                month,
+                year,
+                recordedBy: getCurrentAdminLabel(),
+                recordedAt: new Date().toISOString()
+            };
+
+            await commitData();
+            clearResignForm();
+            updateDynamicUI();
+            showToast("บันทึกพนักงานออกแล้ว");
+        };
+
+        window.cancelResignedEmployee = async function(code) {
+            if (!isAdminUser()) return alert("ยกเลิกสถานะออกได้เฉพาะ Admin");
+            const rec = window.resignedRecords?.[String(code)];
+            if (!rec) return;
+            if (!confirm(`ยืนยันยกเลิกสถานะออกของ ${rec.name} (${rec.code})?`)) return;
+
+            delete window.resignedRecords[String(code)];
+            await commitData();
+            updateDynamicUI();
+            showToast("ยกเลิกสถานะพนักงานออกแล้ว");
+        };
+
+        function renderResignedHistory() {
+            const body = document.getElementById("resigned-history-body");
+            if (!body) return;
+
+            const records = Object.values(window.resignedRecords || {})
+                .sort((a, b) => {
+                    const da = new Date(a.year, a.month - 1, a.day).getTime();
+                    const db = new Date(b.year, b.month - 1, b.day).getTime();
+                    return db - da || String(a.name).localeCompare(String(b.name), "en");
+                });
+
+            if (!records.length) {
+                body.innerHTML = `<tr><td colspan="7" class="px-4 py-6 text-center text-slate-500">ยังไม่มีประวัติพนักงานออก</td></tr>`;
+                return;
+            }
+
+            body.innerHTML = records.map((r, idx) => {
+                const t = r.recordedAt ? new Date(r.recordedAt) : null;
+                const timeText = t ? `${pad2(t.getHours())}:${pad2(t.getMinutes())}` : "-";
+                return `
+                    <tr class="hover:bg-slate-800/40">
+                        <td class="px-4 py-3 text-slate-400">${idx + 1}</td>
+                        <td class="px-4 py-3 font-mono text-slate-300">${r.code}</td>
+                        <td class="px-4 py-3 font-bold text-slate-100">${r.name}</td>
+                        <td class="px-4 py-3 text-rose-300">${getResignDateText(r)}</td>
+                        <td class="px-4 py-3 text-slate-300">${r.recordedBy || "-"}</td>
+                        <td class="px-4 py-3 text-slate-300">${timeText}</td>
+                        <td class="px-4 py-3 text-center">
+                            <button onclick="cancelResignedEmployee('${r.code}')" class="px-3 py-1.5 rounded-lg border border-rose-500/40 text-rose-300 hover:bg-rose-500/10 text-xs font-bold">ยกเลิกออก</button>
+                        </td>
+                    </tr>
+                `;
+            }).join("");
+        }
 
         function showToast(msg) {
             const t = document.getElementById("toast");
