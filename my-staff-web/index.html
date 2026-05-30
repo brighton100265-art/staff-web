@@ -416,6 +416,16 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
 
             <div id="day-confirm-detail" class="bg-slate-950 border border-slate-800 rounded-xl p-4 text-sm text-slate-300 leading-7"></div>
 
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-2">
+                <label class="text-xs text-slate-400 font-medium">เลือกสถานะที่ต้องการ</label>
+                <div class="grid grid-cols-3 gap-2">
+                    <button type="button" onclick="selectDayConfirmStatus('WORK')" id="day-status-work" class="day-status-btn px-3 py-2 rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold">วันทำงาน</button>
+                    <button type="button" onclick="selectDayConfirmStatus('O')" id="day-status-off" class="day-status-btn px-3 py-2 rounded-xl border border-rose-500/40 bg-rose-950/20 hover:bg-rose-950/35 text-rose-300 text-xs font-semibold">วันหยุด O</button>
+                    <button type="button" onclick="selectDayConfirmStatus('L')" id="day-status-leave" class="day-status-btn px-3 py-2 rounded-xl border border-purple-500/40 bg-purple-950/20 hover:bg-purple-950/35 text-purple-300 text-xs font-semibold">วันลา L</button>
+                </div>
+                <input type="hidden" id="day-confirm-status" value="">
+            </div>
+
             <div class="flex justify-end gap-2">
                 <button onclick="closeDayConfirmModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-sm font-semibold rounded-xl">
                     ยกเลิก
@@ -2110,7 +2120,43 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
             return "วันหยุด O";
         }
 
-        window.closeDayConfirmModal = function() {
+        
+        function getDayStatusCode(p, d) {
+            if (Array.isArray(p.offs) && p.offs.includes(d)) return "O";
+            if (Array.isArray(p.leaves) && p.leaves.includes(d)) return "L";
+            return "WORK";
+        }
+
+        function getDayStatusTextByCode(code) {
+            if (code === "O") return "วันหยุด O";
+            if (code === "L") return "วันลา L";
+            return "วันทำงาน";
+        }
+
+        window.selectDayConfirmStatus = function(status) {
+            const input = document.getElementById("day-confirm-status");
+            if (input) input.value = status;
+
+            const btns = {
+                WORK: document.getElementById("day-status-work"),
+                O: document.getElementById("day-status-off"),
+                L: document.getElementById("day-status-leave")
+            };
+
+            Object.values(btns).forEach(btn => {
+                if (!btn) return;
+                btn.classList.remove("ring-2", "ring-indigo-400", "scale-[1.02]");
+            });
+
+            if (btns[status]) {
+                btns[status].classList.add("ring-2", "ring-indigo-400", "scale-[1.02]");
+            }
+
+            const nextText = document.getElementById("day-confirm-next-status");
+            if (nextText) nextText.innerText = getDayStatusTextByCode(status);
+        };
+
+window.closeDayConfirmModal = function() {
             window.pendingDayToggle = null;
             const modal = document.getElementById("day-confirm-modal");
             if (modal) modal.classList.add("hidden");
@@ -2129,19 +2175,18 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                 return alert("บัญชีนี้ไม่มีสิทธิ์แก้ไขวันหยุด");
             }
 
+            const selectedStatus = document.getElementById("day-confirm-status")?.value || "WORK";
+
             if (!p.offs) p.offs = [];
             if (!p.leaves) p.leaves = [];
 
-            const io = p.offs.indexOf(d);
-            const il = p.leaves.indexOf(d);
+            p.offs = p.offs.filter(x => x !== d);
+            p.leaves = p.leaves.filter(x => x !== d);
 
-            if (io === -1 && il === -1) {
+            if (selectedStatus === "O") {
                 p.offs.push(d);
-            } else if (io !== -1) {
-                p.offs.splice(io, 1);
+            } else if (selectedStatus === "L") {
                 p.leaves.push(d);
-            } else {
-                p.leaves.splice(il, 1);
             }
 
             p.offs.sort((a,b)=>a-b);
@@ -2159,8 +2204,7 @@ window.toggleDayOff = function(id, d) {
             const p = window.currentStaffList[idx];
             if (!canEditTeam(p.team)) return alert("บัญชีนี้ไม่มีสิทธิ์แก้ไขวันหยุด");
 
-            const currentStatus = getDayStatusText(p, d);
-            const nextStatus = getNextDayStatusText(p, d);
+            const currentCode = getDayStatusCode(p, d);
 
             window.pendingDayToggle = { id, d };
 
@@ -2170,13 +2214,15 @@ window.toggleDayOff = function(id, d) {
                     <div><span class="text-slate-500">พนักงาน:</span> <b class="text-slate-100">${p.name}</b></div>
                     <div><span class="text-slate-500">ทีม:</span> <b class="text-slate-100">${p.team}</b></div>
                     <div><span class="text-slate-500">วันที่:</span> <b class="text-slate-100">${d}</b></div>
-                    <div><span class="text-slate-500">สถานะปัจจุบัน:</span> <b class="text-amber-300">${currentStatus}</b></div>
-                    <div><span class="text-slate-500">จะเปลี่ยนเป็น:</span> <b class="text-indigo-300">${nextStatus}</b></div>
+                    <div><span class="text-slate-500">สถานะปัจจุบัน:</span> <b class="text-amber-300">${getDayStatusTextByCode(currentCode)}</b></div>
+                    <div><span class="text-slate-500">จะเปลี่ยนเป็น:</span> <b id="day-confirm-next-status" class="text-indigo-300">${getDayStatusTextByCode(currentCode)}</b></div>
                 `;
             }
 
             const modal = document.getElementById("day-confirm-modal");
             if (modal) modal.classList.remove("hidden");
+
+            selectDayConfirmStatus(currentCode);
         };
 
         window.editName = function(id, el) {
