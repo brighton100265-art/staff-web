@@ -2320,7 +2320,8 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
             await setDoc(ref, {
                 staffList: window.currentStaffList,
                 shiftTimes: window.shiftTimes,
-                       deletedShiftCodes: window.deletedShiftCodes || [],
+                       rolePermissions: window.customRolePermissions || getRolePermissions(),
+                        deletedShiftCodes: window.deletedShiftCodes || [],
                         rolePermissions: window.customRolePermissions || getRolePermissions(),
                          deletedShiftCodes: window.deletedShiftCodes || [],
                 month: window.selectedMonth,
@@ -2406,6 +2407,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                     await setDoc(doc(db, "schedule_db", cloudDocId), {
                         staffList: window.currentStaffList,
                         shiftTimes: window.shiftTimes,
+                        rolePermissions: window.customRolePermissions || getRolePermissions(),
                         deletedShiftCodes: window.deletedShiftCodes || [],
                         attendanceChecks: window.attendanceChecks || {},
                         resignedRecords: window.resignedRecords || {},
@@ -2417,6 +2419,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                     await setDoc(doc(db, "schedule_db", "company_schedule_latest"), {
                         staffList: window.currentStaffList,
                         shiftTimes: window.shiftTimes,
+                        rolePermissions: window.customRolePermissions || getRolePermissions(),
                         deletedShiftCodes: window.deletedShiftCodes || [],
                         attendanceChecks: window.attendanceChecks || {},
                         resignedRecords: window.resignedRecords || {},
@@ -2434,6 +2437,10 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                 setSyncStatus("local", "บันทึกในเครื่อง");
             }
             updateDynamicUI();
+        
+            applyRolePermissions();
+            lockTableControlsByPermission();
+            fixWorkTypeLabels();
         }
 
 
@@ -4427,16 +4434,26 @@ window.generateWFHPresentToday = function() {
         const DEFAULT_ROLE_PERMISSIONS = JSON.parse(JSON.stringify(ROLE_PERMISSIONS));
         window.customRolePermissions = window.customRolePermissions || JSON.parse(localStorage.getItem("customRolePermissions") || "null") || JSON.parse(JSON.stringify(DEFAULT_ROLE_PERMISSIONS));
 
-        function getRolePermissions() {
-            const merged = JSON.parse(JSON.stringify(DEFAULT_ROLE_PERMISSIONS));
-            const saved = window.customRolePermissions || {};
+        
+        function loadRolePermissionsFromData(data) {
+            if (data && data.rolePermissions) {
+                window.customRolePermissions = data.rolePermissions;
+                window.customRolePermissions.ADMIN = window.customRolePermissions.ADMIN || {};
+                window.customRolePermissions.ADMIN.managePermissions = true;
+                window.customRolePermissions.ADMIN.saveCloud = true;
+                saveRolePermissionsLocal();
+            }
+        }
+
+function getRolePermissions() {
+            const base = JSON.parse(JSON.stringify(DEFAULT_ROLE_PERMISSIONS || ROLE_PERMISSIONS));
+            const saved = window.customRolePermissions || JSON.parse(localStorage.getItem("customRolePermissions") || "null") || {};
             ["ADMIN","S4","STAFF"].forEach(role => {
-                merged[role] = { ...(merged[role] || {}), ...(saved[role] || {}) };
+                base[role] = { ...(base[role] || {}), ...(saved[role] || {}) };
             });
-            // Admin must always keep core safety rights
-            merged.ADMIN.managePermissions = true;
-            merged.ADMIN.saveCloud = true;
-            return merged;
+            base.ADMIN.managePermissions = true;
+            base.ADMIN.saveCloud = true;
+            return base;
         }
 
         function saveRolePermissionsLocal() {
@@ -4449,28 +4466,56 @@ window.generateWFHPresentToday = function() {
                 renderPermissionModal();
                 return;
             }
-            if (!window.customRolePermissions) window.customRolePermissions = JSON.parse(JSON.stringify(getRolePermissions()));
-            if (!window.customRolePermissions[role]) window.customRolePermissions[role] = {};
+
+            if (!window.customRolePermissions) {
+                window.customRolePermissions = JSON.parse(JSON.stringify(getRolePermissions()));
+            }
+            if (!window.customRolePermissions[role]) {
+                window.customRolePermissions[role] = {};
+            }
+
             window.customRolePermissions[role][key] = !!checked;
 
-            // safety: admin cannot lose manage permission/save cloud
-            if (role === "ADMIN" && (key === "managePermissions" || key === "saveCloud")) {
-                window.customRolePermissions.ADMIN[key] = true;
-            }
+            // กัน Admin ล็อกตัวเองจนจัดการต่อไม่ได้
+            window.customRolePermissions.ADMIN.managePermissions = true;
+            window.customRolePermissions.ADMIN.saveCloud = true;
+
             saveRolePermissionsLocal();
+
+            // อัปเดตทันที ไม่ต้องรอกดปิด/รีเฟรช
+            renderPermissionModal();
             applyRolePermissions();
+            lockTableControlsByPermission();
+            fixWorkTypeLabels();
         };
 
         window.saveRolePermissions = async function() {
             if (!isAdminUser()) return alert("เฉพาะ Admin เท่านั้น");
+
+            if (!window.customRolePermissions) {
+                window.customRolePermissions = JSON.parse(JSON.stringify(getRolePermissions()));
+            }
+            window.customRolePermissions.ADMIN.managePermissions = true;
+            window.customRolePermissions.ADMIN.saveCloud = true;
+
             saveRolePermissionsLocal();
+
+            // ใช้สิทธิ์ใหม่ทันที
+            applyRolePermissions();
+            lockTableControlsByPermission();
+            fixWorkTypeLabels();
+
             try {
                 await commitData();
+                saveRolePermissionsLocal();
+                applyRolePermissions();
+                lockTableControlsByPermission();
+                fixWorkTypeLabels();
                 showToast("บันทึกสิทธิ์แล้ว");
                 closePermissionModal();
             } catch (err) {
                 console.error(err);
-                alert("บันทึกสิทธิ์ไม่สำเร็จ");
+                alert("บันทึกสิทธิ์ไม่สำเร็จ แต่ระบบบันทึกไว้ในเครื่องแล้ว");
             }
         };
 
@@ -4560,7 +4605,9 @@ const I18N = {
         }
 
         function getCurrentRoleKey(){ if(!window.currentUser) return "STAFF"; if(window.currentUser.role==="ADMIN") return "ADMIN"; if(window.currentUser.role==="S4"||window.currentUser.rank==="S4") return "S4"; return "STAFF"; }
-        function hasPermission(key){ return !!getRolePermissions()[getCurrentRoleKey()]?.[key]; }
+        function hasPermission(key){
+            return !!getRolePermissions()[getCurrentRoleKey()]?.[key];
+        }
         function getLang(key){ const lang=localStorage.getItem("schedule_lang")||"th"; return I18N[lang]?.[key]||I18N.th[key]||key; }
 
         window.toggleLanguagePopup = function() {
