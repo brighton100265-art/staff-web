@@ -2802,6 +2802,8 @@ function renderTable() {
             lockTableControlsByPermission();
         
             fixWorkTypeLabels();
+        
+            applyRolePermissions();
         }
 
         function renderDailySummary(filtered) {
@@ -3041,6 +3043,11 @@ window.toggleDayOff = function(id, d) {
         };
 
         window.saveNewEmployee = async function() {
+            if (!hasPermission("addEmployee")) {
+                alert("ไม่มีสิทธิ์ใช้งานเมนูนี้");
+                return;
+            }
+
             const name = normalizeCode(document.getElementById("new-emp-name").value);
             const code = document.getElementById("new-emp-code").value.trim();
             let team = document.getElementById("new-emp-team").value;
@@ -3057,6 +3064,11 @@ window.toggleDayOff = function(id, d) {
             showToast("เพิ่มพนักงานสำเร็จ");
         };
         window.deleteEmployee = async function() {
+            if (!hasPermission("deleteEmployee")) {
+                alert("ไม่มีสิทธิ์ใช้งานเมนูนี้");
+                return;
+            }
+
             const id = Number(document.getElementById("delete-emp-id")?.value);
             const confirmed = document.getElementById("delete-emp-confirmed")?.value === "1";
 
@@ -3085,6 +3097,11 @@ window.toggleDayOff = function(id, d) {
 
         
 window.saveNewShift = async function() {
+            if (!hasPermission("addShift")) {
+                alert("ไม่มีสิทธิ์ใช้งานเมนูนี้");
+                return;
+            }
+
             if (!isLeaderUser()) return alert("เพิ่มกะได้เฉพาะหัวหน้า S4 หรือ Admin");
             const code = normalizeCode(document.getElementById("new-shift-code").value);
             restoreShiftIfAdded(code);
@@ -3187,6 +3204,11 @@ window.saveNewShift = async function() {
         window.reloadFromCloud = function() { location.reload(); };
         window.applyFilters = function() { renderTable(); };
         window.openAddEmployeeModal = function() {
+            if (!hasPermission("addEmployee")) {
+                alert("ไม่มีสิทธิ์ใช้งานเมนูนี้");
+                return;
+            }
+
             if (!window.currentUser) return alert("กรุณาเข้าสู่ระบบก่อน");
             if (!isLeaderUser()) return alert("บัญชีนี้ไม่มีสิทธิ์เพิ่ม/ลบข้อมูล");
             resetDeleteEmployeePreview();
@@ -3197,6 +3219,11 @@ window.saveNewShift = async function() {
         
         window.closeAddShiftModal = function() { document.getElementById("add-shift-modal").classList.add("hidden"); };
         window.exportData = function() {
+            if (!hasPermission("exportData")) {
+                alert("ไม่มีสิทธิ์ใช้งานเมนูนี้");
+                return;
+            }
+
             let txt = `ตารางงาน ${monthNamesTH[window.selectedMonth]} ${window.selectedYear}\nทีม\tยศ\tชื่อ\tรหัส\tลักษณะงาน\tกะ\tเวลา\n`;
             sortedStaffStable(window.currentStaffList).forEach(p => {
                 if (!canViewTeam(p.team)) return;
@@ -3883,6 +3910,8 @@ function renderWFHPresentInline(people, day) {
             }).join("");
         
             applyLanguage();
+        
+            applyRolePermissions();
         }
 
 window.generateWFHPresentToday = function() {
@@ -4079,6 +4108,24 @@ window.generateWFHPresentToday = function() {
         };
 
         window.saveResignedEmployee = async function() {
+            if (!hasPermission("resignEmployee")) {
+                alert("ไม่มีสิทธิ์ใช้งานเมนูนี้");
+                return;
+            }
+
+            // สิทธิ์ลาออก: Admin ได้ทั้งหมด / S4 ได้เฉพาะทีมตัวเอง
+            const __resignCodeArg = String(arguments[0] || document.getElementById("resign-code")?.value || document.getElementById("resigned-code")?.value || "").trim();
+            const __resignNameArg = String(arguments[1] || document.getElementById("resign-name")?.value || document.getElementById("resigned-name")?.value || "").trim().toUpperCase();
+            const __targetStaffForResign = (window.currentStaffList || []).find(p =>
+                String(p.code) === __resignCodeArg ||
+                String(p.id) === __resignCodeArg ||
+                String(p.name).toUpperCase() === __resignNameArg
+            );
+            if (__targetStaffForResign && !canManageResignationForStaff(__targetStaffForResign)) {
+                alert("ไม่มีสิทธิ์บันทึกพนักงานออกของทีมนี้");
+                return;
+            }
+
             if (!isAdminUser()) return alert("บันทึกพนักงานออกได้เฉพาะ Admin");
 
             initResignDateControls();
@@ -4113,6 +4160,11 @@ window.generateWFHPresentToday = function() {
         };
 
         window.cancelResignedEmployee = async function(code) {
+            if (!hasPermission("cancelResign")) {
+                alert("ไม่มีสิทธิ์ใช้งานเมนูนี้");
+                return;
+            }
+
             if (!isAdminUser()) return alert("ยกเลิกสถานะออกได้เฉพาะ Admin");
             const rec = window.resignedRecords?.[String(code)];
             if (!rec) return;
@@ -4164,7 +4216,7 @@ window.generateWFHPresentToday = function() {
 
         window.openResignedModal = function() {
             if (!window.currentUser) return alert("กรุณาเข้าสู่ระบบก่อน");
-            if (!isAdminUser()) return alert("จัดการพนักงานออกได้เฉพาะ Admin");
+            if (!hasPermission("resignEmployee")) return alert("ไม่มีสิทธิ์บันทึกพนักงานออก");
             initResignDateControls();
             renderResignedHistory();
             const modal = document.getElementById("resigned-modal");
@@ -4462,7 +4514,7 @@ function getRolePermissions() {
 
         window.toggleRolePermission = function(role, key, checked) {
             if (!isAdminUser()) {
-                alert("เฉพาะ Admin เท่านั้น");
+                alert("ไม่มีสิทธิ์ใช้งานเมนูนี้");
                 renderPermissionModal();
                 return;
             }
@@ -4490,7 +4542,7 @@ function getRolePermissions() {
         };
 
         window.saveRolePermissions = async function() {
-            if (!isAdminUser()) return alert("เฉพาะ Admin เท่านั้น");
+            if (!hasPermission("managePermissions")) return alert("ไม่มีสิทธิ์ใช้งานเมนูนี้");
 
             if (!window.customRolePermissions) {
                 window.customRolePermissions = JSON.parse(JSON.stringify(getRolePermissions()));
@@ -4520,7 +4572,7 @@ function getRolePermissions() {
         };
 
         window.resetRolePermissions = function() {
-            if (!isAdminUser()) return alert("เฉพาะ Admin เท่านั้น");
+            if (!hasPermission("managePermissions")) return alert("ไม่มีสิทธิ์ใช้งานเมนูนี้");
             if (!confirm("รีเซ็ตสิทธิ์กลับค่าเริ่มต้น?")) return;
             window.customRolePermissions = JSON.parse(JSON.stringify(DEFAULT_ROLE_PERMISSIONS));
             saveRolePermissionsLocal();
@@ -4604,7 +4656,54 @@ const I18N = {
             }
         }
 
-        function getCurrentRoleKey(){ if(!window.currentUser) return "STAFF"; if(window.currentUser.role==="ADMIN") return "ADMIN"; if(window.currentUser.role==="S4"||window.currentUser.rank==="S4") return "S4"; return "STAFF"; }
+        
+        function canManageResignationForStaff(staff) {
+            if (!window.currentUser) return false;
+            if (!hasPermission("resignEmployee")) return false;
+
+            const role = getCurrentRoleKey();
+
+            if (role === "ADMIN") return true;
+
+            if (role === "S4") {
+                const userTeam = String(window.currentUser.team || "").toUpperCase();
+                const staffTeam = String(staff?.team || "").toUpperCase();
+                return !!userTeam && !!staffTeam && userTeam === staffTeam;
+            }
+
+            // STAFF / S2: ถ้าเปิดสิทธิ์บันทึกพนักงานออก ให้ทำได้
+            return true;
+        }
+
+        function canCancelResignationForRecord(record) {
+            if (!window.currentUser) return false;
+            if (!hasPermission("cancelResign")) return false;
+
+            const role = getCurrentRoleKey();
+
+            if (role === "ADMIN") return true;
+
+            if (role === "S4") {
+                const staff = (window.currentStaffList || []).find(p =>
+                    String(p.code) === String(record?.code) ||
+                    String(p.name).toUpperCase() === String(record?.name).toUpperCase()
+                );
+                const userTeam = String(window.currentUser.team || "").toUpperCase();
+                const staffTeam = String(staff?.team || record?.team || "").toUpperCase();
+                return !!userTeam && !!staffTeam && userTeam === staffTeam;
+            }
+
+            // STAFF / S2: ถ้าเปิดสิทธิ์ยกเลิกพนักงานออก ให้ทำได้
+            return true;
+        }
+
+function getCurrentRoleKey() {
+            if (!window.currentUser) return "STAFF";
+            if (window.currentUser.role === "ADMIN") return "ADMIN";
+            if (window.currentUser.role === "S4" || window.currentUser.rank === "S4") return "S4";
+            // S2 / พนักงาน ใช้กลุ่ม STAFF แต่ถ้า Admin เปิดสิทธิ์ให้ ก็ต้องทำได้ตามสิทธิ์
+            return "STAFF";
+        }
         function hasPermission(key){
             return !!getRolePermissions()[getCurrentRoleKey()]?.[key];
         }
@@ -4956,7 +5055,7 @@ function applyLanguage(){
             }
         }
 
-        window.openPermissionModal=function(){ if(!hasPermission("managePermissions")) return alert("เฉพาะ Admin เท่านั้น"); renderPermissionModal(); document.getElementById("permission-modal")?.classList.remove("hidden"); };
+        window.openPermissionModal=function(){ if(!hasPermission("managePermissions")) return alert("ไม่มีสิทธิ์ใช้งานเมนูนี้"); renderPermissionModal(); document.getElementById("permission-modal")?.classList.remove("hidden"); };
         window.closePermissionModal=function(){ document.getElementById("permission-modal")?.classList.add("hidden"); };
 
         function markMainScheduleFullWidth() {
@@ -4983,20 +5082,49 @@ function applyLanguage(){
 
         function applyRolePermissions(){
             const role=getCurrentRoleKey();
-            document.querySelectorAll("[data-admin-only]").forEach(el=>el.classList.toggle("permission-hidden",role!=="ADMIN"));
-            document.querySelectorAll("button").forEach(btn=>{
-                const oc=btn.getAttribute("onclick")||"", txt=btn.textContent.trim();
-                if(oc.includes("openAddShiftModal")) btn.classList.toggle("permission-hidden",!hasPermission("addShift")&&!hasPermission("deleteShift"));
-                if(oc.includes("openAddEmployeeModal")) btn.classList.toggle("permission-hidden",!hasPermission("addEmployee"));
-                if(oc.includes("openResignedModal")) btn.classList.toggle("permission-hidden",!hasPermission("resignEmployee"));
-                if(oc.includes("export")||txt==="Export") btn.classList.toggle("permission-hidden",!hasPermission("exportData"));
-                if(oc.includes("reset")||txt.includes("รีเซ็ต")) btn.classList.toggle("permission-hidden",!hasPermission("resetSystem"));
-                if(txt.includes("บันทึก Cloud")||txt.includes("Save Cloud")||txt.includes("保存云端")||txt.includes("Lưu Cloud")) btn.classList.toggle("permission-hidden",!hasPermission("saveCloud"));
+
+            document.querySelectorAll("[data-admin-only]").forEach(el=>{
+                // ถ้าเปิด managePermissions ให้ S4/S2 ก็เห็นปุ่มสิทธิ์ได้
+                el.classList.toggle("permission-hidden", !hasPermission("managePermissions"));
             });
-            markMainScheduleFullWidth(); applyLanguage();
-        
+
+            document.querySelectorAll("button").forEach(btn=>{
+                const oc=btn.getAttribute("onclick")||"";
+                const txt=btn.textContent.trim();
+
+                const rules = [
+                    [["openAddShiftModal"], "addShift"],
+                    [["deleteShift"], "deleteShift"],
+                    [["openAddEmployeeModal", "saveNewEmployee", "addEmployee"], "addEmployee"],
+                    [["deleteEmployee", "removeEmployee"], "deleteEmployee"],
+                    [["openResigned", "openResign", "saveResigned", "saveResign", "addResigned", "recordResigned"], "resignEmployee"],
+                    [["cancelResigned", "cancelResign", "undoResigned"], "cancelResign"],
+                    [["export"], "exportData"],
+                    [["reset"], "resetSystem"],
+                    [["saveToCloud"], "saveCloud"],
+                    [["openPermissionModal"], "managePermissions"]
+                ];
+
+                rules.forEach(([keys, perm])=>{
+                    if(keys.some(k=>oc.includes(k))) {
+                        btn.classList.toggle("permission-hidden", !hasPermission(perm));
+                    }
+                });
+
+                if(txt.includes("บันทึก Cloud")||txt.includes("Save Cloud")||txt.includes("保存云端")||txt.includes("Lưu Cloud")) {
+                    btn.classList.toggle("permission-hidden", !hasPermission("saveCloud"));
+                }
+                if(txt==="Export"||txt==="导出"||txt==="Xuất") {
+                    btn.classList.toggle("permission-hidden", !hasPermission("exportData"));
+                }
+                if(txt.includes("รีเซ็ต")||txt.includes("Reset")||txt.includes("重置")||txt.includes("Đặt lại")) {
+                    btn.classList.toggle("permission-hidden", !hasPermission("resetSystem"));
+                }
+            });
+
+            markMainScheduleFullWidth();
+            applyLanguage();
             lockTableControlsByPermission();
-        
             fixWorkTypeLabels();
         }
 
@@ -5004,14 +5132,20 @@ function applyLanguage(){
         function canEditStaffField(staff, permissionKey) {
             if (!window.currentUser) return false;
             if (!hasPermission(permissionKey)) return false;
-            if (getCurrentRoleKey() === "ADMIN") return true;
-            // S4 ทำได้เฉพาะทีมตัวเองเท่านั้น
-            if (getCurrentRoleKey() === "S4") {
+
+            const role = getCurrentRoleKey();
+
+            if (role === "ADMIN") return true;
+
+            // S4 จำกัดเฉพาะทีมตัวเอง
+            if (role === "S4") {
                 const userTeam = String(window.currentUser.team || "").toUpperCase();
                 const staffTeam = String(staff?.team || "").toUpperCase();
                 return userTeam && staffTeam && userTeam === staffTeam;
             }
-            return false;
+
+            // STAFF / S2: ถ้า Admin เปิดสิทธิ์ให้แล้ว ให้ทำได้ตามสิทธิ์นั้น
+            return true;
         }
 
         
