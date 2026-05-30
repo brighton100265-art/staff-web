@@ -2339,11 +2339,31 @@ window.previewDeleteEmployeeByCode = function() {
             updateStats();
         }
 
-        function renderTable() {
+        
+        function getResignedRecordByStaff(p) {
+            return window.resignedRecords ? window.resignedRecords[String(p.code)] : null;
+        }
+
+        function getResignDateText(record) {
+            if (!record) return "";
+            return `${pad2(record.day)}/${pad2(record.month)}/${record.year}`;
+        }
+
+        function isResignDayForCell(p, d) {
+            const rec = getResignedRecordByStaff(p);
+            if (!rec) return false;
+            const currentMonth = Number(window.selectedMonth || new Date().getMonth() + 1);
+            const currentYear = Number(window.selectedYear || new Date().getFullYear());
+            return Number(rec.day) === Number(d) && Number(rec.month) === currentMonth && Number(rec.year) === currentYear;
+        }
+
+function renderTable() {
             const tbody = document.getElementById("staff-table-body");
             const fTeam = document.getElementById("filter-team").value;
             const fShift = document.getElementById("filter-shift").value;
             const q = document.getElementById("search-name").value.toLowerCase().trim();
+            const hideResigned = !!document.getElementById("hide-resigned-toggle")?.checked;
+
             tbody.innerHTML = "";
             let count = 0, filtered = [], lastGroup = "";
             ensureStaffPositions();
@@ -2354,6 +2374,10 @@ window.previewDeleteEmployeeByCode = function() {
                 if (fTeam !== "ALL" && p.team !== fTeam) return;
                 if (fShift !== "ALL" && p.shift !== fShift) return;
                 if (q && !p.name.toLowerCase().includes(q) && !String(p.code).includes(q)) return;
+
+                const resigned = getResignedRecordByStaff(p);
+                const isResigned = !!resigned;
+                if (isResigned && hideResigned) return;
 
                 const groupKey = `${p.team}-${p.rank}`;
                 if (groupKey !== lastGroup) {
@@ -2371,11 +2395,22 @@ window.previewDeleteEmployeeByCode = function() {
                 const editable = canEditTeam(p.team);
                 const times = window.shiftTimes[p.shift] || { login: "", rest: "" };
                 const tOffs = p.offs.length, tLeaves = p.leaves.length;
-                const tCol = p.team === "WIN2" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : p.team === "WIN3" ? "bg-indigo-500/10 text-indigo-400 border-indigo-500/20" : "bg-rose-500/10 text-rose-400 border-rose-500/20";
+                const tCol = typeof getTeamBadgeClass === "function"
+                    ? getTeamBadgeClass(p.team)
+                    : (p.team === "WIN2" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : p.team === "WIN3" ? "bg-indigo-500/10 text-indigo-400 border-indigo-500/20" : "bg-rose-500/10 text-rose-400 border-rose-500/20");
                 const typeCol = p.type === "WFH" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-indigo-500/10 text-indigo-400 border-indigo-500/20";
                 const shiftCol = getShiftClass(p.shift);
                 const disabled = editable ? "" : "disabled";
+                const resignedDisabled = isResigned ? "disabled" : disabled;
                 const sOpts = getSortedShiftKeys().map(s => `<option value="${s}" ${p.shift === s ? "selected" : ""}>${s}</option>`).join("");
+
+                const nameHtml = `${p.name}${isResigned ? `<div class="text-[10px] text-rose-300 mt-1">ออกแล้ว ${getResignDateText(resigned)}</div>` : ""}`;
+                const workTypeHtml = isResigned
+                    ? `<span class="status-resigned-pill">ออกแล้ว ${getResignDateText(resigned)}</span>`
+                    : `<select ${!canEditTeam(p.team) ? "disabled" : ""} onchange="changeWorkType(${p.id}, this.value)" class="border px-2 py-0.5 rounded-full text-[10px] font-semibold outline-none ${p.type === "WFH" ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" : "bg-indigo-500/15 text-indigo-400 border-indigo-500/30"} disabled:opacity-50 disabled:cursor-not-allowed">
+                                        <option value="Office" ${p.type === "Office" ? "selected" : ""}>Office</option>
+                                        <option value="WFH" ${p.type === "WFH" ? "selected" : ""}>WFH</option>
+                                    </select>`;
 
                 let html = `<td class="py-2 px-2 text-center text-slate-500 sticky left-0 bg-slate-900/90 border-r border-slate-800 z-10 sticky-left">${i}</td>
                     <td class="py-2 px-1 text-center"><span class="px-2 py-0.5 text-[10px] font-bold border rounded ${tCol}">${p.team}</span></td>
@@ -2385,30 +2420,32 @@ window.previewDeleteEmployeeByCode = function() {
                             <option value="S4" ${p.rank === "S4" ? "selected" : ""}>S4</option>
                         </select>
                     </td>
-                    <td class="py-2 px-3 text-slate-200"><span class="${editable ? "cursor-edit hover:text-indigo-400" : "text-slate-300"}" ${editable ? `ondblclick="editName(${p.id}, this)"` : ""}>${p.name}</span></td>
+                    <td class="py-2 px-3 text-slate-200 ${isResigned ? "resigned-name" : ""}"><span class="${editable && !isResigned ? "cursor-edit hover:text-indigo-400" : "text-slate-300"}" ${editable && !isResigned ? `ondblclick="editName(${p.id}, this)"` : ""}>${nameHtml}</span></td>
                     <td class="py-2 px-3 text-slate-400 text-xs font-mono">${p.code}</td>
-                    <td class="py-2 px-2 text-center"><select ${!canEditTeam(p.team) ? "disabled" : ""} onchange="changeWorkType(${p.id}, this.value)" class="border px-2 py-0.5 rounded-full text-[10px] font-semibold outline-none ${p.type === "WFH" ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" : "bg-indigo-500/15 text-indigo-400 border-indigo-500/30"} disabled:opacity-50 disabled:cursor-not-allowed">
-                                        <option value="Office" ${p.type === "Office" ? "selected" : ""}>Office</option>
-                                        <option value="WFH" ${p.type === "WFH" ? "selected" : ""}>WFH</option>
-                                    </select></td>
-                    <td class="py-2 px-1 text-center"><select ${disabled} onchange="changeShift(${p.id}, this.value)" class="shift-select w-16 border px-2 py-0.5 rounded text-xs outline-none ${shiftCol} disabled:opacity-50 disabled:cursor-not-allowed">${sOpts}</select></td>
-                    <td class="py-2 px-2 text-center text-xs text-slate-300 font-mono">${times.login}</td>
-                    <td class="py-2 px-2 text-center text-xs text-slate-400 font-mono">${times.rest}</td>
+                    <td class="py-2 px-2 text-center">${workTypeHtml}</td>
+                    <td class="py-2 px-1 text-center"><select ${resignedDisabled} onchange="changeShift(${p.id}, this.value)" class="shift-select w-16 border px-2 py-0.5 rounded text-xs outline-none ${shiftCol} disabled:opacity-50 disabled:cursor-not-allowed">${sOpts}</select></td>
+                    <td class="py-2 px-2 text-center text-xs text-slate-300 font-mono">${times.login || "-"}</td>
+                    <td class="py-2 px-2 text-center text-xs text-slate-400 font-mono">${times.rest || times.break || "-"}</td>
                     <td class="py-2 px-2 text-center font-bold text-xs text-blue-400 bg-blue-950/5 border-x border-slate-800">${tOffs}</td>
                     <td class="py-2 px-2 text-center font-bold text-xs text-amber-500 bg-amber-950/5 border-r border-slate-800">${tLeaves}</td>`;
 
                 for (let d=1; d<=31; d++) {
                     const isO = p.offs.includes(d);
                     const isL = p.leaves.includes(d);
+                    const isR = isResignDayForCell(p, d);
                     const isW = ["ส","อา"].includes(daysOfWeek[(d-1)%7]);
                     let bg = isW ? "bg-indigo-950/10" : "bg-slate-900/10";
                     let txt = "•", color = "text-blue-400";
-                    if (isO) { bg = "bg-rose-950/30"; txt = "O"; color = "text-red-400 font-bold"; }
+                    if (isR) { bg = "resigned-day-cell"; txt = `<span class="resigned-day-mark">ออก</span>`; color = ""; }
+                    else if (isO) { bg = "bg-rose-950/30"; txt = "O"; color = "text-red-400 font-bold"; }
                     else if (isL) { bg = "bg-purple-950/30"; txt = "L"; color = "text-purple-400 font-bold"; }
-                    html += `<td onclick="toggleDayOff(${p.id}, ${d})" data-day="${d}" data-name="${p.name}" data-team="${p.team}" class="day-cell text-center ${editable ? "cursor-pointer" : "cursor-not-allowed opacity-70"} p-0.5 border-l border-slate-800/40 text-[11px] ${bg}"><div class="w-7 h-7 flex items-center justify-center mx-auto rounded-md ${color}">${txt}</div></td>`;
+                    const clickHandler = isResigned ? "" : `onclick="toggleDayOff(${p.id}, ${d})"`;
+                    const cursorCls = isResigned ? "cursor-not-allowed opacity-90" : (editable ? "cursor-pointer" : "cursor-not-allowed opacity-70");
+                    const tooltipName = isR ? `${p.name} | ออกแล้ว ${getResignDateText(resigned)}` : p.name;
+                    html += `<td ${clickHandler} data-day="${d}" data-name="${tooltipName}" data-team="${p.team}" class="day-cell text-center ${cursorCls} p-0.5 border-l border-slate-800/40 text-[11px] ${bg}"><div class="w-7 h-7 flex items-center justify-center mx-auto rounded-md ${color}">${txt}</div></td>`;
                 }
                 const tr = document.createElement("tr");
-                tr.className = "data-row border-b border-slate-800";
+                tr.className = `data-row border-b border-slate-800 ${isResigned ? "resigned-row" : ""}`;
                 tr.innerHTML = html;
                 tbody.appendChild(tr);
             });
@@ -3891,23 +3928,6 @@ window.generateWFHPresentToday = function() {
 
             showToast("บันทึกสถานะตรวจสอบแล้ว");
         };
-
-        function getResignedRecordByStaff(p) {
-            return window.resignedRecords ? window.resignedRecords[String(p.code)] : null;
-        }
-
-        function getResignDateText(record) {
-            if (!record) return "";
-            return `${pad2(record.day)}/${pad2(record.month)}/${record.year}`;
-        }
-
-        function isResignDayForCell(p, d) {
-            const rec = getResignedRecordByStaff(p);
-            if (!rec) return false;
-            const currentMonth = Number(window.selectedMonth || new Date().getMonth() + 1);
-            const currentYear = Number(window.selectedYear || new Date().getFullYear());
-            return Number(rec.day) === Number(d) && Number(rec.month) === currentMonth && Number(rec.year) === currentYear;
-        }
 
         function showToast(msg) {
             const t = document.getElementById("toast");
