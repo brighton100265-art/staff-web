@@ -2587,6 +2587,66 @@ window.toggleDayOff = function(id, d) {
             ];
         }
 
+
+        function getWFHReportShiftLabelV4(shift, login) {
+            const s = String(shift || "").toUpperCase();
+            const t = `${s} ${login || ""}`;
+            if (s === "S9" || t.includes("09.30") || t.includes("09:30")) return "เช้า (09:30–18:30)";
+            if (s === "S12" || t.includes("12.30") || t.includes("12:30")) return "บ่าย (12:30–21:30)";
+            if (s === "S21" || t.includes("21.00") || t.includes("21:00")) return "ดึก (21:00–05:00)";
+            return `${shift || "ไม่ระบุกะ"} (${login || "ไม่ระบุเวลา"})`;
+        }
+
+        function getBaseShiftLabelsForTeamV4(team) {
+            if (team === "WIN1" || team === "WIN2") {
+                return ["เช้า (09:30–18:30)", "บ่าย (12:30–21:30)"];
+            }
+            if (team === "WIN3") {
+                return ["บ่าย (12:30–21:30)"];
+            }
+            return ["เช้า (09:30–18:30)", "บ่าย (12:30–21:30)"];
+        }
+
+        function getWFHTeamShiftLabelsV4(team) {
+            const base = getBaseShiftLabelsForTeamV4(team);
+            const extra = [];
+            const teamWFH = (window.currentStaffList || []).filter(p =>
+                p.team === team && String(p.type || "").trim().toUpperCase() === "WFH"
+            );
+
+            teamWFH.forEach(p => {
+                const times = window.shiftTimes[p.shift] || {};
+                const label = getWFHReportShiftLabelV4(p.shift, times.login);
+                if (!base.includes(label) && !extra.includes(label)) {
+                    extra.push(label);
+                }
+            });
+
+            const order = ["เช้า (09:30–18:30)", "บ่าย (12:30–21:30)", "ดึก (21:00–05:00)"];
+            extra.sort((a, b) => {
+                const ia = order.indexOf(a);
+                const ib = order.indexOf(b);
+                if (ia !== -1 || ib !== -1) {
+                    return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+                }
+                return String(a).localeCompare(String(b), "en");
+            });
+
+            return [...base, ...extra];
+        }
+
+        function isWFHForReportV4(p) {
+            return String(p.type || "").trim().toUpperCase() === "WFH";
+        }
+
+        function isOffForReportV4(p, day) {
+            return Array.isArray(p.offs) && p.offs.includes(day);
+        }
+
+        function sortNamesForReportV4(names) {
+            return [...names].sort((a, b) => String(a).localeCompare(String(b), "en"));
+        }
+
 window.generateWFHOffReport = function() {
             const dayInput = document.getElementById("wfh-report-day");
             const out = document.getElementById("wfh-report-output");
@@ -2600,14 +2660,14 @@ window.generateWFHOffReport = function() {
             }
 
             const teams = ["WIN1", "WIN2", "WIN3"];
-            const teamIcon = { WIN1: "🔵", WIN2: "🟢", WIN3: "🟧" };
+            const teamIcon = { WIN1: "🟦", WIN2: "🟩", WIN3: "🟧" };
 
             const sortStaff = typeof sortedStaffStable === "function"
                 ? sortedStaffStable
                 : (arr) => [...arr];
 
             const lines = [];
-            lines.push(`🗓️ พนักงาน WFH หยุดประจำวันที่ ${day}`);
+            lines.push(`📅 พนักงาน WFH หยุดประจำวันที่ ${day}`);
             lines.push("");
 
             teams.forEach((team) => {
@@ -2617,34 +2677,24 @@ window.generateWFHOffReport = function() {
                 lines.push(`${teamIcon[team] || "▪️"} ${team}`);
                 lines.push("");
 
-                // ดึงเฉพาะกะที่มีพนักงาน WFH อยู่จริงในทีมนั้น
-                // เช่น ทีมมีแค่ S9/S12 ก็โชว์แค่เช้า/บ่าย ไม่โชว์ดึก
-                const shiftLabels = getWFHTeamShiftLabelsV3(team);
-
-                if (!shiftLabels.length) {
-                    lines.push("• ไม่มีพนักงาน WFH ในทีมนี้");
-                    lines.push("");
-                    lines.push("");
-                    return;
-                }
-
+                const shiftLabels = getWFHTeamShiftLabelsV4(team);
                 const wfhOffPeople = sortStaff(window.currentStaffList || [])
                     .filter(p => p.team === team)
-                    .filter(p => isWFHForReportV2(p))
-                    .filter(p => isOffForReportV2(p, day));
+                    .filter(p => isWFHForReportV4(p))
+                    .filter(p => isOffForReportV4(p, day));
 
                 const shiftMap = {};
                 shiftLabels.forEach(label => shiftMap[label] = []);
 
                 wfhOffPeople.forEach(p => {
                     const times = window.shiftTimes[p.shift] || {};
-                    const label = getWFHReportShiftLabelV2(p.shift, times.login);
+                    const label = getWFHReportShiftLabelV4(p.shift, times.login);
                     if (!shiftMap[label]) shiftMap[label] = [];
                     shiftMap[label].push(p.name);
                 });
 
                 shiftLabels.forEach(label => {
-                    const names = sortNamesForReportV2(shiftMap[label] || []);
+                    const names = sortNamesForReportV4(shiftMap[label] || []);
                     lines.push(label);
 
                     if (names.length) {
