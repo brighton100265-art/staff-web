@@ -291,7 +291,57 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
 
         <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-800 bg-slate-900/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div class="flex items-center gap-2 text-indigo-400">
+                
+    <div id="wfh-present-inline-panel" class="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden hidden mb-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 px-5 py-4 border-b border-slate-800">
+            <div>
+                <div class="flex items-center gap-2">
+                    <span class="text-lg">👥</span>
+                    <h3 class="text-base font-bold text-slate-100">รายชื่อพนักงาน WFH มาทำงานวันนี้</h3>
+                    <span class="px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/30 text-[11px] font-semibold">เฉพาะ WFH</span>
+                </div>
+                <div id="wfh-present-inline-date" class="text-[11px] text-slate-500 mt-1">ประจำวันที่</div>
+            </div>
+
+            <div class="flex flex-wrap gap-2">
+                <button onclick="copyWFHPresentToday()" class="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-xl transition-all">
+                    คัดลอกผลลัพธ์
+                </button>
+                <button onclick="clearWFHPresentToday()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-semibold text-xs rounded-xl transition-all">
+                    ล้างผลลัพธ์
+                </button>
+            </div>
+        </div>
+
+        <div id="wfh-present-summary" class="grid grid-cols-1 md:grid-cols-3 gap-3 px-5 py-4 border-b border-slate-800 bg-slate-950/25"></div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="bg-slate-950 text-slate-400 text-xs">
+                    <tr>
+                        <th class="px-4 py-3 text-left">ลำดับ</th>
+                        <th class="px-4 py-3 text-left">ทีม</th>
+                        <th class="px-4 py-3 text-left">ยศ</th>
+                        <th class="px-4 py-3 text-left">รหัสพนักงาน</th>
+                        <th class="px-4 py-3 text-left">ชื่อพนักงาน</th>
+                        <th class="px-4 py-3 text-left">กะ</th>
+                        <th class="px-4 py-3 text-left">เวลาเข้า</th>
+                        <th class="px-4 py-3 text-left">เวลาพัก</th>
+                        <th class="px-4 py-3 text-left">สถานะ</th>
+                        <th class="px-4 py-3 text-center">ตรวจแล้ว</th>
+                    </tr>
+                </thead>
+                <tbody id="wfh-present-table-body" class="divide-y divide-slate-800"></tbody>
+            </table>
+        </div>
+
+        <div class="flex items-center justify-between gap-3 px-5 py-3 border-t border-slate-800 text-[11px] text-slate-500">
+            <span id="wfh-present-count-text">แสดง 0 คน</span>
+            <span>เฉพาะพนักงาน WFH ที่ไม่ใช่ O วันหยุด และไม่ใช่ L วันลา</span>
+        </div>
+    </div>
+
+<div class="flex items-center gap-2 text-indigo-400">
                     <span class="font-semibold text-sm text-slate-200">แผ่นงานตารางเวรพนักงานแนวตั้ง <span id="current-month-label" class="text-indigo-300"></span> (วันทำงาน → วันหยุด O → วันลา L)</span>
                 </div>
                 <div class="flex gap-4 text-xs">
@@ -2983,23 +3033,93 @@ window.generateWFHOffReport = function() {
             box.innerHTML = html;
         }
 
+
+        function renderWFHPresentInline(people, day) {
+            const panel = document.getElementById("wfh-present-inline-panel");
+            const tbody = document.getElementById("wfh-present-table-body");
+            const summary = document.getElementById("wfh-present-summary");
+            const dateLabel = document.getElementById("wfh-present-inline-date");
+            const countText = document.getElementById("wfh-present-count-text");
+
+            if (!panel || !tbody) return;
+
+            panel.classList.remove("hidden");
+            if (dateLabel) dateLabel.innerText = `ประจำวันที่ ${day}`;
+            if (countText) countText.innerText = `แสดง ${people.length} คน`;
+
+            const teamCounts = { WIN1: 0, WIN2: 0, WIN3: 0 };
+            people.forEach(p => {
+                if (teamCounts[p.team] !== undefined) teamCounts[p.team]++;
+            });
+
+            if (summary) {
+                summary.innerHTML = `
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
+                        <div class="text-[11px] text-slate-500">รวมทั้งหมด</div>
+                        <div class="text-2xl font-black text-emerald-400">${people.length} คน</div>
+                    </div>
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
+                        <div class="text-[11px] text-slate-500">WIN1 / WIN2 / WIN3</div>
+                        <div class="text-sm font-bold text-slate-200">WIN1 ${teamCounts.WIN1} | WIN2 ${teamCounts.WIN2} | WIN3 ${teamCounts.WIN3}</div>
+                    </div>
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
+                        <div class="text-[11px] text-slate-500">ตรวจแล้ว</div>
+                        <div class="text-sm font-bold text-slate-200">${people.filter(p => isAttendanceVerified(p.id)).length} / ${people.length} คน</div>
+                    </div>
+                `;
+            }
+
+            if (!people.length) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="10" class="px-4 py-8 text-center text-slate-500">ไม่พบพนักงาน WFH ที่มาทำงานวันนี้</td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = people.map((p, idx) => {
+                const times = window.shiftTimes[p.shift] || {};
+                const checked = isAttendanceVerified(p.id);
+                const admin = isAdminUser();
+                const shiftClass = typeof getShiftClass === "function" ? getShiftClass(p.shift) : "shift-other";
+
+                return `
+                    <tr class="hover:bg-slate-800/40 transition-all">
+                        <td class="px-4 py-3 text-slate-400">${idx + 1}</td>
+                        <td class="px-4 py-3"><span class="px-2 py-1 rounded bg-blue-500/15 text-blue-300 border border-blue-500/25 text-xs font-bold">${p.team}</span></td>
+                        <td class="px-4 py-3"><span class="px-2 py-1 rounded bg-purple-500/15 text-purple-300 border border-purple-500/25 text-xs font-bold">${p.rank}</span></td>
+                        <td class="px-4 py-3 font-mono text-slate-300">${p.code}</td>
+                        <td class="px-4 py-3 font-bold text-slate-100">${p.name}</td>
+                        <td class="px-4 py-3"><span class="px-2 py-1 rounded border text-xs font-bold ${shiftClass}">${p.shift}</span></td>
+                        <td class="px-4 py-3 text-slate-300">${times.login || "-"}</td>
+                        <td class="px-4 py-3 text-slate-300">${times.break || "-"}</td>
+                        <td class="px-4 py-3"><span class="px-2 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 text-xs font-bold">มาทำงาน</span></td>
+                        <td class="px-4 py-3 text-center">
+                            <input type="checkbox"
+                                ${checked ? "checked" : ""}
+                                ${admin ? "" : "disabled"}
+                                onchange="toggleAttendanceVerified(${p.id}, this.checked)"
+                                class="w-4 h-4 accent-emerald-500 ${admin ? "cursor-pointer" : "cursor-not-allowed"}">
+                        </td>
+                    </tr>
+                `;
+            }).join("");
+        }
+
 window.generateWFHPresentToday = function() {
             const day = getCurrentReportDay();
             const out = document.getElementById("wfh-present-output");
             const label = document.getElementById("wfh-today-date-label");
-            const floatingDate = document.getElementById("wfh-present-floating-date");
-            const panel = document.getElementById("wfh-present-floating-panel");
-            if (!out) return;
 
             if (label) label.innerText = `วันที่ปัจจุบัน: ${day}`;
-            if (floatingDate) floatingDate.innerText = `ประจำวันที่ ${day}`;
 
             const teams = ["WIN1", "WIN2", "WIN3"];
             const teamIcon = { WIN1: "🟦", WIN2: "🟩", WIN3: "🟧" };
             const sortStaff = typeof sortedStaffStable === "function" ? sortedStaffStable : (arr) => [...arr];
 
+            const allPeople = [];
             const lines = [];
-            const allPresentPeopleForVerify = [];
             lines.push(`📅 พนักงาน WFH มาทำงานประจำวันที่ ${day}`);
             lines.push("");
 
@@ -3011,19 +3131,11 @@ window.generateWFHPresentToday = function() {
                 lines.push("");
 
                 const shiftLabels = getPresentTeamShiftLabels(team);
-
-                if (!shiftLabels.length) {
-                    lines.push("• ไม่มีพนักงาน WFH ในทีมนี้");
-                    lines.push("");
-                    lines.push("");
-                    return;
-                }
-
                 const presentPeople = sortStaff(window.currentStaffList || [])
                     .filter(p => p.team === team)
                     .filter(p => isWFHPresentToday(p, day));
 
-                allPresentPeopleForVerify.push(...presentPeople);
+                allPeople.push(...presentPeople);
 
                 const shiftMap = {};
                 shiftLabels.forEach(label => shiftMap[label] = []);
@@ -3049,11 +3161,14 @@ window.generateWFHPresentToday = function() {
                 lines.push("");
             });
 
-            out.value = lines.join("\n").replace(/\n{4,}/g, "\n\n\n").trim();
-            renderWFHPresentVerifyList(allPresentPeopleForVerify);
+            if (out) out.value = lines.join("\n").replace(/\n{4,}/g, "\n\n\n").trim();
 
-            if (panel) panel.classList.remove("hidden");
-            showToast("สร้างรายงาน WFH มาทำงานวันนี้แล้ว");
+            renderWFHPresentInline(allPeople, day);
+
+            const panel = document.getElementById("wfh-present-inline-panel");
+            if (panel) panel.scrollIntoView({ behavior: "smooth", block: "start" });
+
+            showToast("สร้างรายชื่อ WFH มาทำงานวันนี้แล้ว");
         };
 
         window.copyWFHPresentToday = function() {
@@ -3069,9 +3184,12 @@ window.generateWFHPresentToday = function() {
 
         window.clearWFHPresentToday = function() {
             const out = document.getElementById("wfh-present-output");
+            const panel = document.getElementById("wfh-present-inline-panel");
+            const tbody = document.getElementById("wfh-present-table-body");
             if (out) out.value = "";
-            closeWFHPresentPanel();
-            showToast("ล้างรายงานแล้ว");
+            if (tbody) tbody.innerHTML = "";
+            if (panel) panel.classList.add("hidden");
+            showToast("ล้างผลลัพธ์แล้ว");
         };
 
 
@@ -3113,6 +3231,7 @@ window.generateWFHPresentToday = function() {
             }
 
             await commitData();
+            if (!document.getElementById("wfh-present-inline-panel")?.classList.contains("hidden")) generateWFHPresentToday();
             showToast("บันทึกสถานะตรวจสอบแล้ว");
         };
 
