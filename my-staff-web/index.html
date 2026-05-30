@@ -270,6 +270,9 @@
                         <button onclick="openAddEmployeeModal()" class="leader-only px-3 py-2 bg-emerald-600/20 hover:bg-emerald-600/35 text-emerald-400 border border-emerald-500/30 font-semibold text-xs rounded-xl transition-all">
                             + เพิ่ม/ลบพนักงาน
                         </button>
+<button onclick="openResignedModal()" class="px-4 py-2 rounded-xl bg-rose-600/20 hover:bg-rose-600/35 text-rose-400 border border-rose-500/30 font-semibold text-sm transition-all">
+                            ⛔ พนักงานออก
+                        </button>
                         <button onclick="openAddShiftModal()" class="leader-only px-3 py-2 bg-amber-600/20 hover:bg-amber-600/35 text-amber-400 border border-amber-500/30 font-semibold text-xs rounded-xl transition-all">
                             เพิ่มกะ
                         </button>
@@ -391,59 +394,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
             <span>เฉพาะพนักงาน WFH ที่ไม่ใช่ O วันหยุด และไม่ใช่ L วันลา</span>
         </div>
     </div>
-
-
-    <div id="resigned-panel" class="grid grid-cols-1 xl:grid-cols-[420px_1fr] gap-4 mb-6">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl p-5 space-y-4">
-            <div class="flex items-center gap-2">
-                <span class="text-rose-400 text-lg">⛔</span>
-                <div>
-                    <h3 class="text-base font-bold text-slate-100">บันทึกพนักงานออกจากการทำงาน</h3>
-                    <p class="text-[11px] text-slate-500">ใส่วันที่ออก ชื่อ และรหัสพนักงาน</p>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-3 gap-2">
-                <div>
-                    <label class="text-[10px] text-slate-500">วันออก</label>
-                    <select id="resign-day" class="w-full bg-slate-950 border border-slate-800 text-slate-200 px-2 py-2 rounded-xl text-xs"></select>
-                </div>
-                <div>
-                    <label class="text-[10px] text-slate-500">เดือน</label>
-                    <select id="resign-month" class="w-full bg-slate-950 border border-slate-800 text-slate-200 px-2 py-2 rounded-xl text-xs">
-                        <option value="1">ม.ค.</option><option value="2">ก.พ.</option><option value="3">มี.ค.</option><option value="4">เม.ย.</option>
-                        <option value="5">พ.ค.</option><option value="6">มิ.ย.</option><option value="7">ก.ค.</option><option value="8">ส.ค.</option>
-                        <option value="9">ก.ย.</option><option value="10">ต.ค.</option><option value="11">พ.ย.</option><option value="12">ธ.ค.</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="text-[10px] text-slate-500">ปี</label>
-                    <select id="resign-year" class="w-full bg-slate-950 border border-slate-800 text-slate-200 px-2 py-2 rounded-xl text-xs"></select>
-                </div>
-            </div>
-
-            <div>
-                <label class="text-[10px] text-slate-500">รหัสพนักงาน</label>
-                <input id="resign-code" type="text" oninput="previewResignEmployee()" autocomplete="off" placeholder="กรอกรหัสพนักงาน" class="w-full bg-slate-950 border border-slate-800 focus:border-rose-500 text-slate-200 px-3 py-2 rounded-xl text-sm outline-none">
-            </div>
-            <div>
-                <label class="text-[10px] text-slate-500">ชื่อพนักงาน</label>
-                <input id="resign-name" type="text" autocomplete="off" placeholder="กรอกชื่อพนักงาน" class="w-full bg-slate-950 border border-slate-800 focus:border-rose-500 text-slate-200 px-3 py-2 rounded-xl text-sm outline-none">
-            </div>
-
-            <div id="resign-preview" class="hidden bg-rose-950/15 border border-rose-500/25 rounded-xl p-3 text-xs text-rose-100"></div>
-
-            <div class="grid grid-cols-2 gap-2">
-                <button onclick="saveResignedEmployee()" class="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white text-sm font-bold rounded-xl">
-                    บันทึกออก
-                </button>
-                <button onclick="clearResignForm()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-sm font-bold rounded-xl">
-                    ล้าง
-                </button>
-            </div>
-        </div>
-
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+<div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
             <div class="flex items-center justify-between gap-3 px-5 py-4 border-b border-slate-800">
                 <div>
                     <h3 class="text-base font-bold text-slate-100">ประวัติพนักงานที่ออกแล้ว</h3>
@@ -663,6 +614,88 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
             </div>
             <div id="wfh-present-verify-list" class="max-h-96 overflow-y-auto bg-slate-950/90 text-slate-100 text-xs"></div>
             <textarea id="wfh-present-output" readonly class="w-full h-40 bg-slate-950/90 text-slate-100 px-4 py-3 text-xs outline-none resize-y font-mono leading-5 border-t border-slate-800"></textarea>
+        </div>
+    </div>
+
+
+
+    <div id="resigned-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-[999999] hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-800">
+                <div>
+                    <h3 class="text-lg font-bold text-slate-100">⛔ จัดการพนักงานออก</h3>
+                    <p class="text-xs text-slate-500">กรอกรหัสพนักงาน ระบบจะดึงชื่อ/ทีม/กะให้เอง และผู้บันทึกจะเป็น Admin ที่ล็อกอินอยู่</p>
+                </div>
+                <button onclick="closeResignedModal()" class="text-slate-400 hover:text-slate-200">ปิด</button>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-4 p-5 overflow-y-auto max-h-[calc(90vh-76px)]">
+                <div class="bg-slate-950/40 border border-slate-800 rounded-2xl p-4 space-y-4">
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <label class="text-[10px] text-slate-500">วันออก</label>
+                            <select id="resign-day" class="w-full bg-slate-950 border border-slate-800 text-slate-200 px-2 py-2 rounded-xl text-xs"></select>
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-slate-500">เดือน</label>
+                            <select id="resign-month" class="w-full bg-slate-950 border border-slate-800 text-slate-200 px-2 py-2 rounded-xl text-xs">
+                                <option value="1">ม.ค.</option><option value="2">ก.พ.</option><option value="3">มี.ค.</option><option value="4">เม.ย.</option>
+                                <option value="5">พ.ค.</option><option value="6">มิ.ย.</option><option value="7">ก.ค.</option><option value="8">ส.ค.</option>
+                                <option value="9">ก.ย.</option><option value="10">ต.ค.</option><option value="11">พ.ย.</option><option value="12">ธ.ค.</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-slate-500">ปี</label>
+                            <select id="resign-year" class="w-full bg-slate-950 border border-slate-800 text-slate-200 px-2 py-2 rounded-xl text-xs"></select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="text-[10px] text-slate-500">รหัสพนักงาน</label>
+                        <input id="resign-code" type="text" oninput="previewResignEmployee()" autocomplete="off" placeholder="กรอกรหัสพนักงาน เช่น 251223602" class="w-full bg-slate-950 border border-slate-800 focus:border-rose-500 text-slate-200 px-3 py-2 rounded-xl text-sm outline-none">
+                    </div>
+
+                    <input id="resign-name" type="hidden">
+
+                    <div id="resign-preview" class="hidden bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-200"></div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="saveResignedEmployee()" class="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white text-sm font-bold rounded-xl">
+                            บันทึกออก
+                        </button>
+                        <button onclick="clearResignForm()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-sm font-bold rounded-xl">
+                            ล้าง
+                        </button>
+                    </div>
+
+                    <label class="flex items-center gap-2 text-[11px] text-slate-400 pt-2 border-t border-slate-800">
+                        <input id="hide-resigned-toggle" type="checkbox" checked onchange="updateDynamicUI()" class="accent-rose-500">
+                        ซ่อนพนักงานที่ออกแล้วในตารางหลัก
+                    </label>
+                </div>
+
+                <div class="bg-slate-950/40 border border-slate-800 rounded-2xl overflow-hidden">
+                    <div class="px-4 py-3 border-b border-slate-800">
+                        <h4 class="text-sm font-bold text-slate-100">ประวัติพนักงานที่ออกแล้ว</h4>
+                    </div>
+                    <div class="overflow-x-auto max-h-[520px] overflow-y-auto">
+                        <table class="w-full text-sm">
+                            <thead class="bg-slate-950 text-slate-400 text-xs">
+                                <tr>
+                                    <th class="px-4 py-3 text-left">ลำดับ</th>
+                                    <th class="px-4 py-3 text-left">รหัส</th>
+                                    <th class="px-4 py-3 text-left">ชื่อ</th>
+                                    <th class="px-4 py-3 text-left">วันที่ออก</th>
+                                    <th class="px-4 py-3 text-left">ผู้บันทึก</th>
+                                    <th class="px-4 py-3 text-left">เวลา</th>
+                                    <th class="px-4 py-3 text-center">จัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="resigned-history-body" class="divide-y divide-slate-800"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -3469,6 +3502,7 @@ window.generateWFHPresentToday = function() {
             if (!preview) return;
 
             if (!code) {
+                if (nameInput) nameInput.value = "";
                 preview.classList.add("hidden");
                 preview.innerHTML = "";
                 return;
@@ -3477,18 +3511,27 @@ window.generateWFHPresentToday = function() {
             const matches = (window.currentStaffList || []).filter(p => String(p.code || "").trim() === code);
 
             if (!matches.length) {
+                if (nameInput) nameInput.value = "";
                 preview.classList.remove("hidden");
-                preview.innerHTML = `ไม่พบรหัสนี้ในรายชื่อปัจจุบัน สามารถกรอกชื่อเองเพื่อบันทึกประวัติได้`;
+                preview.innerHTML = `<div class="text-rose-300 font-semibold">ไม่พบรหัสนี้ในรายชื่อปัจจุบัน</div><div class="text-slate-500 mt-1">กรุณาตรวจสอบรหัสอีกครั้ง</div>`;
                 return;
             }
 
             const p = matches[0];
-            if (nameInput && !nameInput.value.trim()) nameInput.value = p.name;
+            if (nameInput) nameInput.value = p.name;
 
+            const oldRecord = window.resignedRecords?.[String(p.code)];
             preview.classList.remove("hidden");
             preview.innerHTML = `
-                <div class="font-bold text-slate-100">${p.name}</div>
-                <div class="text-slate-300 mt-1">รหัส: <b>${p.code}</b> | ${p.team} | ${p.rank} | ${p.type} | ${p.shift}</div>
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <div class="text-emerald-300 font-bold">พบพนักงาน</div>
+                        <div class="text-lg font-black text-slate-100 mt-1">${p.name}</div>
+                        <div class="text-slate-300 mt-1">รหัส: <b>${p.code}</b></div>
+                        <div class="text-slate-400 mt-1">${p.team} | ${p.rank} | ${p.type} | ${p.shift}</div>
+                    </div>
+                    ${oldRecord ? `<span class="resigned-badge">ออกแล้ว ${getResignDateText(oldRecord)}</span>` : ""}
+                </div>
             `;
         };
 
@@ -3585,6 +3628,63 @@ window.generateWFHPresentToday = function() {
             }).join("");
         }
 
+
+        window.openResignedModal = function() {
+            if (!window.currentUser) return alert("กรุณาเข้าสู่ระบบก่อน");
+            if (!isAdminUser()) return alert("จัดการพนักงานออกได้เฉพาะ Admin");
+            initResignDateControls();
+            renderResignedHistory();
+            const modal = document.getElementById("resigned-modal");
+            if (modal) modal.classList.remove("hidden");
+        };
+
+        window.closeResignedModal = function() {
+            const modal = document.getElementById("resigned-modal");
+            if (modal) modal.classList.add("hidden");
+        };
+
+
+        window.saveResignedEmployee = async function() {
+            if (!isAdminUser()) return alert("บันทึกพนักงานออกได้เฉพาะ Admin");
+
+            initResignDateControls();
+
+            const day = Number(document.getElementById("resign-day")?.value);
+            const month = Number(document.getElementById("resign-month")?.value);
+            const year = Number(document.getElementById("resign-year")?.value);
+            const code = String(document.getElementById("resign-code")?.value || "").trim();
+
+            if (!day || !month || !year) return alert("กรุณาเลือกวันเดือนปีที่ออก");
+            if (!code) return alert("กรุณากรอกรหัสพนักงาน");
+
+            const p = (window.currentStaffList || []).find(x => String(x.code || "").trim() === code);
+            if (!p) return alert("ไม่พบรหัสนี้ในรายชื่อปัจจุบัน กรุณาตรวจสอบรหัสอีกครั้ง");
+
+            const name = p.name;
+
+            if (!confirm(`ยืนยันบันทึกพนักงานออก\\n${name} (${code})\\nวันที่ออก ${pad2(day)}/${pad2(month)}/${year}?`)) return;
+
+            if (!window.resignedRecords) window.resignedRecords = {};
+            window.resignedRecords[String(code)] = {
+                code,
+                name,
+                team: p.team,
+                rank: p.rank,
+                type: p.type,
+                shift: p.shift,
+                day,
+                month,
+                year,
+                recordedBy: getCurrentAdminLabel(),
+                recordedAt: new Date().toISOString()
+            };
+
+            await commitData();
+            clearResignForm();
+            renderResignedHistory();
+            updateDynamicUI();
+            showToast("บันทึกพนักงานออกแล้ว");
+        };
         function showToast(msg) {
             const t = document.getElementById("toast");
             document.getElementById("toast-text").innerText = msg;
