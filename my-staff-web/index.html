@@ -211,13 +211,37 @@
                 <div class="pt-2 border-t border-slate-800/70 space-y-2">
                     <div class="flex items-center justify-between gap-2">
                         <div>
-                            <div class="text-xs text-slate-400 font-medium">ค้นหา WFH ที่มาทำงานวันนี้</div>
-                            <div id="wfh-today-date-label" class="text-[11px] text-slate-500">วันที่ปัจจุบัน</div>
+                            <div class="text-xs text-slate-400 font-medium">ค้นหา WFH มาทำงานย้อนหลัง</div>
+                            <div id="wfh-today-date-label" class="text-[11px] text-slate-500">เลือกวันที่ที่ต้องการตรวจสอบ</div>
                         </div>
                         <button onclick="generateWFHPresentToday()" class="px-3 py-2 bg-emerald-600/20 hover:bg-emerald-600/35 text-emerald-400 border border-emerald-500/30 font-semibold text-xs rounded-xl transition-all">
                             ค้นหา
                         </button>
                     </div>
+
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <label class="text-[10px] text-slate-500">วัน</label>
+                            <select id="wfh-present-day" class="w-full bg-slate-950 border border-slate-800 text-slate-200 px-2 py-2 rounded-xl text-xs outline-none"></select>
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-slate-500">เดือน</label>
+                            <select id="wfh-present-month" class="w-full bg-slate-950 border border-slate-800 text-slate-200 px-2 py-2 rounded-xl text-xs outline-none">
+                                <option value="1">ม.ค.</option><option value="2">ก.พ.</option><option value="3">มี.ค.</option><option value="4">เม.ย.</option>
+                                <option value="5">พ.ค.</option><option value="6">มิ.ย.</option><option value="7">ก.ค.</option><option value="8">ส.ค.</option>
+                                <option value="9">ก.ย.</option><option value="10">ต.ค.</option><option value="11">พ.ย.</option><option value="12">ธ.ค.</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-slate-500">ปี</label>
+                            <select id="wfh-present-year" class="w-full bg-slate-950 border border-slate-800 text-slate-200 px-2 py-2 rounded-xl text-xs outline-none"></select>
+                        </div>
+                    </div>
+                    <label class="flex items-center gap-2 text-[11px] text-slate-400">
+                        <input id="wfh-present-only-unchecked" type="checkbox" onchange="generateWFHPresentToday()" class="accent-emerald-500">
+                        แสดงเฉพาะคนยังไม่ตรวจ
+                    </label>
+
                 </div>
 
             </div>
@@ -289,10 +313,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
             </div>
         </div>
 
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden">
-            <div class="px-6 py-4 border-b border-slate-800 bg-slate-900/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                
-    <div id="wfh-present-inline-panel" class="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden hidden mb-6">
+        <div id="wfh-present-inline-panel" class="w-full bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden hidden mb-6">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 px-5 py-4 border-b border-slate-800">
             <div>
                 <div class="flex items-center gap-2">
@@ -315,7 +336,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
 
         <div id="wfh-present-summary" class="grid grid-cols-1 md:grid-cols-3 gap-3 px-5 py-4 border-b border-slate-800 bg-slate-950/25"></div>
 
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto max-h-[520px] overflow-y-auto">
             <table class="w-full text-sm">
                 <thead class="bg-slate-950 text-slate-400 text-xs">
                     <tr>
@@ -341,6 +362,8 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
         </div>
     </div>
 
+<div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-800 bg-slate-900/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
 <div class="flex items-center gap-2 text-indigo-400">
                     <span class="font-semibold text-sm text-slate-200">แผ่นงานตารางเวรพนักงานแนวตั้ง <span id="current-month-label" class="text-indigo-300"></span> (วันทำงาน → วันหยุด O → วันลา L)</span>
                 </div>
@@ -2942,6 +2965,44 @@ window.generateWFHOffReport = function() {
         };
 
 
+
+        function initWFHPresentDateControls() {
+            const daySel = document.getElementById("wfh-present-day");
+            const monthSel = document.getElementById("wfh-present-month");
+            const yearSel = document.getElementById("wfh-present-year");
+            if (!daySel || !monthSel || !yearSel || daySel.dataset.ready === "1") return;
+
+            const now = new Date();
+            daySel.innerHTML = "";
+            for (let d = 1; d <= 31; d++) {
+                daySel.innerHTML += `<option value="${d}">${d}</option>`;
+            }
+
+            yearSel.innerHTML = "";
+            const currentYear = now.getFullYear();
+            for (let y = currentYear - 2; y <= currentYear + 3; y++) {
+                yearSel.innerHTML += `<option value="${y}">${y}</option>`;
+            }
+
+            daySel.value = String(now.getDate());
+            monthSel.value = String(window.selectedMonth || (now.getMonth() + 1));
+            yearSel.value = String(window.selectedYear || currentYear);
+            daySel.dataset.ready = "1";
+        }
+
+        function getSelectedWFHPresentDate() {
+            initWFHPresentDateControls();
+            const now = new Date();
+            const day = Number(document.getElementById("wfh-present-day")?.value || now.getDate());
+            const month = Number(document.getElementById("wfh-present-month")?.value || (window.selectedMonth || now.getMonth() + 1));
+            const year = Number(document.getElementById("wfh-present-year")?.value || (window.selectedYear || now.getFullYear()));
+            return { day, month, year };
+        }
+
+        function getAttendanceKeyByDate(day, month, year) {
+            return `${year}_${pad2(month)}_${pad2(day)}`;
+        }
+
         function getCurrentReportDay() {
             const now = new Date();
             return now.getDate();
@@ -3094,7 +3155,7 @@ window.generateWFHOffReport = function() {
                         <td class="px-4 py-3"><span class="px-2 py-1 rounded border text-xs font-bold ${shiftClass}">${p.shift}</span></td>
                         <td class="px-4 py-3 text-slate-300">${times.login || "-"}</td>
                         <td class="px-4 py-3 text-slate-300">${times.break || "-"}</td>
-                        <td class="px-4 py-3"><span class="px-2 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 text-xs font-bold">มาทำงาน</span></td>
+                        <td class="px-4 py-3"><span class="inline-flex px-2 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 text-xs font-bold whitespace-nowrap">มาทำงาน</span></td>
                         <td class="px-4 py-3 text-center">
                             <input type="checkbox"
                                 ${checked ? "checked" : ""}
@@ -3108,11 +3169,16 @@ window.generateWFHOffReport = function() {
         }
 
 window.generateWFHPresentToday = function() {
-            const day = getCurrentReportDay();
+            initWFHPresentDateControls();
+            const selected = getSelectedWFHPresentDate();
+            const day = selected.day;
+            const month = selected.month;
+            const year = selected.year;
             const out = document.getElementById("wfh-present-output");
             const label = document.getElementById("wfh-today-date-label");
+            const onlyUnchecked = !!document.getElementById("wfh-present-only-unchecked")?.checked;
 
-            if (label) label.innerText = `วันที่ปัจจุบัน: ${day}`;
+            if (label) label.innerText = `กำลังดู: ${day}/${pad2(month)}/${year}`;
 
             const teams = ["WIN1", "WIN2", "WIN3"];
             const teamIcon = { WIN1: "🟦", WIN2: "🟩", WIN3: "🟧" };
@@ -3120,7 +3186,7 @@ window.generateWFHPresentToday = function() {
 
             const allPeople = [];
             const lines = [];
-            lines.push(`📅 พนักงาน WFH มาทำงานประจำวันที่ ${day}`);
+            lines.push(`📅 พนักงาน WFH มาทำงานประจำวันที่ ${day}/${pad2(month)}/${year}`);
             lines.push("");
 
             teams.forEach(team => {
@@ -3131,9 +3197,13 @@ window.generateWFHPresentToday = function() {
                 lines.push("");
 
                 const shiftLabels = getPresentTeamShiftLabels(team);
-                const presentPeople = sortStaff(window.currentStaffList || [])
+                let presentPeople = sortStaff(window.currentStaffList || [])
                     .filter(p => p.team === team)
                     .filter(p => isWFHPresentToday(p, day));
+
+                if (onlyUnchecked) {
+                    presentPeople = presentPeople.filter(p => !isAttendanceVerified(p.id));
+                }
 
                 allPeople.push(...presentPeople);
 
@@ -3153,7 +3223,7 @@ window.generateWFHPresentToday = function() {
                     if (names.length) {
                         names.forEach(name => lines.push(`- ${name}`));
                     } else {
-                        lines.push("• ไม่มีพนักงาน WFH มาทำงาน");
+                        lines.push(onlyUnchecked ? "• ไม่มีพนักงาน WFH ที่ยังไม่ตรวจ" : "• ไม่มีพนักงาน WFH มาทำงาน");
                     }
                     lines.push("");
                 });
@@ -3163,12 +3233,12 @@ window.generateWFHPresentToday = function() {
 
             if (out) out.value = lines.join("\n").replace(/\n{4,}/g, "\n\n\n").trim();
 
-            renderWFHPresentInline(allPeople, day);
+            renderWFHPresentInline(allPeople, `${day}/${pad2(month)}/${year}`);
 
             const panel = document.getElementById("wfh-present-inline-panel");
             if (panel) panel.scrollIntoView({ behavior: "smooth", block: "start" });
 
-            showToast("สร้างรายชื่อ WFH มาทำงานวันนี้แล้ว");
+            showToast("สร้างรายชื่อ WFH มาทำงานแล้ว");
         };
 
         window.copyWFHPresentToday = function() {
@@ -3194,8 +3264,8 @@ window.generateWFHPresentToday = function() {
 
 
         function getTodayKeyForAttendance() {
-            const now = new Date();
-            return `${window.selectedYear || now.getFullYear()}_${pad2(window.selectedMonth || (now.getMonth() + 1))}_${pad2(now.getDate())}`;
+            const selected = getSelectedWFHPresentDate();
+            return getAttendanceKeyByDate(selected.day, selected.month, selected.year);
         }
 
         function ensureAttendanceChecks() {
