@@ -2076,7 +2076,10 @@ window.previewDeleteEmployeeByCode = function() {
                     </td>
                     <td class="py-2 px-3 text-slate-200"><span class="${editable ? "cursor-edit hover:text-indigo-400" : "text-slate-300"}" ${editable ? `ondblclick="editName(${p.id}, this)"` : ""}>${p.name}</span></td>
                     <td class="py-2 px-3 text-slate-400 text-xs font-mono">${p.code}</td>
-                    <td class="py-2 px-2 text-center"><span class="px-2 py-0.5 text-[10px] rounded-full ${typeCol}">${p.type}</span></td>
+                    <td class="py-2 px-2 text-center"><select ${!canEditTeam(p.team) ? "disabled" : ""} onchange="changeWorkType(${p.id}, this.value)" class="border px-2 py-0.5 rounded-full text-[10px] font-semibold outline-none ${p.type === "WFH" ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" : "bg-indigo-500/15 text-indigo-400 border-indigo-500/30"} disabled:opacity-50 disabled:cursor-not-allowed">
+                                        <option value="Office" ${p.type === "Office" ? "selected" : ""}>Office</option>
+                                        <option value="WFH" ${p.type === "WFH" ? "selected" : ""}>WFH</option>
+                                    </select></td>
                     <td class="py-2 px-1 text-center"><select ${disabled} onchange="changeShift(${p.id}, this.value)" class="shift-select w-16 border px-2 py-0.5 rounded text-xs outline-none ${shiftCol} disabled:opacity-50 disabled:cursor-not-allowed">${sOpts}</select></td>
                     <td class="py-2 px-2 text-center text-xs text-slate-300 font-mono">${times.login}</td>
                     <td class="py-2 px-2 text-center text-xs text-slate-400 font-mono">${times.rest}</td>
