@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="th" class="dark">
 <head>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgdmlld0JveD0iMCAwIDY0IDY0Ij4KPGRlZnM+CjxsaW5lYXJHcmFkaWVudCBpZD0iZyIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPgo8c3RvcCBzdG9wLWNvbG9yPSIjN2MzYWVkIi8+CjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI2Y1OWUwYiIvPgo8L2xpbmVhckdyYWRpZW50Pgo8L2RlZnM+CjxyZWN0IHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgcng9IjE2IiBmaWxsPSIjMGYxNzJhIi8+CjxyZWN0IHg9IjkiIHk9IjkiIHdpZHRoPSI0NiIgaGVpZ2h0PSI0NiIgcng9IjEyIiBmaWxsPSJ1cmwoI2cpIiBvcGFjaXR5PSIuOTUiLz4KPHBhdGggZD0iTTE4IDIwaDI4djI3SDE4eiIgZmlsbD0iIzBiMTAyMCIgb3BhY2l0eT0iLjc1IiByeD0iMyIvPgo8cGF0aCBkPSJNMjIgMTd2OE00MiAxN3Y4IiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CjxwYXRoIGQ9Ik0yMyAzMWg2TTM1IDMxaDZNMjMgMzloNk0zNSAzOWg2IiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+Cjx0ZXh0IHg9IjMyIiB5PSI1NSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjExIiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjZmZmIj5XSU48L3RleHQ+Cjwvc3ZnPg==">
+    <link rel="shortcut icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgdmlld0JveD0iMCAwIDY0IDY0Ij4KPGRlZnM+CjxsaW5lYXJHcmFkaWVudCBpZD0iZyIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPgo8c3RvcCBzdG9wLWNvbG9yPSIjN2MzYWVkIi8+CjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI2Y1OWUwYiIvPgo8L2xpbmVhckdyYWRpZW50Pgo8L2RlZnM+CjxyZWN0IHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgcng9IjE2IiBmaWxsPSIjMGYxNzJhIi8+CjxyZWN0IHg9IjkiIHk9IjkiIHdpZHRoPSI0NiIgaGVpZ2h0PSI0NiIgcng9IjEyIiBmaWxsPSJ1cmwoI2cpIiBvcGFjaXR5PSIuOTUiLz4KPHBhdGggZD0iTTE4IDIwaDI4djI3SDE4eiIgZmlsbD0iIzBiMTAyMCIgb3BhY2l0eT0iLjc1IiByeD0iMyIvPgo8cGF0aCBkPSJNMjIgMTd2OE00MiAxN3Y4IiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CjxwYXRoIGQ9Ik0yMyAzMWg2TTM1IDMxaDZNMjMgMzloNk0zNSAzOWg2IiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+Cjx0ZXh0IHg9IjMyIiB5PSI1NSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjExIiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjZmZmIj5XSU48L3RleHQ+Cjwvc3ZnPg==">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบจัดการตารางงาน WIN</title>
@@ -205,6 +207,28 @@
                     <label class="text-xs text-slate-400 font-medium">ค้นหาชื่อพนักงาน / รหัส</label>
                     <input type="text" id="search-name" oninput="applyFilters()" placeholder="พิมพ์ชื่อหรือรหัส..." class="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 text-slate-200 px-4 py-2 rounded-xl text-sm outline-none transition-all placeholder:text-slate-600">
                 </div>
+
+                <div class="pt-2 border-t border-slate-800/70 space-y-2">
+                    <div class="flex items-center justify-between gap-2">
+                        <div>
+                            <div class="text-xs text-slate-400 font-medium">ค้นหา WFH ที่มาทำงานวันนี้</div>
+                            <div id="wfh-today-date-label" class="text-[11px] text-slate-500">ยึดวันที่ปัจจุบัน</div>
+                        </div>
+                        <button onclick="generateWFHPresentToday()" class="px-3 py-2 bg-emerald-600/20 hover:bg-emerald-600/35 text-emerald-400 border border-emerald-500/30 font-semibold text-xs rounded-xl transition-all">
+                            ค้นหา
+                        </button>
+                    </div>
+                    <textarea id="wfh-present-output" readonly placeholder="กดค้นหาเพื่อแสดงพนักงาน WFH ที่มาทำงานวันนี้..." class="w-full h-28 bg-slate-950 border border-slate-800 focus:border-emerald-500 text-slate-200 px-3 py-2 rounded-xl text-xs outline-none resize-y placeholder:text-slate-600"></textarea>
+                    <div class="flex gap-2">
+                        <button onclick="copyWFHPresentToday()" class="flex-1 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-semibold text-xs rounded-xl transition-all">
+                            คัดลอก
+                        </button>
+                        <button onclick="clearWFHPresentToday()" class="px-3 py-2 bg-rose-600/20 hover:bg-rose-600/35 text-rose-400 border border-rose-500/30 font-semibold text-xs rounded-xl transition-all">
+                            ล้าง
+                        </button>
+                    </div>
+                </div>
+
             </div>
 
             <div id="bulk-offs-panel" class="flex-1 min-w-[360px] bg-slate-950/50 border border-slate-800 rounded-2xl p-4 space-y-3">
@@ -2846,6 +2870,127 @@ window.generateWFHOffReport = function() {
             out.setSelectionRange(0, 999999);
             document.execCommand("copy");
             showToast("คัดลอกรายงานแล้ว");
+        };
+
+
+        function getCurrentReportDay() {
+            const now = new Date();
+            return now.getDate();
+        }
+
+        function getWFHPresentShiftLabel(shift, login) {
+            const s = String(shift || "").toUpperCase();
+            const t = `${s} ${login || ""}`;
+            if (s === "S9" || t.includes("09.30") || t.includes("09:30")) return "เช้า (09:30–18:30)";
+            if (s === "S12" || t.includes("12.30") || t.includes("12:30")) return "บ่าย (12:30–21:30)";
+            if (s === "S21" || t.includes("21.00") || t.includes("21:00")) return "ดึก (21:00–05:00)";
+            return `${shift || "ไม่ระบุกะ"} (${login || "ไม่ระบุเวลา"})`;
+        }
+
+        function isWFHPresentToday(p, day) {
+            const isWFH = String(p.type || "").trim().toUpperCase() === "WFH";
+            const isOff = Array.isArray(p.offs) && p.offs.includes(day);
+            const isLeave = Array.isArray(p.leaves) && p.leaves.includes(day);
+            return isWFH && !isOff && !isLeave;
+        }
+
+        function getPresentTeamShiftLabels(team) {
+            const labels = [];
+            const order = ["เช้า (09:30–18:30)", "บ่าย (12:30–21:30)", "ดึก (21:00–05:00)"];
+
+            (window.currentStaffList || [])
+                .filter(p => p.team === team && String(p.type || "").trim().toUpperCase() === "WFH")
+                .forEach(p => {
+                    const times = window.shiftTimes[p.shift] || {};
+                    const label = getWFHPresentShiftLabel(p.shift, times.login);
+                    if (!labels.includes(label)) labels.push(label);
+                });
+
+            return [
+                ...order.filter(x => labels.includes(x)),
+                ...labels.filter(x => !order.includes(x)).sort((a,b)=>String(a).localeCompare(String(b), "en"))
+            ];
+        }
+
+        window.generateWFHPresentToday = function() {
+            const day = getCurrentReportDay();
+            const out = document.getElementById("wfh-present-output");
+            const label = document.getElementById("wfh-today-date-label");
+            if (!out) return;
+
+            if (label) label.innerText = `วันที่ปัจจุบัน: ${day}`;
+
+            const teams = ["WIN1", "WIN2", "WIN3"];
+            const teamIcon = { WIN1: "🟦", WIN2: "🟩", WIN3: "🟧" };
+            const sortStaff = typeof sortedStaffStable === "function" ? sortedStaffStable : (arr) => [...arr];
+
+            const lines = [];
+            lines.push(`📅 พนักงาน WFH มาทำงานประจำวันที่ ${day}`);
+            lines.push("");
+
+            teams.forEach(team => {
+                const canSee = !window.currentUser || window.currentUser.team === "ALL" || window.currentUser.team === team;
+                if (!canSee) return;
+
+                lines.push(`${teamIcon[team] || "▪️"} ${team}`);
+                lines.push("");
+
+                const shiftLabels = getPresentTeamShiftLabels(team);
+
+                if (!shiftLabels.length) {
+                    lines.push("• ไม่มีพนักงาน WFH ในทีมนี้");
+                    lines.push("");
+                    lines.push("");
+                    return;
+                }
+
+                const presentPeople = sortStaff(window.currentStaffList || [])
+                    .filter(p => p.team === team)
+                    .filter(p => isWFHPresentToday(p, day));
+
+                const shiftMap = {};
+                shiftLabels.forEach(label => shiftMap[label] = []);
+
+                presentPeople.forEach(p => {
+                    const times = window.shiftTimes[p.shift] || {};
+                    const shiftLabel = getWFHPresentShiftLabel(p.shift, times.login);
+                    if (!shiftMap[shiftLabel]) shiftMap[shiftLabel] = [];
+                    shiftMap[shiftLabel].push(p.name);
+                });
+
+                shiftLabels.forEach(shiftLabel => {
+                    lines.push(shiftLabel);
+                    const names = (shiftMap[shiftLabel] || []).sort((a,b)=>String(a).localeCompare(String(b), "en"));
+                    if (names.length) {
+                        names.forEach(name => lines.push(`- ${name}`));
+                    } else {
+                        lines.push("• ไม่มีพนักงาน WFH มาทำงาน");
+                    }
+                    lines.push("");
+                });
+
+                lines.push("");
+            });
+
+            out.value = lines.join("\n").replace(/\n{4,}/g, "\n\n\n").trim();
+            showToast("สร้างรายงาน WFH มาทำงานวันนี้แล้ว");
+        };
+
+        window.copyWFHPresentToday = function() {
+            const out = document.getElementById("wfh-present-output");
+            if (!out) return;
+            if (!out.value.trim()) generateWFHPresentToday();
+            out.focus();
+            out.select();
+            out.setSelectionRange(0, 999999);
+            document.execCommand("copy");
+            showToast("คัดลอกรายงานแล้ว");
+        };
+
+        window.clearWFHPresentToday = function() {
+            const out = document.getElementById("wfh-present-output");
+            if (out) out.value = "";
+            showToast("ล้างรายงานแล้ว");
         };
 
         function showToast(msg) {
