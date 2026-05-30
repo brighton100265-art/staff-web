@@ -403,6 +403,67 @@
             overflow-x: hidden !important;
         }
 
+
+        /* v3.5 permission toggle editor */
+        .perm-toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 6px 8px;
+            border-radius: 10px;
+            border: 1px solid rgba(51,65,85,.45);
+            background: rgba(15,23,42,.35);
+            margin-bottom: 6px;
+        }
+        .perm-toggle-row:hover { background: rgba(30,41,59,.55); }
+        .perm-toggle-label {
+            color: #cbd5e1;
+            font-size: 13px;
+            font-weight: 700;
+        }
+        .perm-toggle {
+            width: 38px;
+            height: 20px;
+            appearance: none;
+            border-radius: 999px;
+            background: rgba(244,63,94,.35);
+            border: 1px solid rgba(244,63,94,.55);
+            position: relative;
+            cursor: pointer;
+            transition: .2s;
+        }
+        .perm-toggle::after {
+            content: "";
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 14px;
+            height: 14px;
+            border-radius: 999px;
+            background: #fecaca;
+            transition: .2s;
+        }
+        .perm-toggle:checked {
+            background: rgba(16,185,129,.35);
+            border-color: rgba(16,185,129,.65);
+        }
+        .perm-toggle:checked::after {
+            left: 20px;
+            background: #86efac;
+        }
+        .perm-toggle:disabled {
+            opacity: .45;
+            cursor: not-allowed;
+        }
+        .perm-save-bar {
+            display:flex;
+            justify-content:flex-end;
+            gap:10px;
+            padding:12px 20px;
+            border-top:1px solid rgba(51,65,85,.8);
+        }
+
 </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen antialiased selection:bg-indigo-500/30">
@@ -2204,6 +2265,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                     : JSON.parse(JSON.stringify(defaultShiftTimes));
                 window.deletedShiftCodes = Array.isArray(data.deletedShiftCodes) ? data.deletedShiftCodes : [];
                 applyDeletedShiftFilter();
+                if (data.rolePermissions) { window.customRolePermissions = data.rolePermissions; saveRolePermissionsLocal(); }
                 window.attendanceChecks = data.attendanceChecks && typeof data.attendanceChecks === "object" ? data.attendanceChecks : {};
                 window.resignedRecords = data.resignedRecords && typeof data.resignedRecords === "object" ? data.resignedRecords : {};
 
@@ -2244,6 +2306,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                 staffList: window.currentStaffList,
                 shiftTimes: window.shiftTimes,
                        deletedShiftCodes: window.deletedShiftCodes || [],
+                        rolePermissions: window.customRolePermissions || getRolePermissions(),
                          deletedShiftCodes: window.deletedShiftCodes || [],
                 month: window.selectedMonth,
                 year: window.selectedYear,
@@ -4325,7 +4388,67 @@ window.generateWFHPresentToday = function() {
             STAFF: { addEmployee:false, deleteEmployee:false, addShift:false, deleteShift:false, editShift:false, editDay:false, editWorkType:false, editRank:false, resignEmployee:false, cancelResign:false, exportData:false, resetSystem:false, saveCloud:false, checkWFH:false, managePermissions:false }
         };
 
-        const I18N = {
+        
+        const DEFAULT_ROLE_PERMISSIONS = JSON.parse(JSON.stringify(ROLE_PERMISSIONS));
+        window.customRolePermissions = window.customRolePermissions || JSON.parse(localStorage.getItem("customRolePermissions") || "null") || JSON.parse(JSON.stringify(DEFAULT_ROLE_PERMISSIONS));
+
+        function getRolePermissions() {
+            const merged = JSON.parse(JSON.stringify(DEFAULT_ROLE_PERMISSIONS));
+            const saved = window.customRolePermissions || {};
+            ["ADMIN","S4","STAFF"].forEach(role => {
+                merged[role] = { ...(merged[role] || {}), ...(saved[role] || {}) };
+            });
+            // Admin must always keep core safety rights
+            merged.ADMIN.managePermissions = true;
+            merged.ADMIN.saveCloud = true;
+            return merged;
+        }
+
+        function saveRolePermissionsLocal() {
+            localStorage.setItem("customRolePermissions", JSON.stringify(window.customRolePermissions || {}));
+        }
+
+        window.toggleRolePermission = function(role, key, checked) {
+            if (!isAdminUser()) {
+                alert("เฉพาะ Admin เท่านั้น");
+                renderPermissionModal();
+                return;
+            }
+            if (!window.customRolePermissions) window.customRolePermissions = JSON.parse(JSON.stringify(getRolePermissions()));
+            if (!window.customRolePermissions[role]) window.customRolePermissions[role] = {};
+            window.customRolePermissions[role][key] = !!checked;
+
+            // safety: admin cannot lose manage permission/save cloud
+            if (role === "ADMIN" && (key === "managePermissions" || key === "saveCloud")) {
+                window.customRolePermissions.ADMIN[key] = true;
+            }
+            saveRolePermissionsLocal();
+            applyRolePermissions();
+        };
+
+        window.saveRolePermissions = async function() {
+            if (!isAdminUser()) return alert("เฉพาะ Admin เท่านั้น");
+            saveRolePermissionsLocal();
+            try {
+                await commitData();
+                showToast("บันทึกสิทธิ์แล้ว");
+            } catch (err) {
+                console.error(err);
+                alert("บันทึกสิทธิ์ไม่สำเร็จ");
+            }
+        };
+
+        window.resetRolePermissions = function() {
+            if (!isAdminUser()) return alert("เฉพาะ Admin เท่านั้น");
+            if (!confirm("รีเซ็ตสิทธิ์กลับค่าเริ่มต้น?")) return;
+            window.customRolePermissions = JSON.parse(JSON.stringify(DEFAULT_ROLE_PERMISSIONS));
+            saveRolePermissionsLocal();
+            renderPermissionModal();
+            applyRolePermissions();
+            showToast("รีเซ็ตสิทธิ์แล้ว");
+        };
+
+const I18N = {
             th:{
                 title:"ระบบจัดการตารางงานแนวตั้งอัจฉริยะ", subtitle:"จัดการกะ วันหยุด/วันลา ยศพนักงาน และสิทธิ์หัวหน้าทีมแบบเรียลไทม์",
                 month:"เดือน", year:"ปี", copyPrev:"คัดลอกจากเดือนก่อน", currentUse:"กำลังใช้งาน",
@@ -4401,7 +4524,7 @@ window.generateWFHPresentToday = function() {
         }
 
         function getCurrentRoleKey(){ if(!window.currentUser) return "STAFF"; if(window.currentUser.role==="ADMIN") return "ADMIN"; if(window.currentUser.role==="S4"||window.currentUser.rank==="S4") return "S4"; return "STAFF"; }
-        function hasPermission(key){ return !!ROLE_PERMISSIONS[getCurrentRoleKey()]?.[key]; }
+        function hasPermission(key){ return !!getRolePermissions()[getCurrentRoleKey()]?.[key]; }
         function getLang(key){ const lang=localStorage.getItem("schedule_lang")||"th"; return I18N[lang]?.[key]||I18N.th[key]||key; }
 
         window.toggleLanguagePopup = function() {
@@ -4679,10 +4802,47 @@ function applyLanguage(){
         }
 
         function renderPermissionModal(){
-            const rows=[["เพิ่ม/ลบพนักงาน","addEmployee"],["เพิ่ม/ลบกะ","addShift"],["เปลี่ยนกะ","editShift"],["เปลี่ยนวันหยุด/วันลา","editDay"],["เปลี่ยน Office/WFH","editWorkType"],["เปลี่ยนยศ","editRank"],["ตรวจ WFH","checkWFH"],["บันทึกพนักงานออก","resignEmployee"],["Export","exportData"],["รีเซ็ต","resetSystem"],["จัดการสิทธิ์","managePermissions"]];
-            const make=role=>rows.map(([label,key])=>`<div>${ROLE_PERMISSIONS[role][key]?"✅":"❌"} ${label}</div>`).join("");
+            const rows=[
+                ["เพิ่ม/ลบพนักงาน","addEmployee"],
+                ["เพิ่ม/ลบกะ","addShift"],
+                ["เปลี่ยนกะ","editShift"],
+                ["เปลี่ยนวันหยุด/วันลา","editDay"],
+                ["เปลี่ยน Office/WFH","editWorkType"],
+                ["เปลี่ยนยศ","editRank"],
+                ["ตรวจ WFH","checkWFH"],
+                ["บันทึกพนักงานออก","resignEmployee"],
+                ["Export","exportData"],
+                ["รีเซ็ต","resetSystem"],
+                ["จัดการสิทธิ์","managePermissions"]
+            ];
+            const perms = getRolePermissions();
+            const make=(role)=>rows.map(([label,key])=>{
+                const disabled = role === "ADMIN" && (key === "managePermissions" || key === "saveCloud");
+                const checked = !!perms[role]?.[key];
+                return `
+                    <label class="perm-toggle-row">
+                        <span class="perm-toggle-label">${label}</span>
+                        <input type="checkbox" class="perm-toggle"
+                            ${checked ? "checked" : ""}
+                            ${disabled ? "disabled" : ""}
+                            onchange="toggleRolePermission('${role}','${key}',this.checked)">
+                    </label>
+                `;
+            }).join("");
             const a=document.getElementById("role-admin-list"), s=document.getElementById("role-s4-list"), st=document.getElementById("role-staff-list");
-            if(a) a.innerHTML=make("ADMIN"); if(s) s.innerHTML=make("S4")+`<div class="text-xs text-slate-500 mt-2">* ทำได้เฉพาะทีมตัวเอง</div>`; if(st) st.innerHTML=make("STAFF")+`<div class="text-xs text-slate-500 mt-2">* ดูและค้นหาได้เท่านั้น</div>`;
+            if(a) a.innerHTML=make("ADMIN");
+            if(s) s.innerHTML=make("S4")+`<div class="text-xs text-slate-500 mt-2">* ทำได้เฉพาะทีมตัวเอง</div>`;
+            if(st) st.innerHTML=make("STAFF")+`<div class="text-xs text-slate-500 mt-2">* ดูและค้นหาได้เท่านั้น</div>`;
+
+            const modal = document.querySelector("#permission-modal .role-panel-card");
+            if (modal && !document.getElementById("perm-save-bar")) {
+                modal.insertAdjacentHTML("beforeend", `
+                    <div id="perm-save-bar" class="perm-save-bar">
+                        <button onclick="resetRolePermissions()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs font-bold text-slate-200">รีเซ็ตสิทธิ์</button>
+                        <button onclick="saveRolePermissions()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-xl text-xs font-bold text-white">บันทึกสิทธิ์</button>
+                    </div>
+                `);
+            }
         }
 
         window.openPermissionModal=function(){ if(!hasPermission("managePermissions")) return alert("เฉพาะ Admin เท่านั้น"); renderPermissionModal(); document.getElementById("permission-modal")?.classList.remove("hidden"); };
