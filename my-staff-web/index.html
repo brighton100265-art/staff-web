@@ -1873,7 +1873,40 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
             if (countEl) countEl.innerText = "กรอกรหัสพนักงานเพื่อค้นหา";
         }
 
-        window.previewDeleteEmployeeByCode = function() {
+        
+        window.selectDuplicateEmployeeToDelete = function(id) {
+            const p = window.currentStaffList.find(x => x.id === id);
+            if (!p) return;
+
+            const hidden = document.getElementById("delete-emp-id");
+            const confirmed = document.getElementById("delete-emp-confirmed");
+            const preview = document.getElementById("delete-emp-preview");
+            const confirmBtn = document.getElementById("delete-emp-confirm-btn");
+            const countEl = document.getElementById("delete-emp-result-count");
+            const codeEl = document.getElementById("delete-emp-code");
+
+            if (hidden) hidden.value = String(p.id);
+            if (confirmed) confirmed.value = "0";
+            if (codeEl) codeEl.value = String(p.code || "");
+
+            if (preview) {
+                preview.classList.remove("hidden");
+                preview.innerHTML = `
+                    <div class="text-slate-400">เลือกพนักงานแล้ว</div>
+                    <div class="bg-rose-950/15 border border-rose-500/25 rounded-xl p-3">
+                        <div class="text-base font-bold text-slate-100">${p.name}</div>
+                        <div class="text-slate-300 mt-1">รหัส: <b>${p.code}</b></div>
+                        <div class="text-slate-400 mt-1">${p.team} | ${p.rank} ${getRankLabel(p.rank)} | ${p.type} | ${p.shift}</div>
+                    </div>
+                    <div class="text-[11px] text-amber-300">กรุณากดยืนยันเลือกพนักงานก่อนลบ</div>
+                `;
+            }
+
+            if (confirmBtn) confirmBtn.classList.remove("hidden");
+            if (countEl) countEl.innerText = `เลือกแล้ว: ${p.name} (${p.code}) กรุณากดยืนยัน`;
+        };
+
+window.previewDeleteEmployeeByCode = function() {
             const codeEl = document.getElementById("delete-emp-code");
             const hidden = document.getElementById("delete-emp-id");
             const confirmed = document.getElementById("delete-emp-confirmed");
@@ -1912,14 +1945,22 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
             }
 
             if (matches.length > 1) {
-                if (countEl) countEl.innerText = "พบรหัสซ้ำ กรุณาแจ้ง Admin ตรวจสอบ";
+                if (countEl) countEl.innerText = `พบรหัสซ้ำ ${matches.length} รายการ กรุณาคลิกเลือกคนที่จะลบ`;
                 if (preview) {
                     preview.classList.remove("hidden");
-                    preview.innerHTML = matches.map(p => `
-                        <div class="border border-amber-500/25 bg-amber-950/15 rounded-lg p-2 text-amber-200">
-                            ${p.team} | ${p.rank} ${getRankLabel(p.rank)} | ${p.name} (${p.code})
+                    preview.innerHTML = `
+                        <div class="text-amber-300 text-xs font-semibold mb-2">พบรหัสซ้ำ กรุณาคลิกเลือกคนที่จะลบ</div>
+                        <div class="space-y-2">
+                            ${matches.map(p => `
+                                <button type="button" onclick="selectDuplicateEmployeeToDelete(${p.id})"
+                                    class="w-full text-left border border-amber-500/30 hover:border-rose-500/50 bg-amber-950/10 hover:bg-rose-950/20 rounded-xl p-3 text-xs transition-all">
+                                    <div class="font-bold text-slate-100">${p.name}</div>
+                                    <div class="text-slate-300 mt-1">รหัส: <b>${p.code}</b></div>
+                                    <div class="text-slate-400 mt-1">${p.team} | ${p.rank} ${getRankLabel(p.rank)} | ${p.type} | ${p.shift}</div>
+                                </button>
+                            `).join("")}
                         </div>
-                    `).join("");
+                    `;
                 }
                 return;
             }
