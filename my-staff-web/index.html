@@ -180,20 +180,58 @@
         }
 
 
-        /* v3 full width + role + language */
+        /* v3.1 roles + real full table + language popup */
+        html, body { width: 100%; max-width: 100%; }
         body { overflow-x: hidden; }
         .schedule-full-card {
-            width: calc(100vw - 24px) !important;
-            max-width: none !important;
-            margin-left: auto !important;
-            margin-right: auto !important;
+            width: 100vw !important;
+            max-width: 100vw !important;
+            margin-left: calc(50% - 50vw) !important;
+            margin-right: calc(50% - 50vw) !important;
+            border-left-width: 0 !important;
+            border-right-width: 0 !important;
+            border-radius: 0 !important;
         }
-        .schedule-full-card table { width: max-content; min-width: 100%; }
+        .schedule-full-card .overflow-x-auto,
+        .schedule-full-card [class*="overflow-x-auto"] {
+            width: 100vw !important;
+            max-width: 100vw !important;
+        }
+        .schedule-full-card table {
+            width: max-content !important;
+            min-width: 100vw !important;
+        }
         .permission-hidden { display: none !important; }
-        .lang-chip-active {
-            background: rgba(99,102,241,.25) !important;
-            border-color: rgba(129,140,248,.6) !important;
+        .language-popup {
+            position: fixed;
+            top: 86px;
+            right: 24px;
+            width: 220px;
+            z-index: 999998;
+            background: rgba(15, 23, 42, .98);
+            border: 1px solid rgba(51, 65, 85, .95);
+            border-radius: 18px;
+            box-shadow: 0 18px 45px rgba(0,0,0,.45);
+            padding: 10px;
+        }
+        .language-popup.hidden { display: none !important; }
+        .lang-option-btn {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            color: #cbd5e1;
+            font-size: 13px;
+            font-weight: 800;
+        }
+        .lang-option-btn:hover { background: rgba(51,65,85,.7); }
+        .lang-option-active {
+            background: rgba(99,102,241,.22) !important;
             color: #c4b5fd !important;
+            border: 1px solid rgba(129,140,248,.4);
         }
         .role-panel-card {
             background: rgba(15, 23, 42, .95);
@@ -284,16 +322,15 @@
             </div>
 
             <div class="flex flex-wrap gap-2">
-<button onclick="autoSort()" class="admin-only px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-medium text-sm rounded-xl shadow-lg shadow-indigo-500/20 transition-all">Auto-Sort</button>
 
                     <div id="language-role-toolbar" class="flex items-center gap-2 flex-wrap">
-                        <button onclick="setLanguage('th')" data-lang-btn="th" class="lang-btn px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs font-bold text-slate-300">ไทย</button>
-                        <button onclick="setLanguage('zh')" data-lang-btn="zh" class="lang-btn px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs font-bold text-slate-300">中文</button>
-                        <button onclick="setLanguage('en')" data-lang-btn="en" class="lang-btn px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs font-bold text-slate-300">EN</button>
-                        <button onclick="setLanguage('vi')" data-lang-btn="vi" class="lang-btn px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs font-bold text-slate-300">VI</button>
+                        <button onclick="toggleLanguagePopup()" id="language-main-btn" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs font-bold text-slate-200">
+                            🌐 ภาษา
+                        </button>
                         <button onclick="openPermissionModal()" data-admin-only="true" class="px-4 py-2 bg-indigo-600/20 hover:bg-indigo-600/35 text-indigo-300 border border-indigo-500/30 rounded-xl text-xs font-bold">สิทธิ์</button>
                     </div>
 
+<button onclick="autoSort()" class="admin-only px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-medium text-sm rounded-xl shadow-lg shadow-indigo-500/20 transition-all">Auto-Sort</button>
                 <button onclick="forceSaveCloud()" class="admin-only px-4 py-2 bg-emerald-950/40 hover:bg-emerald-900/40 text-emerald-400 border border-emerald-900/30 font-medium text-sm rounded-xl transition-all">บันทึก Cloud</button>
                 <button onclick="reloadFromCloud()" class="admin-only px-4 py-2 bg-sky-950/40 hover:bg-sky-900/40 text-sky-400 border border-sky-900/30 font-medium text-sm rounded-xl transition-all">รีโหลด</button>
                 <button onclick="exportData()" class="admin-only px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium text-sm rounded-xl transition-all">Export</button>
@@ -779,6 +816,14 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
 
 
     
+    <div id="language-popup" class="language-popup hidden">
+        <div class="text-xs text-slate-500 font-bold px-2 pb-2">เลือกภาษา / Select language</div>
+        <button onclick="setLanguage('th')" data-lang-option="th" class="lang-option-btn"><span>🇹🇭 ไทย</span><span>TH</span></button>
+        <button onclick="setLanguage('zh')" data-lang-option="zh" class="lang-option-btn"><span>🇨🇳 中文</span><span>ZH</span></button>
+        <button onclick="setLanguage('en')" data-lang-option="en" class="lang-option-btn"><span>🇺🇸 English</span><span>EN</span></button>
+        <button onclick="setLanguage('vi')" data-lang-option="vi" class="lang-option-btn"><span>🇻🇳 Tiếng Việt</span><span>VI</span></button>
+    </div>
+
     <div id="permission-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-[999999] hidden">
         <div class="role-panel-card max-w-5xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
             <div class="flex items-center justify-between px-6 py-4 border-b border-slate-800">
@@ -2377,6 +2422,8 @@ window.previewDeleteEmployeeByCode = function() {
             updateStats();
         
             applyRolePermissions();
+        
+            applyLanguage();
         }
 
         
@@ -2492,6 +2539,8 @@ function renderTable() {
 
             renderDailySummary(filtered);
             document.getElementById("empty-state").classList.toggle("hidden", count > 0);
+        
+            applyLanguage();
         }
 
         function renderDailySummary(filtered) {
@@ -2536,6 +2585,8 @@ function renderTable() {
                 w.innerHTML = `<div><p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">กะ ${s}</p><h3 class="text-2xl font-bold text-${colors[idx]}-400 mt-1">${list.filter(p=>p.shift===s).length} คน</h3><p class="text-[11px] text-slate-500 mt-1">เข้า ${window.shiftTimes[s].login}</p></div><div class="w-12 h-12 rounded-xl bg-${colors[idx]}-500/10 border border-${colors[idx]}-500/20 flex items-center justify-center text-${colors[idx]}-400">⏱</div>`;
                 cont.appendChild(w);
             });
+        
+            applyLanguage();
         }
 
         window.changeRank = async function(id, val) {
@@ -3555,6 +3606,8 @@ function renderWFHPresentInline(people, day) {
                     </tr>
                 `;
             }).join("");
+        
+            applyLanguage();
         }
 
 window.generateWFHPresentToday = function() {
@@ -4099,31 +4152,207 @@ window.generateWFHPresentToday = function() {
             S4: { addEmployee:true, deleteEmployee:true, addShift:false, deleteShift:false, editShift:true, editDay:true, editWorkType:true, editRank:true, resignEmployee:false, cancelResign:false, exportData:false, resetSystem:false, saveCloud:true, checkWFH:true, managePermissions:false },
             STAFF: { addEmployee:false, deleteEmployee:false, addShift:false, deleteShift:false, editShift:false, editDay:false, editWorkType:false, editRank:false, resignEmployee:false, cancelResign:false, exportData:false, resetSystem:false, saveCloud:false, checkWFH:false, managePermissions:false }
         };
+
         const I18N = {
-            th:{title:"ระบบจัดการตารางงานแนวตั้งอัจฉริยะ",permissionTitle:"จัดการสิทธิ์การใช้งาน",permissionSubtitle:"Admin ทำได้ทั้งหมด / S4 ทำได้เฉพาะทีมตัวเอง / พนักงานดูอย่างเดียว",close:"ปิด"},
-            zh:{title:"智能排班管理系统",permissionTitle:"权限管理",permissionSubtitle:"Admin 全部权限 / S4 仅管理本团队 / 员工仅查看",close:"关闭"},
-            en:{title:"Smart Vertical Schedule System",permissionTitle:"Permission Management",permissionSubtitle:"Admin has full access / S4 manages own team / Staff view only",close:"Close"},
-            vi:{title:"Hệ thống quản lý lịch làm việc thông minh",permissionTitle:"Quản lý quyền",permissionSubtitle:"Admin toàn quyền / S4 chỉ quản lý đội mình / Nhân viên chỉ xem",close:"Đóng"}
-        };
+            th:{
+                title:"ระบบจัดการตารางงานแนวตั้งอัจฉริยะ", subtitle:"จัดการกะ วันหยุด/วันลา ยศพนักงาน และสิทธิ์หัวหน้าทีมแบบเรียลไทม์",
+                month:"เดือน", year:"ปี", copyPrev:"คัดลอกจากเดือนก่อน", currentUse:"กำลังใช้งาน",
+                totalEmployees:"พนักงานทั้งหมด", shift:"กะ", office:"Office", wfh:"WFH",
+                filterTeam:"คัดกรองเฉพาะทีม", filterShift:"คัดกรองเฉพาะกะ", allTeams:"แสดงทุกทีม", allShifts:"แสดงทุกกะ",
+                searchName:"ค้นหาชื่อพนักงาน / รหัส", searchPlaceholder:"พิมพ์ชื่อหรือรหัส...",
+                searchWFH:"ค้นหา WFH มาทำงาน", clickSearch:"กดค้นหาเพื่อดูรายชื่อ",
+                importLeave:"นำเข้าวันหยุดแบบเร็ว", importHint:"รูปแบบ: ชื่อพนักงาน ตามด้วยวันที่ เช่น NOAH 1 7 21 หรือวางจาก Excel ได้เลย",
+                processLeave:"ประมวลผลวันหยุด", clearDraft:"ล้างช่อง", addEmployee:"+ เพิ่ม/ลบพนักงาน", addShift:"เพิ่มกะ",
+                wfhReport:"สรุป WFH หยุดรายวัน", reportForSend:"สำหรับส่งรายงาน", date:"วันที่", createReport:"สร้างรายงาน", copy:"คัดลอก", clear:"ล้าง",
+                scheduleTitle:"แผ่นงานตารางเวรพนักงานแนวตั้ง", hideResigned:"ซ่อนพนักงานที่ออกแล้ว", resignHistory:"ประวัติพนักงานออก",
+                order:"ลำดับ", team:"ทีม", rank:"ยศ", employeeName:"ชื่อพนักงาน", employeeCode:"รหัสพนักงาน", workType:"ลักษณะงาน", shiftCode:"รหัสกะ",
+                loginTime:"เวลาเข้างาน", breakTime:"เวลาพัก", totalOff:"รวมหยุด", totalLeave:"รวมลา",
+                workday:"วันทำงาน", offDay:"วันหยุด", leaveDay:"วันลา",
+                checked:"ตรวจแล้ว", unchecked:"ยังไม่ตรวจ", checker:"ผู้ตรวจ", checkedTime:"เวลาตรวจ", status:"สถานะ", working:"มาทำงาน",
+                saveCloud:"บันทึก Cloud", reload:"รีโหลด", exportData:"Export", reset:"รีเซ็ต", autoSort:"Auto-Sort", permission:"สิทธิ์",
+                permissionTitle:"จัดการสิทธิ์การใช้งาน", permissionSubtitle:"Admin ทำได้ทั้งหมด / S4 ทำได้เฉพาะทีมตัวเอง / พนักงานดูอย่างเดียว", close:"ปิด"
+            },
+            zh:{
+                title:"智能排班管理系统", subtitle:"实时管理班次、休假、员工级别与组长权限",
+                month:"月份", year:"年份", copyPrev:"从上月复制", currentUse:"当前使用",
+                totalEmployees:"员工总数", shift:"班次", office:"办公室", wfh:"居家办公",
+                filterTeam:"按团队筛选", filterShift:"按班次筛选", allTeams:"显示全部团队", allShifts:"显示全部班次",
+                searchName:"搜索员工姓名 / 工号", searchPlaceholder:"输入姓名或工号...",
+                searchWFH:"搜索今日 WFH 上班", clickSearch:"点击搜索查看名单",
+                importLeave:"快速导入休假", importHint:"格式：姓名 后接日期，例如 NOAH 1 7 21，也可从 Excel 粘贴",
+                processLeave:"处理休假", clearDraft:"清空", addEmployee:"+ 添加/删除员工", addShift:"添加班次",
+                wfhReport:"每日 WFH 休假汇总", reportForSend:"用于发送报告", date:"日期", createReport:"生成报告", copy:"复制", clear:"清空",
+                scheduleTitle:"员工纵向排班表", hideResigned:"隐藏已离职员工", resignHistory:"离职员工记录",
+                order:"序号", team:"团队", rank:"级别", employeeName:"员工姓名", employeeCode:"工号", workType:"工作类型", shiftCode:"班次代码",
+                loginTime:"上班时间", breakTime:"休息时间", totalOff:"休假合计", totalLeave:"请假合计",
+                workday:"工作日", offDay:"休假", leaveDay:"请假",
+                checked:"已检查", unchecked:"未检查", checker:"检查人", checkedTime:"检查时间", status:"状态", working:"上班",
+                saveCloud:"保存云端", reload:"重新加载", exportData:"导出", reset:"重置", autoSort:"自动排序", permission:"权限",
+                permissionTitle:"权限管理", permissionSubtitle:"Admin 全部权限 / S4 仅管理本团队 / 员工仅查看", close:"关闭"
+            },
+            en:{
+                title:"Smart Vertical Schedule System", subtitle:"Manage shifts, days off, leave, ranks, and team-leader permissions in real time",
+                month:"Month", year:"Year", copyPrev:"Copy from previous month", currentUse:"Current file",
+                totalEmployees:"Total Employees", shift:"Shift", office:"Office", wfh:"WFH",
+                filterTeam:"Filter by team", filterShift:"Filter by shift", allTeams:"All teams", allShifts:"All shifts",
+                searchName:"Search employee / code", searchPlaceholder:"Type name or code...",
+                searchWFH:"Search WFH working today", clickSearch:"Click search to show list",
+                importLeave:"Quick leave import", importHint:"Format: employee name followed by dates, e.g. NOAH 1 7 21, or paste from Excel",
+                processLeave:"Process leave", clearDraft:"Clear draft", addEmployee:"+ Add/Delete employee", addShift:"Add shift",
+                wfhReport:"Daily WFH off report", reportForSend:"For sending report", date:"Date", createReport:"Create report", copy:"Copy", clear:"Clear",
+                scheduleTitle:"Vertical Employee Schedule", hideResigned:"Hide resigned employees", resignHistory:"Resigned employee history",
+                order:"No.", team:"Team", rank:"Rank", employeeName:"Employee name", employeeCode:"Employee code", workType:"Work type", shiftCode:"Shift code",
+                loginTime:"Login time", breakTime:"Break time", totalOff:"Total off", totalLeave:"Total leave",
+                workday:"Workday", offDay:"Off", leaveDay:"Leave",
+                checked:"Checked", unchecked:"Unchecked", checker:"Checker", checkedTime:"Checked time", status:"Status", working:"Working",
+                saveCloud:"Save Cloud", reload:"Reload", exportData:"Export", reset:"Reset", autoSort:"Auto-Sort", permission:"Permission",
+                permissionTitle:"Permission Management", permissionSubtitle:"Admin has full access / S4 manages own team / Staff view only", close:"Close"
+            },
+            vi:{
+                title:"Hệ thống quản lý lịch làm việc thông minh", subtitle:"Quản lý ca, ngày nghỉ, nghỉ phép, cấp bậc và quyền trưởng nhóm theo thời gian thực",
+                month:"Tháng", year:"Năm", copyPrev:"Sao chép từ tháng trước", currentUse:"Đang sử dụng",
+                totalEmployees:"Tổng nhân viên", shift:"Ca", office:"Văn phòng", wfh:"WFH",
+                filterTeam:"Lọc theo đội", filterShift:"Lọc theo ca", allTeams:"Tất cả đội", allShifts:"Tất cả ca",
+                searchName:"Tìm nhân viên / mã", searchPlaceholder:"Nhập tên hoặc mã...",
+                searchWFH:"Tìm WFH đi làm hôm nay", clickSearch:"Bấm tìm để xem danh sách",
+                importLeave:"Nhập ngày nghỉ nhanh", importHint:"Định dạng: tên nhân viên kèm ngày, ví dụ NOAH 1 7 21, hoặc dán từ Excel",
+                processLeave:"Xử lý ngày nghỉ", clearDraft:"Xóa ô", addEmployee:"+ Thêm/Xóa nhân viên", addShift:"Thêm ca",
+                wfhReport:"Báo cáo WFH nghỉ theo ngày", reportForSend:"Dùng để gửi báo cáo", date:"Ngày", createReport:"Tạo báo cáo", copy:"Sao chép", clear:"Xóa",
+                scheduleTitle:"Bảng lịch nhân viên dạng dọc", hideResigned:"Ẩn nhân viên đã nghỉ", resignHistory:"Lịch sử nhân viên nghỉ việc",
+                order:"STT", team:"Đội", rank:"Cấp", employeeName:"Tên nhân viên", employeeCode:"Mã nhân viên", workType:"Hình thức", shiftCode:"Mã ca",
+                loginTime:"Giờ vào", breakTime:"Giờ nghỉ", totalOff:"Tổng nghỉ", totalLeave:"Tổng phép",
+                workday:"Ngày làm", offDay:"Ngày nghỉ", leaveDay:"Nghỉ phép",
+                checked:"Đã kiểm tra", unchecked:"Chưa kiểm tra", checker:"Người kiểm tra", checkedTime:"Giờ kiểm tra", status:"Trạng thái", working:"Đi làm",
+                saveCloud:"Lưu Cloud", reload:"Tải lại", exportData:"Xuất", reset:"Đặt lại", autoSort:"Tự sắp xếp", permission:"Quyền",
+                permissionTitle:"Quản lý quyền", permissionSubtitle:"Admin toàn quyền / S4 chỉ quản lý đội mình / Nhân viên chỉ xem", close:"Đóng"
+            }
+        }
+
         function getCurrentRoleKey(){ if(!window.currentUser) return "STAFF"; if(window.currentUser.role==="ADMIN") return "ADMIN"; if(window.currentUser.role==="S4"||window.currentUser.rank==="S4") return "S4"; return "STAFF"; }
         function hasPermission(key){ return !!ROLE_PERMISSIONS[getCurrentRoleKey()]?.[key]; }
         function getLang(key){ const lang=localStorage.getItem("schedule_lang")||"th"; return I18N[lang]?.[key]||I18N.th[key]||key; }
-        window.setLanguage=function(lang){ localStorage.setItem("schedule_lang",lang); applyLanguage(); if(typeof showToast==="function") showToast(`Language: ${lang.toUpperCase()}`); };
+
+        window.toggleLanguagePopup = function() {
+            const pop = document.getElementById("language-popup");
+            if (!pop) return;
+            pop.classList.toggle("hidden");
+            updateLanguagePopupState();
+        };
+
+        function closeLanguagePopup() { document.getElementById("language-popup")?.classList.add("hidden"); }
+
+        function updateLanguagePopupState() {
+            const lang = localStorage.getItem("schedule_lang") || "th";
+            const labels = { th:"🌐 ไทย", zh:"🌐 中文", en:"🌐 English", vi:"🌐 Tiếng Việt" };
+            const main = document.getElementById("language-main-btn");
+            if (main) main.textContent = labels[lang] || "🌐 ภาษา";
+            document.querySelectorAll("[data-lang-option]").forEach(btn => btn.classList.toggle("lang-option-active", btn.dataset.langOption === lang));
+        }
+
+        document.addEventListener("click", function(e) {
+            const pop = document.getElementById("language-popup");
+            const btn = document.getElementById("language-main-btn");
+            if (!pop || !btn) return;
+            if (!pop.contains(e.target) && !btn.contains(e.target)) pop.classList.add("hidden");
+        });
+
+        window.setLanguage=function(lang){ localStorage.setItem("schedule_lang",lang); applyLanguage(); closeLanguagePopup(); updateLanguagePopupState(); if(typeof showToast==="function") showToast(`Language: ${lang.toUpperCase()}`); };
+
         function applyLanguage(){
             const lang=localStorage.getItem("schedule_lang")||"th";
-            document.querySelectorAll("[data-lang-btn]").forEach(btn=>btn.classList.toggle("lang-chip-active",btn.dataset.langBtn===lang));
-            document.querySelectorAll("[data-i18n]").forEach(el=>{ const key=el.dataset.i18n; if(I18N[lang]?.[key]) el.textContent=I18N[lang][key]; });
-            const title=document.querySelector("h1"); if(title) title.textContent=getLang("title");
+            const t=I18N[lang]||I18N.th;
+            const replaceMap = {
+                "ระบบจัดการตารางงานแนวตั้งอัจฉริยะ": t.title,
+                "Smart Vertical Schedule System": t.title,
+                "จัดการกะ วันหยุด/วันลา ยศพนักงาน และสิทธิ์หัวหน้าทีมแบบเรียลไทม์": t.subtitle,
+                "พนักงานทั้งหมด": t.totalEmployees,
+                "คัดกรองเฉพาะทีม": t.filterTeam,
+                "คัดกรองเฉพาะกะ": t.filterShift,
+                "แสดงทุกทีม": t.allTeams,
+                "แสดงทุกกะ": t.allShifts,
+                "ค้นหาชื่อพนักงาน / รหัส": t.searchName,
+                "ค้นหา WFH มาทำงาน": t.searchWFH,
+                "กดค้นหาเพื่อดูรายชื่อ": t.clickSearch,
+                "นำเข้าวันหยุดแบบเร็ว": t.importLeave,
+                "ประมวลผลวันหยุด": t.processLeave,
+                "ล้างช่อง": t.clearDraft,
+                "+ เพิ่ม/ลบพนักงาน": t.addEmployee,
+                "เพิ่มกะ": t.addShift,
+                "สรุป WFH หยุดรายวัน": t.wfhReport,
+                "สำหรับส่งรายงาน": t.reportForSend,
+                "วันที่": t.date,
+                "สร้างรายงาน": t.createReport,
+                "คัดลอก": t.copy,
+                "ล้าง": t.clear,
+                "ซ่อนพนักงานที่ออกแล้ว": t.hideResigned,
+                "ประวัติพนักงานออก": t.resignHistory,
+                "ลำดับ": t.order,
+                "ทีม": t.team,
+                "ยศ": t.rank,
+                "ชื่อพนักงาน": t.employeeName,
+                "รหัสพนักงาน": t.employeeCode,
+                "ลักษณะงาน": t.workType,
+                "รหัสกะ": t.shiftCode,
+                "เวลาเข้างาน": t.loginTime,
+                "เวลาพัก": t.breakTime,
+                "รวมหยุด": t.totalOff,
+                "รวมลา": t.totalLeave,
+                "ตรวจแล้ว": t.checked,
+                "ยังไม่ตรวจ": t.unchecked,
+                "ผู้ตรวจ": t.checker,
+                "เวลาตรวจ": t.checkedTime,
+                "สถานะ": t.status,
+                "มาทำงาน": t.working,
+                "บันทึก Cloud": t.saveCloud,
+                "รีโหลด": t.reload,
+                "Export": t.exportData,
+                "รีเซ็ต": t.reset,
+                "Auto-Sort": t.autoSort,
+                "สิทธิ์": t.permission,
+                "เดือน": t.month,
+                "ปี": t.year,
+                "คัดลอกจากเดือนก่อน": t.copyPrev
+            };
+
+            document.querySelectorAll("[data-i18n]").forEach(el=>{
+                const key=el.dataset.i18n;
+                if(t[key]) el.textContent=t[key];
+            });
+
+            document.querySelectorAll("h1,h2,h3,h4,p,label,button,th,span,div,option").forEach(el=>{
+                if(el.children.length>0 && !el.matches("button")) return;
+                const raw=(el.textContent||"").trim();
+                if(replaceMap[raw]) el.textContent=replaceMap[raw];
+                if(raw.startsWith("แผ่นงานตารางเวรพนักงานแนวตั้ง")) {
+                    el.textContent = `${t.scheduleTitle} (${t.month === "เดือน" ? "พฤษภาคม 2026" : ""})`;
+                }
+            });
+
+            document.querySelectorAll("input[placeholder], textarea[placeholder]").forEach(el=>{
+                const ph=el.getAttribute("placeholder")||"";
+                if(ph.includes("พิมพ์ชื่อหรือรหัส")) el.setAttribute("placeholder", t.searchPlaceholder);
+                if(ph.includes("กดสร้างรายงาน")) el.setAttribute("placeholder", t.createReport);
+            });
+
+            updateLanguagePopupState();
         }
+
         function renderPermissionModal(){
             const rows=[["เพิ่ม/ลบพนักงาน","addEmployee"],["เพิ่ม/ลบกะ","addShift"],["เปลี่ยนกะ","editShift"],["เปลี่ยนวันหยุด/วันลา","editDay"],["เปลี่ยน Office/WFH","editWorkType"],["เปลี่ยนยศ","editRank"],["ตรวจ WFH","checkWFH"],["บันทึกพนักงานออก","resignEmployee"],["Export","exportData"],["รีเซ็ต","resetSystem"],["จัดการสิทธิ์","managePermissions"]];
             const make=role=>rows.map(([label,key])=>`<div>${ROLE_PERMISSIONS[role][key]?"✅":"❌"} ${label}</div>`).join("");
             const a=document.getElementById("role-admin-list"), s=document.getElementById("role-s4-list"), st=document.getElementById("role-staff-list");
             if(a) a.innerHTML=make("ADMIN"); if(s) s.innerHTML=make("S4")+`<div class="text-xs text-slate-500 mt-2">* ทำได้เฉพาะทีมตัวเอง</div>`; if(st) st.innerHTML=make("STAFF")+`<div class="text-xs text-slate-500 mt-2">* ดูและค้นหาได้เท่านั้น</div>`;
         }
+
         window.openPermissionModal=function(){ if(!hasPermission("managePermissions")) return alert("เฉพาะ Admin เท่านั้น"); renderPermissionModal(); document.getElementById("permission-modal")?.classList.remove("hidden"); };
         window.closePermissionModal=function(){ document.getElementById("permission-modal")?.classList.add("hidden"); };
-        function markMainScheduleFullWidth(){ const tbody=document.getElementById("staff-table-body"); if(!tbody) return; const card=tbody.closest(".bg-slate-900"); if(card) card.classList.add("schedule-full-card"); }
+
+        function markMainScheduleFullWidth(){
+            const tbody=document.getElementById("staff-table-body"); if(!tbody) return;
+            const card=tbody.closest(".bg-slate-900")||tbody.closest("div"); if(card) card.classList.add("schedule-full-card");
+            let el=card?.parentElement; for(let i=0;el&&i<4;i++,el=el.parentElement){ el.style.maxWidth="none"; el.style.width="100%"; }
+        }
+
         function applyRolePermissions(){
             const role=getCurrentRoleKey();
             document.querySelectorAll("[data-admin-only]").forEach(el=>el.classList.toggle("permission-hidden",role!=="ADMIN"));
