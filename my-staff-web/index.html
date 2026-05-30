@@ -3386,7 +3386,129 @@ window.generateWFHOffReport = function() {
         }
 
 
-        function renderWFHPresentInlineLastOnly() {
+        
+        function getWFHSelectedDateParts() {
+            const now = new Date();
+            const dEl = document.getElementById("wfh-present-day");
+            const mEl = document.getElementById("wfh-present-month");
+            const yEl = document.getElementById("wfh-present-year");
+            const day = Number(dEl?.value || now.getDate());
+            const month = Number(mEl?.value || window.selectedMonth || (now.getMonth() + 1));
+            const year = Number(yEl?.value || window.selectedYear || now.getFullYear());
+            return { day, month, year };
+        }
+
+        function getWFHCheckKey() {
+            const x = getWFHSelectedDateParts();
+            return `${x.year}_${pad2(x.month)}_${pad2(x.day)}`;
+        }
+
+        function ensureAttendanceKey(key) {
+            if (!window.attendanceChecks || typeof window.attendanceChecks !== "object") {
+                window.attendanceChecks = {};
+            }
+            if (!window.attendanceChecks[key]) window.attendanceChecks[key] = {};
+            return window.attendanceChecks[key];
+        }
+
+        function getAttendanceRecordByKey(id, key) {
+            const store = ensureAttendanceKey(key);
+            return store[String(id)] || null;
+        }
+
+        function isAttendanceVerifiedByKey(id, key) {
+            const rec = getAttendanceRecordByKey(id, key);
+            return !!(rec && rec.checked !== false);
+        }
+
+        function getAttendanceCheckerNameByKey(id, key) {
+            const rec = getAttendanceRecordByKey(id, key);
+            return rec?.checkedBy || "-";
+        }
+
+        function getAttendanceCheckedTimeByKey(id, key) {
+            const rec = getAttendanceRecordByKey(id, key);
+            if (!rec || !rec.checkedAt) return "-";
+            const t = new Date(rec.checkedAt);
+            if (Number.isNaN(t.getTime())) return "-";
+            return `${pad2(t.getHours())}:${pad2(t.getMinutes())}`;
+        }
+
+        function getAttendanceRecord(id) {
+            return getAttendanceRecordByKey(id, getWFHCheckKey());
+        }
+
+        function isAttendanceVerified(id) {
+            return isAttendanceVerifiedByKey(id, getWFHCheckKey());
+        }
+
+        function getAttendanceCheckerName(id) {
+            return getAttendanceCheckerNameByKey(id, getWFHCheckKey());
+        }
+
+        function getAttendanceCheckedTime(id) {
+            return getAttendanceCheckedTimeByKey(id, getWFHCheckKey());
+        }
+
+
+        window.toggleAttendanceVerified = async function(id, checked) {
+            if (!isAdminUser()) {
+                alert("ตรวจสอบได้เฉพาะ Admin");
+                generateWFHPresentToday();
+                return;
+            }
+
+            const key = getWFHCheckKey();
+            const store = ensureAttendanceKey(key);
+            const idKey = String(id);
+            const checkbox = event?.target || null;
+            const row = checkbox?.closest("tr") || null;
+            const now = new Date();
+
+            if (checkbox) checkbox.disabled = true;
+
+            try {
+                if (checked) {
+                    store[idKey] = {
+                        checked: true,
+                        checkedBy: getCurrentAdminLabel(),
+                        checkedAt: now.toISOString()
+                    };
+                } else {
+                    delete store[idKey];
+                }
+
+                if (row) {
+                    const cells = row.querySelectorAll("td");
+                    const checkerCell = cells[cells.length - 2];
+                    const timeCell = cells[cells.length - 1];
+                    if (checkerCell) checkerCell.textContent = checked ? getCurrentAdminLabel() : "-";
+                    if (timeCell) timeCell.textContent = checked ? `${pad2(now.getHours())}:${pad2(now.getMinutes())}` : "-";
+                }
+
+                await commitData();
+
+                // ดึงข้อมูลที่เพิ่งบันทึกกลับเข้า memory เผื่อ commitData รีโหลดบางส่วน
+                ensureAttendanceKey(key);
+                if (checked && !store[idKey]) {
+                    store[idKey] = {
+                        checked: true,
+                        checkedBy: getCurrentAdminLabel(),
+                        checkedAt: now.toISOString()
+                    };
+                }
+
+                generateWFHPresentToday();
+                showToast(checked ? "ตรวจแล้ว" : "ยกเลิกตรวจแล้ว");
+            } catch (err) {
+                console.error(err);
+                alert("บันทึกไม่สำเร็จ กรุณาลองใหม่");
+                generateWFHPresentToday();
+            } finally {
+                if (checkbox) checkbox.disabled = false;
+            }
+        };
+function renderWFHPresentInlineLastOnly() {
             const tbody = document.getElementById("wfh-present-table-body");
             const summary = document.getElementById("wfh-present-summary");
             if (!tbody || !summary) return;
@@ -3407,8 +3529,8 @@ function renderWFHPresentInline(people, day) {
 
             if (!panel || !tbody) return;
 
-            const checkKey = getWFHCheckSelectedDateKey();
-            panel.classList.remove("hidden");
+            const checkKey = getWFHCheckKey();
+panel.classList.remove("hidden");
             if (dateLabel) dateLabel.innerText = `กำลังดูข้อมูล : ${day}`;
             if (countText) countText.innerText = `แสดง ${people.length} คน`;
 
@@ -3417,7 +3539,7 @@ function renderWFHPresentInline(people, day) {
                 if (teamCounts[p.team] !== undefined) teamCounts[p.team]++;
             });
 
-            const checkedCount = people.filter(p => isAttendanceVerified(p.id)).length;
+            const checkedCount = people.filter(p => isAttendanceVerifiedByKey(p.id, checkKey)).length;
 
             if (summary) {
                 summary.innerHTML = `
@@ -3513,7 +3635,7 @@ window.generateWFHPresentToday = function() {
                     .filter(p => isWFHPresentToday(p, day));
 
                 if (onlyUnchecked) {
-                    presentPeople = presentPeople.filter(p => !isAttendanceVerifiedByKey(p.id, getWFHCheckSelectedDateKey()));
+                    presentPeople = presentPeople.filter(p => !isAttendanceVerifiedByKey(p.id, getWFHCheckKey()));
                 }
 
                 allPeople.push(...presentPeople);
@@ -3580,17 +3702,12 @@ window.generateWFHPresentToday = function() {
         }
 
         function ensureAttendanceChecks() {
-            if (!window.attendanceChecks || typeof window.attendanceChecks !== "object") {
-                window.attendanceChecks = {};
-            }
-            const key = getTodayKeyForAttendance();
-            if (!window.attendanceChecks[key]) window.attendanceChecks[key] = {};
+            const key = getWFHCheckKey();
+            ensureAttendanceKey(key);
             return key;
         }
 
-        function isAttendanceVerified(id) {
-            return isAttendanceVerifiedByKey(id, getWFHCheckSelectedDateKey());
-        }
+        
 
         window.toggleAttendanceVerified = async function(id, checked) {
             if (!isAdminUser()) {
@@ -3892,17 +4009,11 @@ window.generateWFHPresentToday = function() {
             return name || code || "USER";
         }
 
-        function getAttendanceRecord(id) {
-            return getAttendanceRecordByKey(id, getWFHCheckSelectedDateKey());
-        }
+        
 
-        function getAttendanceCheckedTime(id) {
-            return getAttendanceCheckedTimeByKey(id, getWFHCheckSelectedDateKey());
-        }
+        
 
-        function getAttendanceCheckerName(id) {
-            return getAttendanceCheckerNameByKey(id, getWFHCheckSelectedDateKey());
-        }
+        
 
 
         window.toggleAttendanceVerified = async function(id, checked) {
@@ -3937,40 +4048,17 @@ window.generateWFHPresentToday = function() {
         };
 
 
-        function getWFHCheckSelectedDateKey() {
-            const selected = typeof getSelectedWFHPresentDate === "function"
-                ? getSelectedWFHPresentDate()
-                : { day: new Date().getDate(), month: (window.selectedMonth || new Date().getMonth() + 1), year: (window.selectedYear || new Date().getFullYear()) };
-            return `${selected.year}_${pad2(selected.month)}_${pad2(selected.day)}`;
-        }
+        
 
-        function ensureAttendanceChecksForKey(key) {
-            if (!window.attendanceChecks || typeof window.attendanceChecks !== "object") window.attendanceChecks = {};
-            if (!window.attendanceChecks[key]) window.attendanceChecks[key] = {};
-            return window.attendanceChecks[key];
-        }
+        
 
-        function getAttendanceRecordByKey(id, key) {
-            ensureAttendanceChecksForKey(key);
-            return window.attendanceChecks?.[key]?.[String(id)] || null;
-        }
+        
 
-        function isAttendanceVerifiedByKey(id, key) {
-            return !!getAttendanceRecordByKey(id, key);
-        }
+        
 
-        function getAttendanceCheckerNameByKey(id, key) {
-            const rec = getAttendanceRecordByKey(id, key);
-            return rec?.checkedBy || "-";
-        }
+        
 
-        function getAttendanceCheckedTimeByKey(id, key) {
-            const rec = getAttendanceRecordByKey(id, key);
-            if (!rec || !rec.checkedAt) return "-";
-            const t = new Date(rec.checkedAt);
-            if (Number.isNaN(t.getTime())) return "-";
-            return `${pad2(t.getHours())}:${pad2(t.getMinutes())}`;
-        }
+        
 
 
         window.toggleAttendanceVerified = async function(id, checked) {
