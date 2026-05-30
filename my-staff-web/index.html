@@ -179,6 +179,28 @@
             white-space: nowrap;
         }
 
+
+        /* v3 full width + role + language */
+        body { overflow-x: hidden; }
+        .schedule-full-card {
+            width: calc(100vw - 24px) !important;
+            max-width: none !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
+        }
+        .schedule-full-card table { width: max-content; min-width: 100%; }
+        .permission-hidden { display: none !important; }
+        .lang-chip-active {
+            background: rgba(99,102,241,.25) !important;
+            border-color: rgba(129,140,248,.6) !important;
+            color: #c4b5fd !important;
+        }
+        .role-panel-card {
+            background: rgba(15, 23, 42, .95);
+            border: 1px solid rgba(51, 65, 85, .9);
+            border-radius: 18px;
+        }
+
 </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen antialiased selection:bg-indigo-500/30">
@@ -263,6 +285,15 @@
 
             <div class="flex flex-wrap gap-2">
 <button onclick="autoSort()" class="admin-only px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-medium text-sm rounded-xl shadow-lg shadow-indigo-500/20 transition-all">Auto-Sort</button>
+
+                    <div id="language-role-toolbar" class="flex items-center gap-2 flex-wrap">
+                        <button onclick="setLanguage('th')" data-lang-btn="th" class="lang-btn px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs font-bold text-slate-300">ไทย</button>
+                        <button onclick="setLanguage('zh')" data-lang-btn="zh" class="lang-btn px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs font-bold text-slate-300">中文</button>
+                        <button onclick="setLanguage('en')" data-lang-btn="en" class="lang-btn px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs font-bold text-slate-300">EN</button>
+                        <button onclick="setLanguage('vi')" data-lang-btn="vi" class="lang-btn px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs font-bold text-slate-300">VI</button>
+                        <button onclick="openPermissionModal()" data-admin-only="true" class="px-4 py-2 bg-indigo-600/20 hover:bg-indigo-600/35 text-indigo-300 border border-indigo-500/30 rounded-xl text-xs font-bold">สิทธิ์</button>
+                    </div>
+
                 <button onclick="forceSaveCloud()" class="admin-only px-4 py-2 bg-emerald-950/40 hover:bg-emerald-900/40 text-emerald-400 border border-emerald-900/30 font-medium text-sm rounded-xl transition-all">บันทึก Cloud</button>
                 <button onclick="reloadFromCloud()" class="admin-only px-4 py-2 bg-sky-950/40 hover:bg-sky-900/40 text-sky-400 border border-sky-900/30 font-medium text-sm rounded-xl transition-all">รีโหลด</button>
                 <button onclick="exportData()" class="admin-only px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium text-sm rounded-xl transition-all">Export</button>
@@ -747,7 +778,25 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
     </div>
 
 
-    <script type="module">
+    
+    <div id="permission-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-[999999] hidden">
+        <div class="role-panel-card max-w-5xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-800">
+                <div>
+                    <h3 class="text-lg font-bold text-slate-100" data-i18n="permissionTitle">จัดการสิทธิ์การใช้งาน</h3>
+                    <p class="text-xs text-slate-500" data-i18n="permissionSubtitle">Admin ทำได้ทั้งหมด / S4 ทำได้เฉพาะทีมตัวเอง / พนักงานดูอย่างเดียว</p>
+                </div>
+                <button onclick="closePermissionModal()" class="text-slate-400 hover:text-slate-200" data-i18n="close">ปิด</button>
+            </div>
+            <div class="p-5 grid grid-cols-1 md:grid-cols-3 gap-4 overflow-y-auto max-h-[calc(90vh-80px)]">
+                <div class="bg-slate-950/50 border border-slate-800 rounded-2xl p-4"><h4 class="font-black text-emerald-300 mb-2">ADMIN</h4><div class="text-sm text-slate-300 space-y-1" id="role-admin-list"></div></div>
+                <div class="bg-slate-950/50 border border-slate-800 rounded-2xl p-4"><h4 class="font-black text-purple-300 mb-2">S4 หัวหน้า</h4><div class="text-sm text-slate-300 space-y-1" id="role-s4-list"></div></div>
+                <div class="bg-slate-950/50 border border-slate-800 rounded-2xl p-4"><h4 class="font-black text-blue-300 mb-2">พนักงาน</h4><div class="text-sm text-slate-300 space-y-1" id="role-staff-list"></div></div>
+            </div>
+        </div>
+    </div>
+
+<script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
@@ -1835,7 +1884,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
         }
 
         function isLeaderUser() {
-            return !!window.currentUser && (window.currentUser.team === "ALL" || window.currentUser.rank === "S4");
+            return hasPermission("addEmployee") || hasPermission("editShift") || hasPermission("addShift");
         }
 
         function updateRoleVisibility() {
@@ -2326,6 +2375,8 @@ window.previewDeleteEmployeeByCode = function() {
             renderTable();
             updateRoleVisibility();
             updateStats();
+        
+            applyRolePermissions();
         }
 
         
@@ -3256,7 +3307,7 @@ window.generateWFHOffReport = function() {
                 return;
             }
 
-            const admin = isAdminUser();
+            const admin = hasPermission("checkWFH");
             let html = `
                 <div class="grid grid-cols-[48px_80px_1fr_72px_86px] gap-2 px-4 py-2 bg-slate-900 border-b border-slate-800 text-slate-400 font-semibold">
                     <div>ลำดับ</div>
@@ -3472,7 +3523,7 @@ function renderWFHPresentInline(people, day) {
 
             tbody.innerHTML = people.map((p, idx) => {
                 const checked = isAttendanceVerifiedStable(p.id, checkKey);
-                const admin = isAdminUser();
+                const admin = hasPermission("checkWFH");
                 const shiftClass = typeof getShiftClass === "function" ? getShiftClass(p.shift) : "shift-other";
                 const checker = getAttendanceCheckerStable(p.id, checkKey);
                 const checkedTime = getAttendanceTimeStable(p.id, checkKey);
@@ -4002,14 +4053,14 @@ window.generateWFHPresentToday = function() {
 
         window.openAddShiftModal = function() {
             if (!window.currentUser) return alert("กรุณาเข้าสู่ระบบก่อน");
-            if (!isLeaderUser()) return alert("เพิ่ม/ลบกะได้เฉพาะหัวหน้า S4 หรือ Admin");
+            if (!hasPermission("addShift") && !hasPermission("deleteShift")) return alert("เพิ่ม/ลบกะได้เฉพาะ Admin");
             updateShiftSelects();
             const modal = document.getElementById("add-shift-modal");
             if (modal) modal.classList.remove("hidden");
         };
 
         window.deleteShift = async function() {
-            if (!isLeaderUser()) return alert("ลบกะได้เฉพาะหัวหน้า S4 หรือ Admin");
+            if (!hasPermission("deleteShift")) return alert("ลบกะได้เฉพาะ Admin");
 
             applyDeletedShiftFilter();
 
@@ -4041,6 +4092,52 @@ window.generateWFHPresentToday = function() {
             updateDynamicUI();
             showToast(`ลบกะ ${code} แล้ว`);
         };
+
+
+        const ROLE_PERMISSIONS = {
+            ADMIN: { addEmployee:true, deleteEmployee:true, addShift:true, deleteShift:true, editShift:true, editDay:true, editWorkType:true, editRank:true, resignEmployee:true, cancelResign:true, exportData:true, resetSystem:true, saveCloud:true, checkWFH:true, managePermissions:true },
+            S4: { addEmployee:true, deleteEmployee:true, addShift:false, deleteShift:false, editShift:true, editDay:true, editWorkType:true, editRank:true, resignEmployee:false, cancelResign:false, exportData:false, resetSystem:false, saveCloud:true, checkWFH:true, managePermissions:false },
+            STAFF: { addEmployee:false, deleteEmployee:false, addShift:false, deleteShift:false, editShift:false, editDay:false, editWorkType:false, editRank:false, resignEmployee:false, cancelResign:false, exportData:false, resetSystem:false, saveCloud:false, checkWFH:false, managePermissions:false }
+        };
+        const I18N = {
+            th:{title:"ระบบจัดการตารางงานแนวตั้งอัจฉริยะ",permissionTitle:"จัดการสิทธิ์การใช้งาน",permissionSubtitle:"Admin ทำได้ทั้งหมด / S4 ทำได้เฉพาะทีมตัวเอง / พนักงานดูอย่างเดียว",close:"ปิด"},
+            zh:{title:"智能排班管理系统",permissionTitle:"权限管理",permissionSubtitle:"Admin 全部权限 / S4 仅管理本团队 / 员工仅查看",close:"关闭"},
+            en:{title:"Smart Vertical Schedule System",permissionTitle:"Permission Management",permissionSubtitle:"Admin has full access / S4 manages own team / Staff view only",close:"Close"},
+            vi:{title:"Hệ thống quản lý lịch làm việc thông minh",permissionTitle:"Quản lý quyền",permissionSubtitle:"Admin toàn quyền / S4 chỉ quản lý đội mình / Nhân viên chỉ xem",close:"Đóng"}
+        };
+        function getCurrentRoleKey(){ if(!window.currentUser) return "STAFF"; if(window.currentUser.role==="ADMIN") return "ADMIN"; if(window.currentUser.role==="S4"||window.currentUser.rank==="S4") return "S4"; return "STAFF"; }
+        function hasPermission(key){ return !!ROLE_PERMISSIONS[getCurrentRoleKey()]?.[key]; }
+        function getLang(key){ const lang=localStorage.getItem("schedule_lang")||"th"; return I18N[lang]?.[key]||I18N.th[key]||key; }
+        window.setLanguage=function(lang){ localStorage.setItem("schedule_lang",lang); applyLanguage(); if(typeof showToast==="function") showToast(`Language: ${lang.toUpperCase()}`); };
+        function applyLanguage(){
+            const lang=localStorage.getItem("schedule_lang")||"th";
+            document.querySelectorAll("[data-lang-btn]").forEach(btn=>btn.classList.toggle("lang-chip-active",btn.dataset.langBtn===lang));
+            document.querySelectorAll("[data-i18n]").forEach(el=>{ const key=el.dataset.i18n; if(I18N[lang]?.[key]) el.textContent=I18N[lang][key]; });
+            const title=document.querySelector("h1"); if(title) title.textContent=getLang("title");
+        }
+        function renderPermissionModal(){
+            const rows=[["เพิ่ม/ลบพนักงาน","addEmployee"],["เพิ่ม/ลบกะ","addShift"],["เปลี่ยนกะ","editShift"],["เปลี่ยนวันหยุด/วันลา","editDay"],["เปลี่ยน Office/WFH","editWorkType"],["เปลี่ยนยศ","editRank"],["ตรวจ WFH","checkWFH"],["บันทึกพนักงานออก","resignEmployee"],["Export","exportData"],["รีเซ็ต","resetSystem"],["จัดการสิทธิ์","managePermissions"]];
+            const make=role=>rows.map(([label,key])=>`<div>${ROLE_PERMISSIONS[role][key]?"✅":"❌"} ${label}</div>`).join("");
+            const a=document.getElementById("role-admin-list"), s=document.getElementById("role-s4-list"), st=document.getElementById("role-staff-list");
+            if(a) a.innerHTML=make("ADMIN"); if(s) s.innerHTML=make("S4")+`<div class="text-xs text-slate-500 mt-2">* ทำได้เฉพาะทีมตัวเอง</div>`; if(st) st.innerHTML=make("STAFF")+`<div class="text-xs text-slate-500 mt-2">* ดูและค้นหาได้เท่านั้น</div>`;
+        }
+        window.openPermissionModal=function(){ if(!hasPermission("managePermissions")) return alert("เฉพาะ Admin เท่านั้น"); renderPermissionModal(); document.getElementById("permission-modal")?.classList.remove("hidden"); };
+        window.closePermissionModal=function(){ document.getElementById("permission-modal")?.classList.add("hidden"); };
+        function markMainScheduleFullWidth(){ const tbody=document.getElementById("staff-table-body"); if(!tbody) return; const card=tbody.closest(".bg-slate-900"); if(card) card.classList.add("schedule-full-card"); }
+        function applyRolePermissions(){
+            const role=getCurrentRoleKey();
+            document.querySelectorAll("[data-admin-only]").forEach(el=>el.classList.toggle("permission-hidden",role!=="ADMIN"));
+            document.querySelectorAll("button").forEach(btn=>{
+                const oc=btn.getAttribute("onclick")||"", txt=btn.textContent.trim();
+                if(oc.includes("openAddShiftModal")) btn.classList.toggle("permission-hidden",!hasPermission("addShift")&&!hasPermission("deleteShift"));
+                if(oc.includes("openAddEmployeeModal")) btn.classList.toggle("permission-hidden",!hasPermission("addEmployee"));
+                if(oc.includes("openResignedModal")) btn.classList.toggle("permission-hidden",!hasPermission("resignEmployee"));
+                if(oc.includes("export")||txt==="Export") btn.classList.toggle("permission-hidden",!hasPermission("exportData"));
+                if(oc.includes("reset")||txt.includes("รีเซ็ต")) btn.classList.toggle("permission-hidden",!hasPermission("resetSystem"));
+                if(txt.includes("บันทึก Cloud")||txt.includes("Save Cloud")||txt.includes("保存云端")||txt.includes("Lưu Cloud")) btn.classList.toggle("permission-hidden",!hasPermission("saveCloud"));
+            });
+            markMainScheduleFullWidth(); applyLanguage();
+        }
 
         function showToast(msg) {
             const t = document.getElementById("toast");
