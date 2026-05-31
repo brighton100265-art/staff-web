@@ -6216,11 +6216,19 @@ function renderDynamicShiftStats() {
             if (statusIdx === -1 || checkedIdx === -1) return;
 
             let leaveIdx = headers.findIndex(th => (th.textContent || "").trim() === "ลา");
+
+            // เพิ่มหัวคอลัมน์ลา และต้องเพิ่ม td ให้ทุกแถวตรงตำแหน่งเดียวกัน ไม่งั้นช่องจะเลื่อนผิด
             if (leaveIdx === -1) {
                 const th = document.createElement("th");
                 th.textContent = "ลา";
                 th.className = headers[checkedIdx]?.className || "";
                 headerRow.insertBefore(th, headers[checkedIdx]);
+
+                Array.from(table.querySelectorAll("tbody tr")).forEach(row => {
+                    const td = document.createElement("td");
+                    td.className = row.children[checkedIdx]?.className || "";
+                    row.insertBefore(td, row.children[checkedIdx] || null);
+                });
             }
 
             headers = Array.from(headerRow.children);
@@ -6230,47 +6238,74 @@ function renderDynamicShiftStats() {
             const timeIdx = headers.findIndex(th => (th.textContent || "").trim().includes("เวลาตรวจ") || (th.textContent || "").trim().includes("Checked time"));
 
             Array.from(table.querySelectorAll("tbody tr")).forEach(row => {
-                const rowText = row.textContent || "";
+                const rowTextBefore = row.textContent || "";
                 const staff = (window.currentStaffList || []).find(p =>
-                    rowText.includes(String(p.name || "")) ||
-                    rowText.includes(String(p.code || "")) ||
-                    rowText.includes(String(p.id || ""))
+                    rowTextBefore.includes(String(p.name || "")) ||
+                    rowTextBefore.includes(String(p.code || "")) ||
+                    rowTextBefore.includes(String(p.id || ""))
                 );
                 if (!staff) return;
 
-                while (row.children.length < headers.length) row.appendChild(document.createElement("td"));
+                // ถ้าแถวเก่ามีจำนวนช่องน้อยกว่าหัวตาราง ให้แทรกช่องลา ณ leaveIdx ไม่ใช่ append ท้ายแถว
+                while (row.children.length < headers.length) {
+                    const td = document.createElement("td");
+                    td.className = row.children[checkedIdx]?.className || "";
+                    row.insertBefore(td, row.children[leaveIdx] || row.children[checkedIdx] || null);
+                }
+
                 const cells = Array.from(row.children);
                 const rec = getAttendanceRecord(staff, day, row);
                 const v = String(getStaffDayValueStrict(staff, day) || "").toUpperCase();
-                if (v === "L") { rec.leave = true; rec.checked = false; }
+
+                if (v === "L") {
+                    rec.leave = true;
+                    rec.checked = false;
+                }
+
+                // ถ้าเคยพังจน checkbox ตรวจไปอยู่ใต้คอลัมน์ลา ให้ย้าย logic กลับ
+                const leaveCellText = cells[leaveIdx]?.textContent || "";
+                const checkedCellText = cells[checkedIdx]?.textContent || "";
+                if (!rec.leave && rec.checked) {
+                    // ทำงาน = ติ๊กเฉพาะตรวจแล้ว
+                }
 
                 const status = getWFHStatusText(staff, day, row);
+
                 if (cells[statusIdx]) {
                     const cls = status === "ลา" ? "wfh-status-leave" : status === "มาทำงาน" ? "wfh-status-work" : "wfh-status-pending";
                     cells[statusIdx].innerHTML = `<span class="${cls} px-3 py-1 rounded-full text-xs font-bold">${status}</span>`;
                 }
+
                 if (cells[leaveIdx]) {
                     cells[leaveIdx].innerHTML = "";
-                    const cb = document.createElement("input");
-                    cb.type = "checkbox";
-                    cb.className = "wfh-leave-check";
-                    cb.checked = !!rec.leave;
-                    cb.disabled = isResignedStaffStrict(staff) || !canEditStaffField(staff, "editDay");
-                    cb.onchange = () => setWFHAttendanceState(String(staff.id || staff.code || staff.name), "leave", cb.checked);
-                    cells[leaveIdx].appendChild(cb);
+                    const cbLeave = document.createElement("input");
+                    cbLeave.type = "checkbox";
+                    cbLeave.className = "wfh-leave-check";
+                    cbLeave.checked = !!rec.leave;
+                    cbLeave.disabled = isResignedStaffStrict(staff) || !canEditStaffField(staff, "editDay");
+                    cbLeave.onchange = () => setWFHAttendanceState(String(staff.id || staff.code || staff.name), "leave", cbLeave.checked);
+                    cells[leaveIdx].appendChild(cbLeave);
                 }
+
                 if (cells[checkedIdx]) {
                     cells[checkedIdx].innerHTML = "";
-                    const cb = document.createElement("input");
-                    cb.type = "checkbox";
-                    cb.className = "wfh-present-check";
-                    cb.checked = !!rec.checked && !rec.leave;
-                    cb.disabled = isResignedStaffStrict(staff) || !canEditStaffField(staff, "checkWFH");
-                    cb.onchange = () => setWFHAttendanceState(String(staff.id || staff.code || staff.name), "check", cb.checked);
-                    cells[checkedIdx].appendChild(cb);
+                    const cbCheck = document.createElement("input");
+                    cbCheck.type = "checkbox";
+                    cbCheck.className = "wfh-present-check";
+                    cbCheck.checked = !!rec.checked && !rec.leave;
+                    cbCheck.disabled = isResignedStaffStrict(staff) || !canEditStaffField(staff, "checkWFH");
+                    cbCheck.onchange = () => setWFHAttendanceState(String(staff.id || staff.code || staff.name), "check", cbCheck.checked);
+                    cells[checkedIdx].appendChild(cbCheck);
                 }
-                if (checkerIdx >= 0 && cells[checkerIdx]) cells[checkerIdx].textContent = rec.checked && !rec.leave ? (rec.checker || "-") : "-";
-                if (timeIdx >= 0 && cells[timeIdx]) cells[timeIdx].textContent = rec.checked && !rec.leave ? (rec.time || "-") : "-";
+
+                if (checkerIdx >= 0 && cells[checkerIdx]) {
+                    cells[checkerIdx].textContent = rec.checked && !rec.leave ? (rec.checker || "-") : "-";
+                }
+
+                if (timeIdx >= 0 && cells[timeIdx]) {
+                    cells[timeIdx].textContent = rec.checked && !rec.leave ? (rec.time || "-") : "-";
+                }
+
                 window.attendanceChecks[makeAttendanceKeys(staff, day)[0]] = rec;
             });
         }
