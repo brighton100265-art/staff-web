@@ -6355,7 +6355,77 @@ function renderDynamicShiftStats() {
 
         startCloudSync();
         updateDynamicUI();
-    </script>
+    
+        /* v6.6 expose inline handlers for type=module */
+        function exposeInlineHandlersV66() {
+            try { if (typeof applyFilters === "function") window.applyFilters = applyFilters; } catch(e) {}
+            try { if (typeof autoSort === "function") window.autoSort = autoSort; } catch(e) {}
+            try { if (typeof cancelResignedEmployee === "function") window.cancelResignedEmployee = cancelResignedEmployee; } catch(e) {}
+            try { if (typeof changeRank === "function") window.changeRank = changeRank; } catch(e) {}
+            try { if (typeof changeScheduleMonth === "function") window.changeScheduleMonth = changeScheduleMonth; } catch(e) {}
+            try { if (typeof changeShift === "function") window.changeShift = changeShift; } catch(e) {}
+            try { if (typeof changeWorkType === "function") window.changeWorkType = changeWorkType; } catch(e) {}
+            try { if (typeof clearBulkOffs === "function") window.clearBulkOffs = clearBulkOffs; } catch(e) {}
+            try { if (typeof clearResignForm === "function") window.clearResignForm = clearResignForm; } catch(e) {}
+            try { if (typeof clearWFHPresentToday === "function") window.clearWFHPresentToday = clearWFHPresentToday; } catch(e) {}
+            try { if (typeof clearWFHReport === "function") window.clearWFHReport = clearWFHReport; } catch(e) {}
+            try { if (typeof closeAddEmployeeModal === "function") window.closeAddEmployeeModal = closeAddEmployeeModal; } catch(e) {}
+            try { if (typeof closeAddShiftModal === "function") window.closeAddShiftModal = closeAddShiftModal; } catch(e) {}
+            try { if (typeof closeDayConfirmModal === "function") window.closeDayConfirmModal = closeDayConfirmModal; } catch(e) {}
+            try { if (typeof closeExportModal === "function") window.closeExportModal = closeExportModal; } catch(e) {}
+            try { if (typeof closePermissionModal === "function") window.closePermissionModal = closePermissionModal; } catch(e) {}
+            try { if (typeof closeResignedModal === "function") window.closeResignedModal = closeResignedModal; } catch(e) {}
+            try { if (typeof closeWFHPresentPanel === "function") window.closeWFHPresentPanel = closeWFHPresentPanel; } catch(e) {}
+            try { if (typeof confirmDeleteEmployeeSelection === "function") window.confirmDeleteEmployeeSelection = confirmDeleteEmployeeSelection; } catch(e) {}
+            try { if (typeof confirmToggleDayOff === "function") window.confirmToggleDayOff = confirmToggleDayOff; } catch(e) {}
+            try { if (typeof copyExportText === "function") window.copyExportText = copyExportText; } catch(e) {}
+            try { if (typeof copyFromPreviousMonth === "function") window.copyFromPreviousMonth = copyFromPreviousMonth; } catch(e) {}
+            try { if (typeof copyWFHOffReport === "function") window.copyWFHOffReport = copyWFHOffReport; } catch(e) {}
+            try { if (typeof copyWFHPresentToday === "function") window.copyWFHPresentToday = copyWFHPresentToday; } catch(e) {}
+            try { if (typeof deleteEmployee === "function") window.deleteEmployee = deleteEmployee; } catch(e) {}
+            try { if (typeof deleteShift === "function") window.deleteShift = deleteShift; } catch(e) {}
+            try { if (typeof exportData === "function") window.exportData = exportData; } catch(e) {}
+            try { if (typeof exportScheduleCSV === "function") window.exportScheduleCSV = exportScheduleCSV; } catch(e) {}
+            try { if (typeof forceSaveCloud === "function") window.forceSaveCloud = forceSaveCloud; } catch(e) {}
+            try { if (typeof generateWFHOffReport === "function") window.generateWFHOffReport = generateWFHOffReport; } catch(e) {}
+            try { if (typeof generateWFHPresentToday === "function") window.generateWFHPresentToday = generateWFHPresentToday; } catch(e) {}
+            try { if (typeof loginUser === "function") window.loginUser = loginUser; } catch(e) {}
+            try { if (typeof logoutUser === "function") window.logoutUser = logoutUser; } catch(e) {}
+            try { if (typeof openAddEmployeeModal === "function") window.openAddEmployeeModal = openAddEmployeeModal; } catch(e) {}
+            try { if (typeof openAddShiftModal === "function") window.openAddShiftModal = openAddShiftModal; } catch(e) {}
+            try { if (typeof openPermissionModal === "function") window.openPermissionModal = openPermissionModal; } catch(e) {}
+            try { if (typeof openResignedModal === "function") window.openResignedModal = openResignedModal; } catch(e) {}
+            try { if (typeof processBulkOffs === "function") window.processBulkOffs = processBulkOffs; } catch(e) {}
+            try { if (typeof reloadFromCloud === "function") window.reloadFromCloud = reloadFromCloud; } catch(e) {}
+            try { if (typeof resetRolePermissions === "function") window.resetRolePermissions = resetRolePermissions; } catch(e) {}
+            try { if (typeof resetToDefault === "function") window.resetToDefault = resetToDefault; } catch(e) {}
+            try { if (typeof saveNewEmployee === "function") window.saveNewEmployee = saveNewEmployee; } catch(e) {}
+            try { if (typeof saveNewShift === "function") window.saveNewShift = saveNewShift; } catch(e) {}
+            try { if (typeof saveResignedEmployee === "function") window.saveResignedEmployee = saveResignedEmployee; } catch(e) {}
+            try { if (typeof saveRolePermissions === "function") window.saveRolePermissions = saveRolePermissions; } catch(e) {}
+            try { if (typeof selectDayConfirmStatus === "function") window.selectDayConfirmStatus = selectDayConfirmStatus; } catch(e) {}
+            try { if (typeof selectDuplicateEmployeeToDelete === "function") window.selectDuplicateEmployeeToDelete = selectDuplicateEmployeeToDelete; } catch(e) {}
+            try { if (typeof setLanguage === "function") window.setLanguage = setLanguage; } catch(e) {}
+            try { if (typeof toggleAttendanceVerified === "function") window.toggleAttendanceVerified = toggleAttendanceVerified; } catch(e) {}
+            try { if (typeof toggleDayOff === "function") window.toggleDayOff = toggleDayOff; } catch(e) {}
+            try { if (typeof toggleDraftMode === "function") window.toggleDraftMode = toggleDraftMode; } catch(e) {}
+            try { if (typeof toggleLanguagePopup === "function") window.toggleLanguagePopup = toggleLanguagePopup; } catch(e) {}
+            try { if (typeof toggleRolePermission === "function") window.toggleRolePermission = toggleRolePermission; } catch(e) {}
+            try { if (typeof toggleWFHLeaveInline === "function") window.toggleWFHLeaveInline = toggleWFHLeaveInline; } catch(e) {}
+            try { if (typeof toggleWFHPresentInline === "function") window.toggleWFHPresentInline = toggleWFHPresentInline; } catch(e) {}
+            try { if (typeof undoLastChange === "function") window.undoLastChange = undoLastChange; } catch(e) {}
+            try { if (typeof updateDynamicUI === "function") window.updateDynamicUI = updateDynamicUI; } catch(e) {}
+        }
+        exposeInlineHandlersV66();
+        document.addEventListener('DOMContentLoaded', exposeInlineHandlersV66);
+
+        function rebuildWFHCheckLeaveColumns(){ /* v6.6 no-op compatibility */ }
+
+        function enhanceWFHLeaveColumn(){ /* v6.6 no-op compatibility */ }
+
+        window.rebuildWFHCheckLeaveColumns = rebuildWFHCheckLeaveColumns;
+        window.enhanceWFHLeaveColumn = enhanceWFHLeaveColumn;
+</script>
 </body>
 </html>
 
