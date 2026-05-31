@@ -480,141 +480,37 @@
         .auto-close-after-save {}
 
 
-        /* v4.2 dynamic top stats */
-        #dynamic-shift-stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 12px;
-            margin: 14px 0 18px;
-        }
-        .dynamic-stat-card {
-            background: rgba(15,23,42,.88);
-            border: 1px solid rgba(51,65,85,.9);
-            border-radius: 18px;
-            padding: 16px 18px;
-            min-height: 92px;
-        }
-        .dynamic-stat-title {
-            color:#93c5fd;
-            font-size:12px;
-            font-weight:800;
-            margin-bottom:6px;
-        }
-        .dynamic-stat-value {
-            color:#34d399;
-            font-size:28px;
-            line-height:1;
-            font-weight:1000;
-        }
-        .dynamic-stat-sub {
-            color:#64748b;
-            font-size:12px;
-            margin-top:8px;
-        }
-        .dynamic-stat-shift .dynamic-stat-value { color:#fbbf24; }
-        .dynamic-stat-total .dynamic-stat-value { color:#f8fafc; }
+        /* v5 HR controls: quota, audit, undo, tracker */
+        .today-col { background: rgba(59,130,246,.16) !important; box-shadow: inset 0 0 0 1px rgba(96,165,250,.35); }
+        .blank-alert { background: rgba(250,204,21,.12) !important; box-shadow: inset 0 0 0 1px rgba(250,204,21,.28); }
+        .leave-pl-cell { background: rgba(168,85,247,.15) !important; color: #c084fc !important; }
+        .leave-sl-cell { background: rgba(14,165,233,.15) !important; color: #67e8f9 !important; }
+        .quota-tooltip { position: fixed; z-index: 999999; min-width: 190px; background: rgba(2,6,23,.96); border: 1px solid rgba(148,163,184,.35); border-radius: 14px; padding: 10px 12px; color: #e2e8f0; font-size: 12px; pointer-events: none; box-shadow: 0 18px 45px rgba(0,0,0,.45); }
+        .quota-tooltip.hidden { display: none !important; }
+        .quota-line { display:flex; justify-content:space-between; gap:12px; margin:3px 0; }
+        .sticky-table-summary { position: sticky; bottom: 0; z-index: 8; background: rgba(2,6,23,.96) !important; backdrop-filter: blur(8px); }
+        .dept-card { border: 1px solid rgba(51,65,85,.85); border-radius: 16px; background: rgba(15,23,42,.85); padding: 12px 14px; }
+        .dept-card b { color:#34d399; font-size:18px; }
+        .audit-modal-body { max-height: 70vh; overflow: auto; }
+        .audit-row { display:grid; grid-template-columns: 145px 110px 1fr; gap:12px; padding:10px 12px; border-bottom:1px solid rgba(51,65,85,.55); font-size:12px; }
+        .quick-reset-btn { border: 1px solid rgba(244,63,94,.45); color: #fb7185; background: rgba(244,63,94,.08); border-radius: 8px; padding: 2px 6px; font-size: 10px; margin-left: 4px; }
 
 
-        /* v4.3 clean two-row summary */
-        #dynamic-shift-stats {
-            display: block !important;
-            margin: 14px 0 18px !important;
-        }
-        .summary-row-1,
-        .summary-row-2 {
-            display: grid;
-            gap: 12px;
-            margin-bottom: 12px;
-        }
-        .summary-row-1 {
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-        }
-        .summary-row-2 {
-            grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
-        }
-        .dynamic-stat-card {
-            background: rgba(15,23,42,.88);
-            border: 1px solid rgba(51,65,85,.9);
-            border-radius: 18px;
-            padding: 16px 18px;
-            min-height: 94px;
-        }
-        .dynamic-stat-title {
-            color:#93c5fd;
-            font-size:12px;
-            font-weight:800;
-            margin-bottom:6px;
-        }
-        .dynamic-stat-value {
-            color:#34d399;
-            font-size:28px;
-            line-height:1;
-            font-weight:1000;
-        }
-        .dynamic-stat-sub {
-            color:#64748b;
-            font-size:12px;
-            margin-top:8px;
-        }
-        .team-detail-card .dynamic-stat-value {
-            font-size: 22px;
-            color: #34d399;
-        }
-        .team-detail-line {
-            color:#cbd5e1;
-            font-size:12px;
-            margin-top:5px;
-            line-height:1.45;
-        }
-        .team-detail-line b {
-            color:#fbbf24;
-        }
-        .old-stat-hidden {
-            display:none !important;
-        }
-
-
-        /* v4.4 WFH leave sync */
-        .leave-sync-btn {
-            display:inline-flex;
-            align-items:center;
-            justify-content:center;
-            min-width:42px;
-            height:24px;
-            border-radius:999px;
-            border:1px solid rgba(168,85,247,.45);
-            background:rgba(168,85,247,.10);
-            color:#c084fc;
-            font-size:11px;
-            font-weight:900;
-            cursor:pointer;
-        }
-        .leave-sync-btn.active {
-            background:rgba(168,85,247,.28);
-            color:#f5d0fe;
-            border-color:rgba(216,180,254,.75);
-        }
-        .leave-sync-btn:disabled {
-            opacity:.45;
-            cursor:not-allowed;
-        }
-
-
-        /* v4.5 remove duplicated summary cards */
-        .old-stat-hidden,
-        .legacy-summary-hidden,
-        .duplicate-summary-hidden {
-            display: none !important;
-            height: 0 !important;
-            min-height: 0 !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            overflow: hidden !important;
-        }
-        #dynamic-shift-stats .summary-row-1,
-        #dynamic-shift-stats .summary-row-2 {
-            display: grid !important;
-        }
+        /* v5.1 stability + stats + WFH check/leave */
+        .old-stat-hidden,.legacy-summary-hidden,.duplicate-summary-hidden{display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important}
+        #dynamic-shift-stats{display:block!important;margin:14px 0 18px!important}
+        .summary-row-1,.summary-row-2{display:grid;gap:12px;margin-bottom:12px}
+        .summary-row-1{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+        .summary-row-2{grid-template-columns:repeat(auto-fit,minmax(330px,1fr))}
+        .team-detail-card .dynamic-stat-value{font-size:22px;color:#34d399}
+        .team-detail-line{color:#cbd5e1;font-size:12px;margin-top:5px;line-height:1.45}
+        .team-detail-line b{color:#fbbf24}
+        .wfh-leave-check,.wfh-present-check{width:16px;height:16px;cursor:pointer}
+        .wfh-present-check{accent-color:#10b981}.wfh-leave-check{accent-color:#a855f7}
+        .wfh-status-leave{background:rgba(168,85,247,.22)!important;color:#f0abfc!important;border:1px solid rgba(216,180,254,.45)}
+        .wfh-status-work{background:rgba(16,185,129,.18)!important;color:#34d399!important}
+        .wfh-status-pending{background:rgba(100,116,139,.18)!important;color:#cbd5e1!important}
+        tr.resigned-row{opacity:.62}
 
 </style>
 </head>
@@ -705,6 +601,11 @@
                             🌐 ภาษา
                         </button>
                         <button onclick="openPermissionModal()" data-admin-only="true" class="px-4 py-2 bg-indigo-600/20 hover:bg-indigo-600/35 text-indigo-300 border border-indigo-500/30 rounded-xl text-xs font-bold">สิทธิ์</button>
+                        <button onclick="toggleDraftMode()" id="draft-mode-btn" class="px-4 py-2 bg-amber-600/20 hover:bg-amber-600/35 text-amber-300 border border-amber-500/30 rounded-xl text-xs font-bold">📝 Draft</button>
+                        <button onclick="undoLastChange()" id="undo-btn" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold">↩ Undo (0)</button>
+                        <button onclick="openAuditModal()" class="px-4 py-2 bg-cyan-600/20 hover:bg-cyan-600/35 text-cyan-300 border border-cyan-500/30 rounded-xl text-xs font-bold">Audit Log</button>
+                        <button onclick="exportScheduleCSV()" class="px-4 py-2 bg-emerald-600/20 hover:bg-emerald-600/35 text-emerald-300 border border-emerald-500/30 rounded-xl text-xs font-bold">Export CSV</button>
+
                     </div>
 
 <button onclick="autoSort()" class="admin-only px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-medium text-sm rounded-xl shadow-lg shadow-indigo-500/20 transition-all">Auto-Sort</button>
@@ -1218,6 +1119,16 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
         </div>
     </div>
 
+
+    <div id="quota-tooltip" class="quota-tooltip hidden"></div>
+    <div id="audit-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-[999999] hidden">
+      <div class="role-panel-card max-w-5xl w-full overflow-hidden shadow-2xl">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-800">
+          <div><h3 class="text-lg font-bold text-slate-100">Audit Log</h3><p class="text-xs text-slate-500">ประวัติการแก้ไขข้อมูลย้อนหลัง</p></div>
+          <div class="flex gap-2"><button onclick="exportAuditLog()" class="px-4 py-2 bg-blue-600/20 text-blue-300 border border-blue-500/30 rounded-xl text-xs font-bold">Export Log</button><button onclick="clearAuditLog()" class="px-4 py-2 bg-rose-600/20 text-rose-300 border border-rose-500/30 rounded-xl text-xs font-bold">ล้าง Log</button><button onclick="closeAuditModal()" class="px-4 py-2 bg-slate-800 text-slate-200 rounded-xl text-xs font-bold">ปิด</button></div>
+        </div><div id="audit-log-list" class="audit-modal-body"></div>
+      </div>
+    </div>
 <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -2458,6 +2369,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                 staffList: window.currentStaffList,
                 shiftTimes: window.shiftTimes,
                        rolePermissions: window.customRolePermissions || getRolePermissions(),
+                        auditLog: window.auditLog || [],
                         deletedShiftCodes: window.deletedShiftCodes || [],
                         rolePermissions: window.customRolePermissions || getRolePermissions(),
                          deletedShiftCodes: window.deletedShiftCodes || [],
@@ -2537,7 +2449,6 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
         async function commitData() {
             const localOK = saveLocalScheduleBackup();
             const payload = buildSafeSchedulePayload();
-
             try {
                 if (typeof setDoc === "function" && typeof doc === "function" && typeof db !== "undefined") {
                     await setDoc(doc(db, "schedules", getScheduleDocId()), payload, { merge: true });
@@ -2552,9 +2463,6 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                 }
                 throw err;
             }
-        
-            renderDynamicShiftStats();
-            repairOldTopStats();
         }
 
 
@@ -2794,12 +2702,14 @@ window.previewDeleteEmployeeByCode = function() {
         
             fixWorkTypeLabels();
         
+            addDepartmentTracker();
+            enhanceTableAfterRender();
+            updateDraftBadge();
+        
             renderDynamicShiftStats();
-            repairOldTopStats();
-        
             hideOldDuplicateStats();
-        
-            enhanceWFHLeaveColumn();
+            rebuildWFHCheckLeaveColumns();
+
         }
 
         
@@ -2926,12 +2836,14 @@ function renderTable() {
         
             applyRolePermissions();
         
+            addDepartmentTracker();
+            enhanceTableAfterRender();
+            updateDraftBadge();
+        
             renderDynamicShiftStats();
-            repairOldTopStats();
-        
             hideOldDuplicateStats();
-        
-            enhanceWFHLeaveColumn();
+            rebuildWFHCheckLeaveColumns();
+
         }
 
         function renderDailySummary(filtered) {
@@ -2981,10 +2893,14 @@ function renderTable() {
         
             applyLanguage();
         
-            renderDynamicShiftStats();
-            repairOldTopStats();
+            addDepartmentTracker();
+            enhanceTableAfterRender();
+            updateDraftBadge();
         
+            renderDynamicShiftStats();
             hideOldDuplicateStats();
+            rebuildWFHCheckLeaveColumns();
+
         }
 
         window.changeRank = async function(id, val) {
@@ -4046,7 +3962,10 @@ function renderWFHPresentInline(people, day) {
         
             applyRolePermissions();
         
-            enhanceWFHLeaveColumn();
+            renderDynamicShiftStats();
+            hideOldDuplicateStats();
+            rebuildWFHCheckLeaveColumns();
+
         }
 
 window.generateWFHPresentToday = function() {
@@ -4440,10 +4359,7 @@ window.generateWFHPresentToday = function() {
             return name || code || "USER";
         }
 
-        function getAttendanceRecord(id) {
-            const key = ensureAttendanceChecks();
-            return window.attendanceChecks?.[key]?.[String(id)] || null;
-        }
+        
 
         function getAttendanceCheckedTime(id) {
             const rec = getAttendanceRecord(id);
@@ -4566,9 +4482,6 @@ window.generateWFHPresentToday = function() {
                 });
                 if (currentDelete && window.shiftTimes[currentDelete]) deleteShiftSelect.value = currentDelete;
             }
-        
-            renderDynamicShiftStats();
-            repairOldTopStats();
         }
 
         window.openAddShiftModal = function() {
@@ -4689,17 +4602,23 @@ function getRolePermissions() {
             window.customRolePermissions.ADMIN.saveCloud = true;
 
             saveRolePermissionsLocal();
+
+            // ใช้สิทธิ์ใหม่ทันที
             applyRolePermissions();
             lockTableControlsByPermission();
             fixWorkTypeLabels();
 
             try {
                 await commitData();
+                saveRolePermissionsLocal();
+                applyRolePermissions();
+                lockTableControlsByPermission();
+                fixWorkTypeLabels();
                 showToast("บันทึกสิทธิ์แล้ว");
                 closePermissionModal();
             } catch (err) {
                 console.error(err);
-                alert("บันทึกสิทธิ์ไม่สำเร็จ");
+                alert("บันทึกสิทธิ์ไม่สำเร็จ แต่ระบบบันทึกไว้ในเครื่องแล้ว");
             }
         };
 
@@ -5259,7 +5178,10 @@ function applyLanguage(){
             lockTableControlsByPermission();
             fixWorkTypeLabels();
         
-            enhanceWFHLeaveColumn();
+            renderDynamicShiftStats();
+            hideOldDuplicateStats();
+            rebuildWFHCheckLeaveColumns();
+
         }
 
 
@@ -5343,6 +5265,35 @@ function lockTableControlsByPermission() {
         });
 
 
+        const LEAVE_QUOTAS = { O: 5, PL: 1, SL: 99, L: 99 };
+        window.auditLog = window.auditLog || JSON.parse(localStorage.getItem("auditLog") || "[]");
+        window.undoStack = window.undoStack || [];
+        window.draftMode = window.draftMode || false;
+        function getActorName(){ return String(window.currentUser?.name || window.currentUser?.username || window.currentUser?.role || "UNKNOWN").toUpperCase(); }
+        function getDayValue(staff, day){ const d=String(day); if(staff?.days && staff.days[d]!==undefined) return staff.days[d]; if(staff?.schedule && staff.schedule[d]!==undefined) return staff.schedule[d]; if(Array.isArray(staff?.offDays)&&staff.offDays.includes(Number(day))) return "O"; if(Array.isArray(staff?.leaveDays)&&staff.leaveDays.includes(Number(day))) return "L"; return ""; }
+        function setDayValue(staff, day, value){ const d=String(day); if(!staff.days) staff.days={}; staff.days[d]=value; if(Array.isArray(staff.offDays)){ staff.offDays=staff.offDays.filter(x=>Number(x)!==Number(day)); if(value==="O") staff.offDays.push(Number(day)); } if(Array.isArray(staff.leaveDays)){ staff.leaveDays=staff.leaveDays.filter(x=>Number(x)!==Number(day)); if(["L","PL","SL"].includes(value)) staff.leaveDays.push(Number(day)); } }
+        function calculateLeaveQuota(staff){ const r={O:0,PL:0,SL:0,L:0,work:0,blank:0}; const days=daysInMonth(currentYear,currentMonth); for(let d=1;d<=days;d++){ const v=String(getDayValue(staff,d)||"").toUpperCase(); if(v==="O")r.O++; else if(v==="PL")r.PL++; else if(v==="SL")r.SL++; else if(v==="L")r.L++; else if(!v||v==="."||v==="-")r.blank++; else r.work++; } return r; }
+        function checkLeaveQuota(staff, day, nextValue){ const v=String(nextValue||"").toUpperCase(); if(!["O","PL","SL","L"].includes(v)) return true; const q=calculateLeaveQuota(staff); const old=String(getDayValue(staff,day)||"").toUpperCase(); if(old===v) return true; const next=(q[v]||0)+1; const limit=LEAVE_QUOTAS[v]??99; if(next>limit){ alert(`โควตา ${v} เกินกำหนด (${next}/${limit})\nไม่สามารถบันทึกเพิ่มได้`); return false;} return true; }
+        function pushUndoSnapshot(action="แก้ไขข้อมูล"){ try{ const snapshot=JSON.stringify({staffList:window.currentStaffList||[],shiftTimes:window.shiftTimes||{},resignedEmployees:window.resignedEmployees||[],attendanceChecks:window.attendanceChecks||{}}); window.undoStack.push({time:new Date().toISOString(),action,snapshot}); if(window.undoStack.length>30) window.undoStack.shift(); updateDraftBadge(); }catch(e){console.warn(e);} }
+        window.undoLastChange=function(){ const item=window.undoStack.pop(); if(!item) return alert("ยังไม่มีรายการให้ย้อนกลับ"); const data=JSON.parse(item.snapshot); window.currentStaffList=data.staffList||[]; window.shiftTimes=data.shiftTimes||{}; window.resignedEmployees=data.resignedEmployees||[]; window.attendanceChecks=data.attendanceChecks||{}; addAuditLog("UNDO","-",item.action); updateDynamicUI(); showToast("ย้อนกลับแล้ว"); };
+        window.toggleDraftMode=function(){ window.draftMode=!window.draftMode; updateDraftBadge(); showToast(window.draftMode?"เปิด Draft Mode":"ปิด Draft Mode"); };
+        function updateDraftBadge(){ const b=document.getElementById("draft-mode-btn"); if(b) b.textContent=window.draftMode?"📝 Draft ON":"📝 Draft"; const u=document.getElementById("undo-btn"); if(u) u.textContent=`↩ Undo (${window.undoStack.length})`; }
+        function addAuditLog(action,staffName,detail){ const row={time:new Date().toLocaleString("th-TH"),actor:getActorName(),action,staffName:staffName||"-",detail:detail||""}; window.auditLog.unshift(row); if(window.auditLog.length>500) window.auditLog.length=500; localStorage.setItem("auditLog",JSON.stringify(window.auditLog)); }
+        window.openAuditModal=function(){ renderAuditLog(); document.getElementById("audit-modal")?.classList.remove("hidden"); };
+        window.closeAuditModal=function(){ document.getElementById("audit-modal")?.classList.add("hidden"); };
+        function renderAuditLog(){ const box=document.getElementById("audit-log-list"); if(!box) return; if(!window.auditLog.length){box.innerHTML='<div class="p-8 text-center text-slate-500">ยังไม่มีประวัติการแก้ไข</div>';return;} box.innerHTML=window.auditLog.map(r=>`<div class="audit-row"><div class="text-slate-400">${r.time}</div><div class="text-indigo-300 font-bold">${r.actor}</div><div><div class="font-bold text-slate-100">${r.action} — ${r.staffName}</div><div class="text-slate-400">${r.detail||""}</div></div></div>`).join(""); }
+        window.clearAuditLog=function(){ if(!confirm("ล้าง Audit Log ทั้งหมด?")) return; window.auditLog=[]; localStorage.setItem("auditLog","[]"); renderAuditLog(); };
+        function downloadCsv(filename,rows){ const csv=rows.map(row=>row.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\n"); const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8;"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=filename; a.click(); URL.revokeObjectURL(a.href); }
+        window.exportAuditLog=function(){ const rows=[["time","actor","action","staffName","detail"],...window.auditLog.map(r=>[r.time,r.actor,r.action,r.staffName,r.detail])]; downloadCsv("audit_log.csv",rows); };
+        window.exportScheduleCSV=function(){ const days=daysInMonth(currentYear,currentMonth); const rows=[["team","rank","name","code","workType","shift","login","break",...Array.from({length:days},(_,i)=>String(i+1))]]; (window.currentStaffList||[]).forEach(p=>rows.push([p.team,p.rank,p.name,p.code,p.workType,p.shift,window.shiftTimes?.[p.shift]?.login||"",window.shiftTimes?.[p.shift]?.rest||"",...Array.from({length:days},(_,i)=>getDayValue(p,i+1))])); downloadCsv(`schedule_${currentYear}_${String(currentMonth).padStart(2,"0")}.csv`,rows); addAuditLog("EXPORT","-","Export schedule CSV"); };
+        function showQuotaTooltip(staff,event){ const tip=document.getElementById("quota-tooltip"); if(!tip||!staff) return; const q=calculateLeaveQuota(staff); tip.innerHTML=`<div class="font-black text-white mb-1">${staff.name||"-"}</div><div class="text-slate-400 text-[11px] mb-2">${staff.team||""} | ${staff.code||""}</div><div class="quota-line"><span>O วันหยุด</span><b>${q.O}/5</b></div><div class="quota-line"><span>PL ลากิจ</span><b>${q.PL}/1</b></div><div class="quota-line"><span>SL ลาป่วย</span><b>${q.SL}</b></div><div class="quota-line"><span>L วันลา</span><b>${q.L}</b></div><div class="quota-line"><span>ช่องว่าง</span><b>${q.blank}</b></div>`; tip.classList.remove("hidden"); tip.style.left=Math.min(event.clientX+14,window.innerWidth-230)+"px"; tip.style.top=Math.min(event.clientY+14,window.innerHeight-170)+"px"; }
+        function hideQuotaTooltip(){ document.getElementById("quota-tooltip")?.classList.add("hidden"); }
+        function addDepartmentTracker(){ let wrap=document.getElementById("department-tracker"); if(!wrap){ const first=document.querySelector(".grid"); if(!first) return; wrap=document.createElement("div"); wrap.id="department-tracker"; wrap.className="grid grid-cols-2 md:grid-cols-4 gap-3 my-4"; first.parentElement.insertBefore(wrap,first.nextSibling); } const tags={}; (window.currentStaffList||[]).forEach(p=>{ if(typeof isResignedStaff==='function'&&isResignedStaff(p)) return; const tag=String(p.department||p.dept||p.tag||p.line||p.roleTag||p.team||"OTHER").toUpperCase(); tags[tag]=(tags[tag]||0)+1; }); wrap.innerHTML=Object.entries(tags).sort().slice(0,8).map(([k,v])=>`<button onclick="setDepartmentFilter('${k}')" class="dept-card text-left"><div class="text-xs text-slate-400">${k}</div><b>${v} คน</b></button>`).join(""); }
+        window.setDepartmentFilter=function(tag){ window.activeDepartmentFilter=tag; renderTable(); showToast(`Filter: ${tag}`); };
+        window.quickResetProfile=function(staffId){ const staff=(window.currentStaffList||[]).find(p=>String(p.id)===String(staffId)||String(p.code)===String(staffId)); if(!staff) return alert("ไม่พบพนักงาน"); if(!canEditStaffField(staff,"editDay")) return alert("ไม่มีสิทธิ์ล้างตารางพนักงานคนนี้"); if(!confirm(`ล้าง O / L / PL / SL ของ ${staff.name} ทั้งเดือน?`)) return; pushUndoSnapshot(`Quick reset ${staff.name}`); const days=daysInMonth(currentYear,currentMonth); for(let d=1;d<=days;d++){ const v=String(getDayValue(staff,d)||"").toUpperCase(); if(["O","L","PL","SL"].includes(v)) setDayValue(staff,d,""); } addAuditLog("QUICK RESET",staff.name,"ล้าง O/L/PL/SL ทั้งเดือน"); updateDynamicUI(); if(!window.draftMode) commitData(); };
+        function enhanceTableAfterRender(){ const tbody=document.getElementById("staff-table-body"); if(!tbody) return; const today=new Date().getDate(); const days=daysInMonth(currentYear,currentMonth); (window.currentStaffList||[]).forEach(staff=>{ const row=Array.from(tbody.querySelectorAll("tr")).find(r=>r.textContent.includes(staff.name)&&r.textContent.includes(String(staff.code||""))); if(!row) return; const nameCell=Array.from(row.querySelectorAll("td")).find(td=>td.textContent.trim().includes(staff.name)); if(nameCell&&!nameCell.dataset.quotaBound){ nameCell.dataset.quotaBound="1"; nameCell.addEventListener("mousemove",e=>showQuotaTooltip(staff,e)); nameCell.addEventListener("mouseleave",hideQuotaTooltip); const btn=document.createElement("button"); btn.className="quick-reset-btn"; btn.textContent="🧹"; btn.title="ล้างตารางรายบุคคล"; btn.onclick=ev=>{ev.stopPropagation();window.quickResetProfile(staff.id||staff.code);}; nameCell.appendChild(btn); }}); document.querySelectorAll(".schedule-full-card tr").forEach(tr=>{ const cells=tr.children; for(let idx=11;idx<cells.length;idx++){ const day=idx-10; if(day===today) cells[idx].classList.add("today-col"); if(tr.querySelector("td")&&day>=1&&day<=days){ const tx=cells[idx].textContent.trim().toUpperCase(); if(!tx||tx==="."||tx==="-") cells[idx].classList.add("blank-alert"); if(tx==="PL") cells[idx].classList.add("leave-pl-cell"); if(tx==="SL") cells[idx].classList.add("leave-sl-cell"); } }}); const table=tbody.closest("table"); if(table) Array.from(table.querySelectorAll("tr")).slice(-5).forEach(r=>r.classList.add("sticky-table-summary")); }
+
+
         function sanitizeForSave(obj) {
             return JSON.parse(JSON.stringify(obj, (key, value) => {
                 if (typeof value === "function") return undefined;
@@ -5356,9 +5307,10 @@ function lockTableControlsByPermission() {
                 staffList: window.currentStaffList || [],
                 shiftTimes: window.shiftTimes || {},
                 deletedShiftCodes: window.deletedShiftCodes || [],
-                rolePermissions: window.customRolePermissions || getRolePermissions(),
+                rolePermissions: window.customRolePermissions || (typeof getRolePermissions === "function" ? getRolePermissions() : {}),
                 attendanceChecks: window.attendanceChecks || {},
                 resignedEmployees: window.resignedEmployees || [],
+                auditLog: window.auditLog || [],
                 updatedAt: new Date().toISOString(),
                 updatedBy: window.currentUser?.name || window.currentUser?.username || window.currentUser?.role || "UNKNOWN"
             });
@@ -5373,6 +5325,7 @@ function lockTableControlsByPermission() {
                 localStorage.setItem(`rolePermissions_${getScheduleDocId()}`, JSON.stringify(payload.rolePermissions || {}));
                 localStorage.setItem(`attendanceChecks_${getScheduleDocId()}`, JSON.stringify(payload.attendanceChecks || {}));
                 localStorage.setItem(`resignedEmployees_${getScheduleDocId()}`, JSON.stringify(payload.resignedEmployees || []));
+                localStorage.setItem(`auditLog_${getScheduleDocId()}`, JSON.stringify(payload.auditLog || []));
                 return true;
             } catch (err) {
                 console.error("local backup failed", err);
@@ -5381,244 +5334,63 @@ function lockTableControlsByPermission() {
         }
 
 
-        function isStaffResignedForStats(staff) {
-            try {
-                if (typeof isResignedStaff === "function" && isResignedStaff(staff)) return true;
-            } catch(e) {}
-            const code = String(staff?.code || staff?.id || "").trim();
-            const name = String(staff?.name || "").trim().toUpperCase();
-            return (window.resignedEmployees || []).some(r =>
-                String(r.code || r.id || "").trim() === code ||
-                String(r.name || "").trim().toUpperCase() === name
-            );
+        function isResignedStaffStrict(staff) {
+            if (!staff) return false;
+            if (staff.resigned || staff.isResigned || staff.status === "resigned") return true;
+            const code = String(staff.code || staff.id || "").trim();
+            const name = String(staff.name || "").trim().toUpperCase();
+            return (window.resignedEmployees || []).some(r => {
+                const rCode = String(r.code || r.id || r.employeeCode || "").trim();
+                const rName = String(r.name || r.employeeName || "").trim().toUpperCase();
+                return (!!code && rCode === code) || (!!name && rName === name);
+            });
         }
 
         function getActiveStaffForStats() {
-            return (window.currentStaffList || []).filter(p => !isStaffResignedForStats(p));
-        }
-
-        function normalizeWorkTypeForStats(v) {
-            const s = String(v || "").trim().toUpperCase();
-            if (s.includes("WFH")) return "WFH";
-            if (s.includes("OFFICE")) return "Office";
-            if (s.includes("วันหยุดICE")) return "Office";
-            return s || "Office";
-        }
-
-        function shiftSortForStats(a,b) {
-            const na = Number(String(a).replace(/[^0-9]/g,""));
-            const nb = Number(String(b).replace(/[^0-9]/g,""));
-            if (Number.isFinite(na) && Number.isFinite(nb)) return na - nb;
-            return String(a).localeCompare(String(b), "en");
-        }
-
-        function getShiftLabelForStats(code) {
-            const t = window.shiftTimes?.[code] || {};
-            const login = t.login || t.time || t.work || "";
-            return login ? `เข้า ${login}` : "";
-        }
-
-        function ensureDynamicStatsContainer() {
-            let el = document.getElementById("dynamic-shift-stats");
-            if (el) return el;
-
-            const grids = Array.from(document.querySelectorAll(".grid"));
-            const oldStatsGrid = grids.find(g => {
-                const txt = (g.textContent || "");
-                return txt.includes("พนักงานทั้งหมด") && (txt.includes("กะ S9") || txt.includes("กะ S12") || txt.includes("Office:"));
-            });
-
-            el = document.createElement("div");
-            el.id = "dynamic-shift-stats";
-
-            if (oldStatsGrid && oldStatsGrid.parentElement) {
-                oldStatsGrid.parentElement.insertBefore(el, oldStatsGrid);
-                oldStatsGrid.classList.add("old-stat-hidden", "legacy-summary-hidden");
-            } else {
-                const header = document.querySelector("header") || document.body.firstElementChild;
-                header?.insertAdjacentElement("afterend", el);
-            }
-            return el;
+            return (window.currentStaffList || []).filter(p => !isResignedStaffStrict(p));
         }
 
         function hideOldDuplicateStats() {
             const dynamicBox = document.getElementById("dynamic-shift-stats");
             if (!dynamicBox) return;
-
-            const keep = new Set([dynamicBox]);
-            dynamicBox.querySelectorAll("*").forEach(el => keep.add(el));
-
-            const normalize = s => String(s || "").replace(/\s+/g, " ").trim();
-
-            const allBlocks = Array.from(document.querySelectorAll("body > div, main > div, section, .grid"));
-            const dynamicRect = dynamicBox.getBoundingClientRect();
-
-            allBlocks.forEach(block => {
-                if (keep.has(block) || dynamicBox.contains(block)) return;
-                if (block.closest("#dynamic-shift-stats")) return;
-
-                const txt = normalize(block.textContent);
-                if (!txt) return;
-
-                const rect = block.getBoundingClientRect();
-                const nearDynamicArea =
-                    rect.top >= dynamicRect.top - 40 &&
-                    rect.top <= dynamicRect.bottom + 260;
-
-                const isOldTopSummary =
-                    txt.includes("พนักงานทั้งหมด") &&
-                    (txt.includes("กะ S9") || txt.includes("กะ S12") || txt.includes("Office:") || txt.includes("WFH:"));
-
-                const isOldTeamOnlySummary =
-                    txt.includes("WIN1") &&
-                    txt.includes("WIN2") &&
-                    txt.includes("WIN3") &&
-                    !block.closest("#dynamic-shift-stats");
-
-                // ซ่อนเฉพาะแถวซ้ำที่อยู่ระหว่าง summary ใหม่กับฟอร์มด้านล่าง
-                if (nearDynamicArea && (isOldTopSummary || isOldTeamOnlySummary)) {
-                    block.classList.add("old-stat-hidden", "duplicate-summary-hidden");
-                }
-            });
-
-            // ซ่อน grid ลูกซ้ำที่เกิดจากระบบเดิมโดยตรง
             document.querySelectorAll(".grid").forEach(grid => {
                 if (dynamicBox.contains(grid)) return;
-                const txt = normalize(grid.textContent);
+                const txt = (grid.textContent || "").replace(/\s+/g," ").trim();
                 const rect = grid.getBoundingClientRect();
-                const underDynamic = rect.top > dynamicBox.getBoundingClientRect().top && rect.top < dynamicBox.getBoundingClientRect().bottom + 240;
+                const drect = dynamicBox.getBoundingClientRect();
+                const underDynamic = rect.top > drect.top && rect.top < drect.bottom + 260;
                 if (underDynamic && txt.includes("พนักงานทั้งหมด") && (txt.includes("กะ S9") || txt.includes("กะ S12"))) {
-                    grid.classList.add("old-stat-hidden", "legacy-summary-hidden");
-                }
-            });
-        }
-function renderDynamicShiftStats() {
-            const box = ensureDynamicStatsContainer();
-            if (!box) return;
-
-            const list = getActiveStaffForStats();
-            const total = list.length;
-            const office = list.filter(p => normalizeWorkTypeForStats(p.workType || p.type || p.work) === "Office").length;
-            const wfh = list.filter(p => normalizeWorkTypeForStats(p.workType || p.type || p.work) === "WFH").length;
-
-            const shiftCounts = {};
-            const teamCounts = {};
-
-            list.forEach(p => {
-                const team = String(p.team || "OTHER").toUpperCase();
-                const workType = normalizeWorkTypeForStats(p.workType || p.type || p.work);
-                const shift = String(p.shift || p.shiftCode || "").trim();
-
-                if (!teamCounts[team]) {
-                    teamCounts[team] = { total: 0, office: 0, wfh: 0, shifts: {} };
-                }
-
-                teamCounts[team].total++;
-                if (workType === "Office") teamCounts[team].office++;
-                if (workType === "WFH") teamCounts[team].wfh++;
-
-                if (shift && !(window.deletedShiftCodes || []).includes(shift)) {
-                    shiftCounts[shift] = (shiftCounts[shift] || 0) + 1;
-                    teamCounts[team].shifts[shift] = (teamCounts[team].shifts[shift] || 0) + 1;
-                }
-            });
-
-            const row1 = [];
-            row1.push(`
-                <div class="dynamic-stat-card dynamic-stat-total">
-                    <div class="dynamic-stat-title">พนักงานทั้งหมด</div>
-                    <div class="dynamic-stat-value">${total} คน</div>
-                    <div class="dynamic-stat-sub">Office: ${office} | WFH: ${wfh}</div>
-                </div>
-            `);
-
-            Object.keys(shiftCounts).sort(shiftSortForStats).forEach(code => {
-                row1.push(`
-                    <div class="dynamic-stat-card dynamic-stat-shift">
-                        <div class="dynamic-stat-title">กะ ${code}</div>
-                        <div class="dynamic-stat-value">${shiftCounts[code]} คน</div>
-                        <div class="dynamic-stat-sub">${getShiftLabelForStats(code)}</div>
-                    </div>
-                `);
-            });
-
-            const row2 = Object.keys(teamCounts).sort().map(team => {
-                const t = teamCounts[team];
-                const shiftText = Object.keys(t.shifts).sort(shiftSortForStats)
-                    .map(code => `<b>${code}</b> ${t.shifts[code]}`)
-                    .join(" | ") || "-";
-
-                return `
-                    <div class="dynamic-stat-card team-detail-card">
-                        <div class="dynamic-stat-title">${team}</div>
-                        <div class="dynamic-stat-value">${t.total} คน</div>
-                        <div class="team-detail-line">Office: ${t.office} | WFH: ${t.wfh}</div>
-                        <div class="team-detail-line">กะ: ${shiftText}</div>
-                    </div>
-                `;
-            });
-
-            box.innerHTML = `
-                <div class="summary-row-1">${row1.join("")}</div>
-                <div class="summary-row-2">${row2.join("")}</div>
-            `;
-
-            hideOldDuplicateStats();
-        }
-
-        function repairOldTopStats() {
-            document.querySelectorAll("*").forEach(el => {
-                if (el.children.length === 0 && /--\s*คน/.test(el.textContent || "")) {
-                    el.textContent = el.textContent.replace(/--\s*คน/g, "0 คน");
+                    grid.classList.add("old-stat-hidden","legacy-summary-hidden","duplicate-summary-hidden");
                 }
             });
         }
 
-
-        function getSelectedWFHCheckDay() {
-            const candidates = [
-                document.getElementById("wfh-check-day"),
-                document.getElementById("wfh-day"),
-                document.getElementById("present-day"),
-                document.querySelector("input[type='number'][min='1'][max='31']"),
-                document.querySelector("select[data-day-select]")
-            ].filter(Boolean);
-            for (const el of candidates) {
+        function getWFHCheckDay() {
+            const explicit = Number(window.currentCheckDay || window.selectedCheckDay || window.wfhCheckDay || 0);
+            if (explicit >= 1 && explicit <= 31) return explicit;
+            const controls = Array.from(document.querySelectorAll("input,select")).filter(el => {
+                const txt = `${el.id || ""} ${el.name || ""} ${el.placeholder || ""}`.toLowerCase();
+                return txt.includes("day") || txt.includes("วัน");
+            });
+            for (const el of controls) {
                 const n = Number(el.value);
                 if (n >= 1 && n <= 31) return n;
             }
-            const d = Number(window.currentCheckDay || window.selectedCheckDay || new Date().getDate());
-            return d >= 1 && d <= 31 ? d : new Date().getDate();
+            const n = new Date().getDate();
+            return n >= 1 && n <= 31 ? n : 1;
         }
 
-        function getStaffByAnyKey(key) {
+        function findStaffStrict(key) {
             const k = String(key || "").trim();
+            const ku = k.toUpperCase();
             return (window.currentStaffList || []).find(p =>
-                String(p.id || "") === k ||
-                String(p.code || "") === k ||
-                String(p.name || "").toUpperCase() === k.toUpperCase()
+                String(p.id || "").trim() === k ||
+                String(p.code || "").trim() === k ||
+                String(p.name || "").trim().toUpperCase() === ku
             );
         }
 
-        function setScheduleValueForStaffDay(staff, day, value) {
-            if (!staff) return false;
-            const d = String(day);
-            if (!staff.days) staff.days = {};
-            staff.days[d] = value;
-
-            // sync legacy arrays
-            if (Array.isArray(staff.offDays)) {
-                staff.offDays = staff.offDays.filter(x => Number(x) !== Number(day));
-                if (value === "O") staff.offDays.push(Number(day));
-            }
-            if (Array.isArray(staff.leaveDays)) {
-                staff.leaveDays = staff.leaveDays.filter(x => Number(x) !== Number(day));
-                if (["L","PL","SL"].includes(String(value).toUpperCase())) staff.leaveDays.push(Number(day));
-            }
-            return true;
-        }
-
-        function getScheduleValueForStaffDay(staff, day) {
+        function getStaffDayValueStrict(staff, day) {
             const d = String(day);
             if (staff?.days && staff.days[d] !== undefined) return staff.days[d];
             if (staff?.schedule && staff.schedule[d] !== undefined) return staff.schedule[d];
@@ -5627,130 +5399,166 @@ function renderDynamicShiftStats() {
             return "";
         }
 
-        window.toggleWFHLeaveSync = async function(staffKey, explicitDay) {
-            const staff = getStaffByAnyKey(staffKey);
+        function setStaffDayValueStrict(staff, day, value) {
+            const d = String(day);
+            if (!staff.days) staff.days = {};
+            staff.days[d] = value || "";
+            if (Array.isArray(staff.offDays)) {
+                staff.offDays = staff.offDays.filter(x => Number(x) !== Number(day));
+                if (value === "O") staff.offDays.push(Number(day));
+            }
+            if (Array.isArray(staff.leaveDays)) {
+                staff.leaveDays = staff.leaveDays.filter(x => Number(x) !== Number(day));
+                if (["L","PL","SL"].includes(String(value || "").toUpperCase())) staff.leaveDays.push(Number(day));
+            }
+        }
+
+        function getAttendanceRecord(staff, day) {
+            if (!window.attendanceChecks) window.attendanceChecks = {};
+            const key = `${String(staff?.id || staff?.code || staff?.name || "").trim()}_${day}`;
+            if (!window.attendanceChecks[key]) {
+                window.attendanceChecks[key] = { checked: false, leave: false, checker: "", time: "" };
+            }
+            return window.attendanceChecks[key];
+        }
+
+        async function setWFHAttendanceState(staffKey, mode, checked) {
+            const staff = findStaffStrict(staffKey);
             if (!staff) return alert("ไม่พบพนักงาน");
-
-            if (!canEditStaffField(staff, "editDay")) {
-                return alert("ไม่มีสิทธิ์แก้ไขวันลา");
+            if (isResignedStaffStrict(staff)) return alert("พนักงานออกแล้ว ไม่สามารถตรวจ/ลาได้");
+            if (mode === "leave") {
+                if (!canEditStaffField(staff, "editDay")) return alert("ไม่มีสิทธิ์แก้ไขวันลา");
+            } else {
+                if (!canEditStaffField(staff, "checkWFH")) return alert("ไม่มีสิทธิ์ตรวจ WFH");
             }
-
-            const day = Number(explicitDay || getSelectedWFHCheckDay());
-            const oldValue = String(getScheduleValueForStaffDay(staff, day) || "").toUpperCase();
-            const nextValue = oldValue === "L" ? "" : "L";
-
-            if (typeof pushUndoSnapshot === "function") pushUndoSnapshot(`WFH leave ${staff.name} day ${day}`);
-
-            setScheduleValueForStaffDay(staff, day, nextValue);
-
-            if (typeof addAuditLog === "function") {
-                addAuditLog("WFH LEAVE", staff.name, `วันที่ ${day}: ${oldValue || "-"} → ${nextValue || "-"}`);
+            const day = getWFHCheckDay();
+            const rec = getAttendanceRecord(staff, day);
+            const actor = String(window.currentUser?.name || window.currentUser?.username || window.currentUser?.role || "ADMIN").toUpperCase();
+            const now = new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
+            if (mode === "leave") {
+                rec.leave = !!checked;
+                if (checked) {
+                    rec.checked = false;
+                    rec.checker = "";
+                    rec.time = "";
+                    setStaffDayValueStrict(staff, day, "L");
+                } else {
+                    setStaffDayValueStrict(staff, day, "");
+                }
+            } else {
+                rec.checked = !!checked;
+                if (checked) {
+                    rec.leave = false;
+                    rec.checker = actor;
+                    rec.time = now;
+                    const oldValue = String(getStaffDayValueStrict(staff, day) || "").toUpperCase();
+                    if (oldValue === "L" || oldValue === "PL" || oldValue === "SL") setStaffDayValueStrict(staff, day, "");
+                } else {
+                    rec.checker = "";
+                    rec.time = "";
+                }
             }
-
+            if (typeof addAuditLog === "function") addAuditLog(mode === "leave" ? "WFH LEAVE" : "WFH CHECK", staff.name, `วันที่ ${day}: ${checked ? "ON" : "OFF"}`);
             updateDynamicUI();
             if (!window.draftMode && typeof commitData === "function") {
                 try { await commitData(); } catch(e) { console.warn(e); }
             }
-            showToast(nextValue === "L" ? `ลงลา ${staff.name} วันที่ ${day}` : `ยกเลิกลา ${staff.name} วันที่ ${day}`);
-        };
+        }
 
-        function enhanceWFHLeaveColumn() {
-            const tables = Array.from(document.querySelectorAll("table"));
-            const table = tables.find(t => {
+        function getWFHStatusText(staff, day) {
+            if (isResignedStaffStrict(staff)) {
+                const r = (window.resignedEmployees || []).find(x =>
+                    String(x.code || x.id || "") === String(staff.code || staff.id || "") ||
+                    String(x.name || "").toUpperCase() === String(staff.name || "").toUpperCase()
+                );
+                return r?.date ? `ออกแล้ว ${r.date}` : "ออกแล้ว";
+            }
+            const rec = getAttendanceRecord(staff, day);
+            const dayValue = String(getStaffDayValueStrict(staff, day) || "").toUpperCase();
+            if (rec.leave || dayValue === "L") return "ลา";
+            if (rec.checked) return "มาทำงาน";
+            return "รอตรวจ";
+        }
+
+        function rebuildWFHCheckLeaveColumns() {
+            const table = Array.from(document.querySelectorAll("table")).find(t => {
                 const txt = t.textContent || "";
                 return txt.includes("ตรวจแล้ว") && txt.includes("ผู้ตรวจ") && txt.includes("สถานะ");
             });
             if (!table) return;
-
+            const day = getWFHCheckDay();
             const headerRow = table.querySelector("thead tr") || table.querySelector("tr");
-            if (!headerRow || headerRow.dataset.leaveHeaderFixed === "1") return;
-
-            const headers = Array.from(headerRow.children);
+            if (!headerRow) return;
+            let headers = Array.from(headerRow.children);
             const statusIdx = headers.findIndex(th => (th.textContent || "").trim().includes("สถานะ") || (th.textContent || "").trim().includes("Status"));
-            const checkedIdx = headers.findIndex(th => (th.textContent || "").trim().includes("ตรวจแล้ว") || (th.textContent || "").trim().includes("Checked"));
-
-            if (statusIdx === -1 || checkedIdx === -1 || checkedIdx <= statusIdx) return;
-
-            // If there is already blank column between status and checked, name it "ลา"; otherwise insert one.
-            const between = headers[statusIdx + 1];
-            if (between && checkedIdx === statusIdx + 2 && !(between.textContent || "").trim()) {
-                between.textContent = "ลา";
-            } else if (!headers.some(th => (th.textContent || "").trim() === "ลา")) {
+            let checkedIdx = headers.findIndex(th => (th.textContent || "").trim().includes("ตรวจแล้ว") || (th.textContent || "").trim().includes("Checked"));
+            if (statusIdx === -1 || checkedIdx === -1) return;
+            let leaveIdx = headers.findIndex(th => (th.textContent || "").trim() === "ลา");
+            if (leaveIdx === -1) {
                 const th = document.createElement("th");
                 th.textContent = "ลา";
-                th.className = headers[statusIdx].className || "";
+                th.className = headers[checkedIdx]?.className || "";
                 headerRow.insertBefore(th, headers[checkedIdx]);
             }
-            headerRow.dataset.leaveHeaderFixed = "1";
-
-            const day = getSelectedWFHCheckDay();
-            const rows = Array.from(table.querySelectorAll("tbody tr"));
-            rows.forEach(row => {
-                if (row.dataset.leaveCellFixed === "1") return;
-                const cells = Array.from(row.children);
-                const nameText = row.textContent || "";
+            headers = Array.from(headerRow.children);
+            leaveIdx = headers.findIndex(th => (th.textContent || "").trim() === "ลา");
+            checkedIdx = headers.findIndex(th => (th.textContent || "").trim().includes("ตรวจแล้ว") || (th.textContent || "").trim().includes("Checked"));
+            const checkerIdx = headers.findIndex(th => (th.textContent || "").trim().includes("ผู้ตรวจ") || (th.textContent || "").trim().includes("Checker"));
+            const timeIdx = headers.findIndex(th => (th.textContent || "").trim().includes("เวลาตรวจ") || (th.textContent || "").trim().includes("Checked time"));
+            Array.from(table.querySelectorAll("tbody tr")).forEach(row => {
+                const rowText = row.textContent || "";
                 const staff = (window.currentStaffList || []).find(p =>
-                    nameText.includes(String(p.name || "")) ||
-                    nameText.includes(String(p.code || "")) ||
-                    nameText.includes(String(p.id || ""))
+                    rowText.includes(String(p.name || "")) ||
+                    rowText.includes(String(p.code || "")) ||
+                    rowText.includes(String(p.id || ""))
                 );
                 if (!staff) return;
-
-                const value = String(getScheduleValueForStaffDay(staff, day) || "").toUpperCase();
-                const btn = document.createElement("button");
-                btn.className = "leave-sync-btn" + (value === "L" ? " active" : "");
-                btn.textContent = value === "L" ? "ลา" : "ลงลา";
-                btn.onclick = (e) => {
-                    e.stopPropagation();
-                    window.toggleWFHLeaveSync(staff.id || staff.code || staff.name, day);
-                };
-                btn.disabled = !canEditStaffField(staff, "editDay");
-
-                // use blank column if exists, otherwise insert before checked
-                const currentCells = Array.from(row.children);
-                const hNow = Array.from(headerRow.children);
-                const leaveIdx = hNow.findIndex(th => (th.textContent || "").trim() === "ลา");
-                if (currentCells[leaveIdx]) {
-                    currentCells[leaveIdx].innerHTML = "";
-                    currentCells[leaveIdx].appendChild(btn);
-                } else {
-                    const td = document.createElement("td");
-                    td.className = currentCells[statusIdx]?.className || "";
-                    td.appendChild(btn);
-                    const checkedCell = currentCells[checkedIdx] || null;
-                    row.insertBefore(td, checkedCell);
+                while (row.children.length < headers.length) row.appendChild(document.createElement("td"));
+                const cells = Array.from(row.children);
+                const rec = getAttendanceRecord(staff, day);
+                const status = getWFHStatusText(staff, day);
+                if (cells[statusIdx]) {
+                    const cls = status === "ลา" ? "wfh-status-leave" : status === "มาทำงาน" ? "wfh-status-work" : "wfh-status-pending";
+                    cells[statusIdx].innerHTML = `<span class="${cls} px-3 py-1 rounded-full text-xs font-bold">${status}</span>`;
                 }
-                row.dataset.leaveCellFixed = "1";
+                if (cells[leaveIdx]) {
+                    cells[leaveIdx].innerHTML = "";
+                    const cb = document.createElement("input");
+                    cb.type = "checkbox";
+                    cb.className = "wfh-leave-check";
+                    cb.checked = !!rec.leave || String(getStaffDayValueStrict(staff, day)).toUpperCase() === "L";
+                    cb.disabled = isResignedStaffStrict(staff) || !canEditStaffField(staff, "editDay");
+                    cb.onchange = () => setWFHAttendanceState(String(staff.id || staff.code || staff.name), "leave", cb.checked);
+                    cells[leaveIdx].appendChild(cb);
+                }
+                if (cells[checkedIdx]) {
+                    cells[checkedIdx].innerHTML = "";
+                    const cb = document.createElement("input");
+                    cb.type = "checkbox";
+                    cb.className = "wfh-present-check";
+                    cb.checked = !!rec.checked && !rec.leave && String(getStaffDayValueStrict(staff, day)).toUpperCase() !== "L";
+                    cb.disabled = isResignedStaffStrict(staff) || !canEditStaffField(staff, "checkWFH");
+                    cb.onchange = () => setWFHAttendanceState(String(staff.id || staff.code || staff.name), "check", cb.checked);
+                    cells[checkedIdx].appendChild(cb);
+                }
+                if (checkerIdx >= 0 && cells[checkerIdx]) cells[checkerIdx].textContent = rec.checked && !rec.leave ? (rec.checker || "-") : "-";
+                if (timeIdx >= 0 && cells[timeIdx]) cells[timeIdx].textContent = rec.checked && !rec.leave ? (rec.time || "-") : "-";
+                row.classList.toggle("resigned-row", isResignedStaffStrict(staff));
             });
         }
 
 
-        if (!window.__wfhLeaveObserverInstalled) {
-            window.__wfhLeaveObserverInstalled = true;
-            const __wfhLeaveObserver = new MutationObserver(() => {
-                clearTimeout(window.__wfhLeaveObserverTimer);
-                window.__wfhLeaveObserverTimer = setTimeout(() => {
-                    try { enhanceWFHLeaveColumn(); } catch(e) {}
+        if (!window.__v51ObserverInstalled) {
+            window.__v51ObserverInstalled = true;
+            const __obs = new MutationObserver(() => {
+                clearTimeout(window.__v51Timer);
+                window.__v51Timer = setTimeout(() => {
+                    try { renderDynamicShiftStats(); hideOldDuplicateStats(); rebuildWFHCheckLeaveColumns(); } catch(e) {}
                 }, 150);
             });
             document.addEventListener("DOMContentLoaded", () => {
-                __wfhLeaveObserver.observe(document.body, { childList: true, subtree: true });
-                setTimeout(enhanceWFHLeaveColumn, 500);
-            });
-        }
-
-
-        if (!window.__duplicateSummaryCleanerInstalled) {
-            window.__duplicateSummaryCleanerInstalled = true;
-            const __dupCleaner = new MutationObserver(() => {
-                clearTimeout(window.__dupCleanerTimer);
-                window.__dupCleanerTimer = setTimeout(() => {
-                    try { hideOldDuplicateStats(); } catch(e) {}
-                }, 120);
-            });
-            document.addEventListener("DOMContentLoaded", () => {
-                __dupCleaner.observe(document.body, { childList: true, subtree: true });
-                setTimeout(() => { try { renderDynamicShiftStats(); hideOldDuplicateStats(); } catch(e) {} }, 500);
+                __obs.observe(document.body, { childList: true, subtree: true });
+                setTimeout(() => { try { renderDynamicShiftStats(); hideOldDuplicateStats(); rebuildWFHCheckLeaveColumns(); } catch(e) {} }, 600);
             });
         }
 
