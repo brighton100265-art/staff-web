@@ -2838,19 +2838,86 @@ function renderTable() {
 
         function updateStats() {
             applyDeletedShiftFilter();
-            const list = window.currentStaffList.filter(p => window.currentUser && canViewTeam(p.team));
-            document.getElementById("stat-total").innerText = `${list.length} คน`;
-            document.getElementById("stat-sub-types").innerText = `Office: ${list.filter(p=>p.type==="Office").length} | WFH: ${list.filter(p=>p.type==="WFH").length}`;
+
+            const list = (window.currentStaffList || []).filter(p => window.currentUser && canViewTeam(p.team));
+            const totalCard = document.getElementById("stat-total");
+            const subTypeCard = document.getElementById("stat-sub-types");
             const cont = document.getElementById("dashboard-widgets");
+
+            if (!cont) return;
+
+            const officeCount = list.filter(p => p.type === "Office").length;
+            const wfhCount = list.filter(p => p.type === "WFH").length;
+
+            if (totalCard) totalCard.innerText = `${list.length} คน`;
+            if (subTypeCard) subTypeCard.innerText = `Office: ${officeCount} | WFH: ${wfhCount}`;
+
+            // Keep the first summary card, then rebuild all dynamic cards safely.
             while (cont.children.length > 1) cont.removeChild(cont.lastChild);
-            const colors = ["emerald","amber","indigo"];
-            getSortedShiftKeys().slice(0,3).forEach((s,idx) => {
+
+            const cardThemes = [
+                { text: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20", icon: "⏱" },
+                { text: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/20", icon: "⏱" },
+                { text: "text-indigo-400", bg: "bg-indigo-500/10", border: "border-indigo-500/20", icon: "⏱" },
+                { text: "text-pink-400", bg: "bg-pink-500/10", border: "border-pink-500/20", icon: "👥" },
+                { text: "text-cyan-400", bg: "bg-cyan-500/10", border: "border-cyan-500/20", icon: "👥" },
+                { text: "text-purple-400", bg: "bg-purple-500/10", border: "border-purple-500/20", icon: "👥" },
+                { text: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20", icon: "👥" },
+                { text: "text-rose-400", bg: "bg-rose-500/10", border: "border-rose-500/20", icon: "👥" }
+            ];
+
+            const makeStatCard = ({ label, count, sub, themeIndex, icon }) => {
+                const theme = cardThemes[themeIndex % cardThemes.length];
                 const w = document.createElement("div");
                 w.className = "bg-slate-900 border border-slate-800 p-5 rounded-2xl flex items-center justify-between shadow-md";
-                w.innerHTML = `<div><p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">กะ ${s}</p><h3 class="text-2xl font-bold text-${colors[idx]}-400 mt-1">${list.filter(p=>p.shift===s).length} คน</h3><p class="text-[11px] text-slate-500 mt-1">เข้า ${window.shiftTimes[s].login}</p></div><div class="w-12 h-12 rounded-xl bg-${colors[idx]}-500/10 border border-${colors[idx]}-500/20 flex items-center justify-center text-${colors[idx]}-400">⏱</div>`;
+                w.innerHTML = `
+                    <div>
+                        <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">${label}</p>
+                        <h3 class="text-2xl font-bold ${theme.text} mt-1">${count} คน</h3>
+                        <p class="text-[11px] text-slate-500 mt-1">${sub}</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl ${theme.bg} border ${theme.border} flex items-center justify-center ${theme.text}">${icon || theme.icon}</div>
+                `;
                 cont.appendChild(w);
+            };
+
+            // Row 1: shift summary cards after total card.
+            getSortedShiftKeys().slice(0, 3).forEach((shiftCode, idx) => {
+                const shiftList = list.filter(p => p.shift === shiftCode);
+                const loginTime = window.shiftTimes?.[shiftCode]?.login || "-";
+                makeStatCard({
+                    label: `กะ ${shiftCode}`,
+                    count: shiftList.length,
+                    sub: `เข้า ${loginTime}`,
+                    themeIndex: idx,
+                    icon: "⏱"
+                });
             });
-        
+
+            // Row 2: team summary cards. This uses every team visible to the current user,
+            // so it will not break if WIN4/WIN8 or another team is added later.
+            const teamOrder = ["WIN1", "WIN2", "WIN3", "WIN4", "WIN5", "WIN6", "WIN7", "WIN8"];
+            const teams = [...new Set(list.map(p => p.team).filter(Boolean))]
+                .sort((a, b) => {
+                    const ai = teamOrder.indexOf(a);
+                    const bi = teamOrder.indexOf(b);
+                    if (ai !== -1 || bi !== -1) return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
+                    return String(a).localeCompare(String(b), "en", { numeric: true });
+                });
+
+            teams.forEach((team, idx) => {
+                const teamList = list.filter(p => p.team === team);
+                const teamOffice = teamList.filter(p => p.type === "Office").length;
+                const teamWFH = teamList.filter(p => p.type === "WFH").length;
+                makeStatCard({
+                    label: `ทีม ${team}`,
+                    count: teamList.length,
+                    sub: `Office: ${teamOffice} | WFH: ${teamWFH}`,
+                    themeIndex: idx + 3,
+                    icon: "👥"
+                });
+            });
+
             applyLanguage();
         }
 
