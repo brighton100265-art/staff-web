@@ -6313,9 +6313,11 @@ function renderDynamicShiftStats() {
         }
 
         function rebuildWFHCheckLeaveColumns() {
-            // v6: disabled. WFH columns are rendered directly in renderWFHPresentInline().
-        }
-
+            // ปิดการทำงานส่วนนี้เพื่อแก้ปัญหาเว็บกระตุก (Infinity Loop)
+            // เพราะตาราง 13 คอลัมน์ถูกจัดการเสร็จแล้วในฟังก์ชัน renderWFHPresentInline
+            return;
+        }
+        window.rebuildWFHCheckLeaveColumns = rebuildWFHCheckLeaveColumns;
 
         if (!window.__v56WFHStateObserver) {
             window.__v56WFHStateObserver = true;
