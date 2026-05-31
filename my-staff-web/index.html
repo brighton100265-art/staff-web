@@ -491,14 +491,19 @@
             color: #fde68a !important;
         }
         tr.no-holiday-warning-row td {
-            background: rgba(245, 158, 11, 0.20) !important;
-            color: #111827 !important;
-            box-shadow: inset 0 1px 0 rgba(245, 158, 11, 0.35), inset 0 -1px 0 rgba(245, 158, 11, 0.35);
+            background: rgba(245, 158, 11, 0.075) !important;
+            box-shadow: inset 0 1px 0 rgba(245, 158, 11, 0.22), inset 0 -1px 0 rgba(245, 158, 11, 0.22);
         }
-        tr.no-holiday-warning-row td * { color: inherit; }
-        tr.no-holiday-warning-row .shift-select,
-        tr.no-holiday-warning-row select {
-            color: inherit !important;
+        tr.no-holiday-warning-row td.day-cell {
+            background: rgba(245, 158, 11, 0.095) !important;
+        }
+        tr.no-holiday-warning-row td.sticky-left {
+            background: rgba(30, 41, 59, 0.92) !important;
+        }
+        tr.no-holiday-warning-row .no-holiday-badge {
+            display:inline-flex; align-items:center; gap:5px; white-space:nowrap;
+            border-radius:999px; padding:4px 8px; font-size:10px; font-weight:900;
+            color:#fbbf24; background:rgba(245,158,11,.10); border:1px solid rgba(245,158,11,.35);
         }
         .monthly-status-sticky {
             position: sticky;
@@ -5685,10 +5690,23 @@ function lockTableControlsByPermission() {
         }
 
         function formatThaiFullDate(day, month, year) {
-            const date = new Date(Number(year), Number(month) - 1, Number(day));
+            const d = Number(day);
+            const m = Number(month);
+            const y = Number(year);
+            const monthFull = (typeof monthNamesTH !== "undefined" && monthNamesTH[m]) ? monthNamesTH[m] : "";
+            if (!d || !m || !y || !monthFull) return "-";
+            return `วันที่ ${d} ${monthFull} ${y}`;
+        }
+
+        function formatThaiWeekdayDate(day, month, year) {
+            const d = Number(day);
+            const m = Number(month);
+            const y = Number(year);
+            const date = new Date(y, m - 1, d);
             const dayNames = ["วันอาทิตย์", "วันจันทร์", "วันอังคาร", "วันพุธ", "วันพฤหัสบดี", "วันศุกร์", "วันเสาร์"];
-            const monthFull = monthNamesTH[Number(month)] || "";
-            return `${dayNames[date.getDay()]}ที่ ${Number(day)} ${monthFull} ${Number(year)}`;
+            const monthFull = (typeof monthNamesTH !== "undefined" && monthNamesTH[m]) ? monthNamesTH[m] : "";
+            if (!d || !m || !y || !monthFull) return "-";
+            return `${dayNames[date.getDay()]}ที่ ${d} ${monthFull} ${y}`;
         }
 
         function getStatusTypeLabel(kind) {
@@ -5734,7 +5752,8 @@ function lockTableControlsByPermission() {
             const sl = active.filter(p => getLeaveCodeForSummary(p, day) === "SL");
             const pl = active.filter(p => getLeaveCodeForSummary(p, day) === "PL");
             const total = active;
-            return { day, list, active, office, wfh, off, sl, pl, total };
+            const md = getMonthlyStatusDay();
+            return { day: md.day, month: md.month, year: md.year, list, active, office, wfh, off, sl, pl, total };
         }
 
         function statusIconSvg(type) {
@@ -5829,7 +5848,7 @@ function lockTableControlsByPermission() {
             const body = document.getElementById("status-list-body");
             if (!modal || !body) return;
             if (title) title.textContent = `${item.title} (${item.people.length} คน)`;
-            if (sub) sub.textContent = formatThaiFullDate(data.day, data.month, data.year);
+            if (sub) sub.textContent = formatThaiWeekdayDate(data.day, data.month, data.year);
             window.__statusListPeople = item.people || [];
             window.__statusListKind = kind;
             renderStatusListModalRows();
