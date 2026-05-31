@@ -502,7 +502,7 @@
         }
         .monthly-status-sticky {
             position: sticky;
-            bottom: 0;
+            bottom: 56px;
             z-index: 9990;
             margin-top: 14px;
             background: rgba(15, 23, 42, 0.96);
@@ -514,7 +514,7 @@
         }
         .monthly-status-grid {
             display: grid;
-            grid-template-columns: 1.05fr repeat(5, minmax(170px, 1fr));
+            grid-template-columns: 1.05fr repeat(6, minmax(160px, 1fr));
             gap: 10px;
             align-items: stretch;
         }
@@ -577,6 +577,8 @@
         .status-office-card .status-value, .status-office-card .status-icon { color: #60a5fa; }
         .status-wfh-card { border-color: rgba(16,185,129,.45); background: linear-gradient(135deg, rgba(6,95,70,.30), rgba(15,23,42,.85)); }
         .status-wfh-card .status-value, .status-wfh-card .status-icon { color: #4ade80; }
+        .status-off-card { border-color: rgba(248,113,113,.45); background: linear-gradient(135deg, rgba(127,29,29,.30), rgba(15,23,42,.85)); }
+        .status-off-card .status-value, .status-off-card .status-icon { color: #f87171; }
         .status-sl-card { border-color: rgba(168,85,247,.45); background: linear-gradient(135deg, rgba(88,28,135,.32), rgba(15,23,42,.85)); }
         .status-sl-card .status-value, .status-sl-card .status-icon { color: #c084fc; }
         .status-pl-card { border-color: rgba(236,72,153,.45); background: linear-gradient(135deg, rgba(131,24,67,.35), rgba(15,23,42,.85)); }
@@ -596,6 +598,29 @@
             .status-list-modal-row { grid-template-columns: 42px 70px 1fr; }
             .status-list-modal-row .hide-sm { display: none; }
         }
+
+        /* v4.2 summary popup + current user separated row */
+        #current-user-bar {
+            bottom: 10px !important;
+            right: 16px !important;
+        }
+        .status-list-modal-panel {
+            background: rgba(15, 23, 42, .98);
+            border: 1px solid rgba(51, 65, 85, .95);
+            border-radius: 18px;
+            box-shadow: 0 24px 70px rgba(0,0,0,.55);
+        }
+        .status-list-search {
+            width: 100%;
+            background: rgba(2, 6, 23, .9);
+            border: 1px solid rgba(51, 65, 85, .95);
+            color: #e2e8f0;
+            border-radius: 12px;
+            padding: 10px 12px;
+            outline: none;
+            font-size: 13px;
+        }
+        .status-list-search:focus { border-color: rgba(99, 102, 241, .8); }
 
 </style>
 </head>
@@ -5659,6 +5684,31 @@ function lockTableControlsByPermission() {
             return { day, month: selectedMonth, year: selectedYear };
         }
 
+        function formatThaiFullDate(day, month, year) {
+            const date = new Date(Number(year), Number(month) - 1, Number(day));
+            const dayNames = ["วันอาทิตย์", "วันจันทร์", "วันอังคาร", "วันพุธ", "วันพฤหัสบดี", "วันศุกร์", "วันเสาร์"];
+            const monthFull = monthNamesTH[Number(month)] || "";
+            return `${dayNames[date.getDay()]}ที่ ${Number(day)} ${monthFull} ${Number(year)}`;
+        }
+
+        function getStatusTypeLabel(kind) {
+            const map = { office: "Office ทำงาน", wfh: "WFH ทำงาน", off: "วันหยุด", sl: "ลาป่วย (SL)", pl: "ลากิจ (PL)", total: "รวมทั้งหมด" };
+            return map[kind] || "รวมทั้งหมด";
+        }
+
+        function getPersonStatusDetail(p, kind, day) {
+            if (kind === "off") return `วันหยุด วันที่ ${day}`;
+            if (kind === "sl") return `ลาป่วย วันที่ ${day}`;
+            if (kind === "pl") return `ลากิจ วันที่ ${day}`;
+            if (kind === "office") return "Office ทำงาน";
+            if (kind === "wfh") return "WFH ทำงาน";
+            const leave = getLeaveCodeForSummary(p, day);
+            if (leave === "SL") return "ลาป่วย";
+            if (leave === "PL") return "ลากิจ";
+            if (Array.isArray(p.offs) && p.offs.map(Number).includes(Number(day))) return "วันหยุด";
+            return `${p.type || "-"} ทำงาน`;
+        }
+
         function getLeaveCodeForSummary(p, day) {
             if (!p || !Array.isArray(p.leaves) || !p.leaves.map(Number).includes(Number(day))) return "";
             if (p.leaveTypes && p.leaveTypes[String(day)]) return String(p.leaveTypes[String(day)]).toUpperCase();
@@ -5680,10 +5730,11 @@ function lockTableControlsByPermission() {
             const active = list.filter(p => !getResignedRecordByStaff(p));
             const office = active.filter(p => p.type === "Office" && isWorkingForSummary(p, day));
             const wfh = active.filter(p => p.type === "WFH" && isWorkingForSummary(p, day));
+            const off = active.filter(p => Array.isArray(p.offs) && p.offs.map(Number).includes(Number(day)));
             const sl = active.filter(p => getLeaveCodeForSummary(p, day) === "SL");
             const pl = active.filter(p => getLeaveCodeForSummary(p, day) === "PL");
-            const total = [...office, ...wfh, ...sl, ...pl];
-            return { day, list, active, office, wfh, sl, pl, total };
+            const total = active;
+            return { day, list, active, office, wfh, off, sl, pl, total };
         }
 
         function statusIconSvg(type) {
@@ -5692,6 +5743,7 @@ function lockTableControlsByPermission() {
                 date: `<svg ${attrs}><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></svg>`,
                 office: `<svg ${attrs}><path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16"/><path d="M16 8h2a2 2 0 0 1 2 2v11"/><path d="M8 7h4M8 11h4M8 15h4M8 21v-3h4v3M3 21h18"/></svg>`,
                 wfh: `<svg ${attrs}><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10.5V21h14V10.5"/><path d="M9 21v-6h6v6"/><path d="M16 5.8V3h3v5.3"/><path d="M8 12h8"/></svg>`,
+                off: `<svg ${attrs}><path d="M8 2v4M16 2v4M3 10h18"/><rect x="3" y="4" width="18" height="17" rx="2"/><path d="m9 15 2 2 4-4"/></svg>`,
                 sl: `<svg ${attrs}><path d="M4 19h16"/><path d="M5 19V9a3 3 0 0 1 3-3h3v13"/><path d="M11 12h6a3 3 0 0 1 3 3v4"/><path d="M7 14h2"/><path d="M15 8v4M13 10h4"/></svg>`,
                 pl: `<svg ${attrs}><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/><path d="M4 21a8 8 0 0 1 16 0"/><path d="M18 4v4M16 6h4"/></svg>`,
                 total: `<svg ${attrs}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`
@@ -5727,17 +5779,17 @@ function lockTableControlsByPermission() {
             const panel = ensureMonthlyStatusPanel();
             if (!panel) return;
             const data = getMonthlyStatusPeople();
-            const monthLabel = monthNamesTH[data.month] || "";
             panel.innerHTML = `<div class="monthly-status-grid">
                 <div class="monthly-status-card status-date-card">
                     <div class="status-icon">${statusIconSvg("date")}</div>
                     <div>
                         <div class="status-title">วันนี้</div>
-                        <div class="status-value">${data.day} ${monthLabel.slice(0,3)}. ${data.year}</div>
+                        <div class="status-value">${formatThaiFullDate(data.day, data.month, data.year)}</div>
                     </div>
                 </div>
                 ${makeStatusCard({ kind:"office", title:"Office ทำงาน", count:`${data.office.length} คน`, cls:"status-office-card", icon:"office" })}
                 ${makeStatusCard({ kind:"wfh", title:"WFH ทำงาน", count:`${data.wfh.length} คน`, cls:"status-wfh-card", icon:"wfh" })}
+                ${makeStatusCard({ kind:"off", title:"วันหยุด", count:`${data.off.length} คน`, cls:"status-off-card", icon:"off" })}
                 ${makeStatusCard({ kind:"sl", title:"ลาป่วย (SL)", count:`${data.sl.length} คน`, cls:"status-sl-card", icon:"sl" })}
                 ${makeStatusCard({ kind:"pl", title:"ลากิจ (PL)", count:`${data.pl.length} คน`, cls:"status-pl-card", icon:"pl" })}
                 ${makeStatusCard({ kind:"total", title:"รวมทั้งหมด", count:`${data.total.length} คน`, cls:"status-total-card", icon:"total" })}
@@ -5765,6 +5817,7 @@ function lockTableControlsByPermission() {
             const map = {
                 office: { title: "รายชื่อ Office ทำงาน", people: data.office },
                 wfh: { title: "รายชื่อ WFH ทำงาน", people: data.wfh },
+                off: { title: "รายชื่อวันหยุด", people: data.off },
                 sl: { title: "รายชื่อลาป่วย (SL)", people: data.sl },
                 pl: { title: "รายชื่อลากิจ (PL)", people: data.pl },
                 total: { title: "รายชื่อรวมทั้งหมด", people: data.total }
@@ -5776,23 +5829,44 @@ function lockTableControlsByPermission() {
             const body = document.getElementById("status-list-body");
             if (!modal || !body) return;
             if (title) title.textContent = `${item.title} (${item.people.length} คน)`;
-            if (sub) sub.textContent = `ประจำวันที่ ${data.day}/${pad2(data.month)}/${data.year}`;
-            if (!item.people.length) {
-                body.innerHTML = `<div class="p-8 text-center text-slate-500">ไม่พบรายชื่อ</div>`;
-            } else {
-                body.innerHTML = item.people.map((p, idx) => {
-                    const shift = p.shift || "-";
-                    const times = window.shiftTimes?.[shift] || {};
-                    return `<div class="status-list-modal-row">
-                        <div class="text-slate-500">${idx + 1}</div>
-                        <div><span class="px-2 py-0.5 rounded border text-[11px] font-bold ${getTeamBadgeClass ? getTeamBadgeClass(p.team) : 'text-blue-300 border-blue-500/30'}">${p.team || "-"}</span></div>
-                        <div class="font-bold text-slate-100">${p.name || "-"}<div class="text-[11px] text-slate-500 font-normal">${p.code || ""}</div></div>
-                        <div class="hide-sm text-slate-300">${p.type || "-"} / ${shift}</div>
-                        <div class="hide-sm text-slate-400">${times.login || "-"}</div>
-                    </div>`;
-                }).join("");
-            }
+            if (sub) sub.textContent = formatThaiFullDate(data.day, data.month, data.year);
+            window.__statusListPeople = item.people || [];
+            window.__statusListKind = kind;
+            renderStatusListModalRows();
+            const search = document.getElementById("status-list-search");
+            if (search) search.value = "";
             modal.classList.remove("hidden");
+        };
+
+        window.renderStatusListModalRows = function() {
+            const data = getMonthlyStatusPeople();
+            const body = document.getElementById("status-list-body");
+            if (!body) return;
+            const q = String(document.getElementById("status-list-search")?.value || "").trim().toLowerCase();
+            const kind = window.__statusListKind || "total";
+            let people = window.__statusListPeople || [];
+            if (q) {
+                people = people.filter(p => `${p.name || ""} ${p.code || ""} ${p.team || ""} ${p.type || ""} ${p.shift || ""}`.toLowerCase().includes(q));
+            }
+            if (!people.length) {
+                body.innerHTML = `<div class="p-8 text-center text-slate-500">ไม่พบรายชื่อ</div>`;
+                return;
+            }
+            body.innerHTML = people.map((p, idx) => {
+                const shift = p.shift || "-";
+                const times = window.shiftTimes?.[shift] || {};
+                return `<div class="status-list-modal-row">
+                    <div class="text-slate-500">${idx + 1}</div>
+                    <div><span class="px-2 py-0.5 rounded border text-[11px] font-bold ${typeof getTeamBadgeClass === "function" ? getTeamBadgeClass(p.team) : 'text-blue-300 border-blue-500/30'}">${p.team || "-"}</span></div>
+                    <div class="font-bold text-slate-100">${p.name || "-"}<div class="text-[11px] text-slate-500 font-normal">${p.code || ""}</div></div>
+                    <div class="hide-sm text-slate-300">${getPersonStatusDetail(p, kind, data.day)} / ${shift}</div>
+                    <div class="hide-sm text-slate-400">${times.login || "-"}</div>
+                </div>`;
+            }).join("");
+        };
+
+        window.filterStatusListModal = function() {
+            renderStatusListModalRows();
         };
 
         const _statusObserver = new MutationObserver(() => {
