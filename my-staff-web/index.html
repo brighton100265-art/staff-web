@@ -677,6 +677,12 @@
         .wfh-status-leave{background:rgba(168,85,247,.20)!important;color:#f0abfc!important;border:1px solid rgba(216,180,254,.45)}
         .wfh-status-pending{background:rgba(100,116,139,.18)!important;color:#cbd5e1!important;border:1px solid rgba(148,163,184,.25)}
 
+
+        /* v5.8 WFH column hard alignment */
+        .wfh-col-leave,.wfh-col-check,.wfh-col-checker,.wfh-col-time{text-align:center!important}
+        .wfh-present-check,.wfh-leave-check{width:16px;height:16px;cursor:pointer;display:inline-block}
+        .wfh-present-check{accent-color:#10b981}.wfh-leave-check{accent-color:#a855f7}
+
 </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen antialiased selection:bg-indigo-500/30">
@@ -5664,73 +5670,10 @@ function renderDynamicShiftStats() {
         };
 
         function enhanceWFHLeaveColumn() {
-            const tables = Array.from(document.querySelectorAll("table"));
-            const table = tables.find(t => {
-                const txt = t.textContent || "";
-                return txt.includes("ตรวจแล้ว") && txt.includes("ผู้ตรวจ") && txt.includes("สถานะ");
-            });
-            if (!table) return;
-
-            const headerRow = table.querySelector("thead tr") || table.querySelector("tr");
-            if (!headerRow || headerRow.dataset.leaveHeaderFixed === "1") return;
-
-            const headers = Array.from(headerRow.children);
-            const statusIdx = headers.findIndex(th => (th.textContent || "").trim().includes("สถานะ") || (th.textContent || "").trim().includes("Status"));
-            const checkedIdx = headers.findIndex(th => (th.textContent || "").trim().includes("ตรวจแล้ว") || (th.textContent || "").trim().includes("Checked"));
-
-            if (statusIdx === -1 || checkedIdx === -1 || checkedIdx <= statusIdx) return;
-
-            // If there is already blank column between status and checked, name it "ลา"; otherwise insert one.
-            const between = headers[statusIdx + 1];
-            if (between && checkedIdx === statusIdx + 2 && !(between.textContent || "").trim()) {
-                between.textContent = "ลา";
-            } else if (!headers.some(th => (th.textContent || "").trim() === "ลา")) {
-                const th = document.createElement("th");
-                th.textContent = "ลา";
-                th.className = headers[statusIdx].className || "";
-                headerRow.insertBefore(th, headers[checkedIdx]);
+            // v5.8: ปิดตัวเก่า เพราะทำให้คอลัมน์ ลา/ตรวจแล้ว เลื่อนผิด
+            if (typeof rebuildWFHCheckLeaveColumns === "function") {
+                rebuildWFHCheckLeaveColumns();
             }
-            headerRow.dataset.leaveHeaderFixed = "1";
-
-            const day = getSelectedWFHCheckDay();
-            const rows = Array.from(table.querySelectorAll("tbody tr"));
-            rows.forEach(row => {
-                if (row.dataset.leaveCellFixed === "1") return;
-                const cells = Array.from(row.children);
-                const nameText = row.textContent || "";
-                const staff = (window.currentStaffList || []).find(p =>
-                    nameText.includes(String(p.name || "")) ||
-                    nameText.includes(String(p.code || "")) ||
-                    nameText.includes(String(p.id || ""))
-                );
-                if (!staff) return;
-
-                const value = String(getScheduleValueForStaffDay(staff, day) || "").toUpperCase();
-                const btn = document.createElement("button");
-                btn.className = "leave-sync-btn" + (value === "L" ? " active" : "");
-                btn.textContent = value === "L" ? "ลา" : "ลงลา";
-                btn.onclick = (e) => {
-                    e.stopPropagation();
-                    window.toggleWFHLeaveSync(staff.id || staff.code || staff.name, day);
-                };
-                btn.disabled = !canEditStaffField(staff, "editDay");
-
-                // use blank column if exists, otherwise insert before checked
-                const currentCells = Array.from(row.children);
-                const hNow = Array.from(headerRow.children);
-                const leaveIdx = hNow.findIndex(th => (th.textContent || "").trim() === "ลา");
-                if (currentCells[leaveIdx]) {
-                    currentCells[leaveIdx].innerHTML = "";
-                    currentCells[leaveIdx].appendChild(btn);
-                } else {
-                    const td = document.createElement("td");
-                    td.className = currentCells[statusIdx]?.className || "";
-                    td.appendChild(btn);
-                    const checkedCell = currentCells[checkedIdx] || null;
-                    row.insertBefore(td, checkedCell);
-                }
-                row.dataset.leaveCellFixed = "1";
-            });
         }
 
 
@@ -6210,63 +6153,81 @@ function renderDynamicShiftStats() {
             const headerRow = table.querySelector("thead tr") || table.querySelector("tr");
             if (!headerRow) return;
 
+            const headerText = th => (th.textContent || "").trim();
             let headers = Array.from(headerRow.children);
-            const statusIdx = headers.findIndex(th => (th.textContent || "").trim().includes("สถานะ") || (th.textContent || "").trim().includes("Status"));
-            let checkedIdx = headers.findIndex(th => (th.textContent || "").trim().includes("ตรวจแล้ว") || (th.textContent || "").trim().includes("Checked"));
-            if (statusIdx === -1 || checkedIdx === -1) return;
 
-            let leaveIdx = headers.findIndex(th => (th.textContent || "").trim() === "ลา");
+            const statusIdx = headers.findIndex(th => headerText(th).includes("สถานะ") || headerText(th).includes("Status"));
+            if (statusIdx === -1) return;
 
-            // เพิ่มหัวคอลัมน์ลา และต้องเพิ่ม td ให้ทุกแถวตรงตำแหน่งเดียวกัน ไม่งั้นช่องจะเลื่อนผิด
+            // ลบหัว "ลา" ที่ซ้ำกันออกให้เหลืออันเดียว
+            headers = Array.from(headerRow.children);
+            const leaveHeaders = headers
+                .map((th, i) => ({ th, i }))
+                .filter(x => headerText(x.th) === "ลา");
+            leaveHeaders.slice(1).reverse().forEach(x => x.th.remove());
+
+            headers = Array.from(headerRow.children);
+            let checkedIdx = headers.findIndex(th => headerText(th).includes("ตรวจแล้ว") || headerText(th).includes("Checked"));
+            if (checkedIdx === -1) return;
+
+            let leaveIdx = headers.findIndex(th => headerText(th) === "ลา");
             if (leaveIdx === -1) {
                 const th = document.createElement("th");
                 th.textContent = "ลา";
                 th.className = headers[checkedIdx]?.className || "";
                 headerRow.insertBefore(th, headers[checkedIdx]);
-
-                Array.from(table.querySelectorAll("tbody tr")).forEach(row => {
-                    const td = document.createElement("td");
-                    td.className = row.children[checkedIdx]?.className || "";
-                    row.insertBefore(td, row.children[checkedIdx] || null);
-                });
+            } else {
+                const leaveTh = headers[leaveIdx];
+                const checkTh = headers[checkedIdx];
+                // บังคับให้หัว "ลา" อยู่ก่อน "ตรวจแล้ว" เสมอ
+                if (leaveIdx !== checkedIdx - 1) {
+                    headerRow.insertBefore(leaveTh, checkTh);
+                }
             }
 
             headers = Array.from(headerRow.children);
-            leaveIdx = headers.findIndex(th => (th.textContent || "").trim() === "ลา");
-            checkedIdx = headers.findIndex(th => (th.textContent || "").trim().includes("ตรวจแล้ว") || (th.textContent || "").trim().includes("Checked"));
-            const checkerIdx = headers.findIndex(th => (th.textContent || "").trim().includes("ผู้ตรวจ") || (th.textContent || "").trim().includes("Checker"));
-            const timeIdx = headers.findIndex(th => (th.textContent || "").trim().includes("เวลาตรวจ") || (th.textContent || "").trim().includes("Checked time"));
+            leaveIdx = headers.findIndex(th => headerText(th) === "ลา");
+            checkedIdx = headers.findIndex(th => headerText(th).includes("ตรวจแล้ว") || headerText(th).includes("Checked"));
+            const checkerIdx = headers.findIndex(th => headerText(th).includes("ผู้ตรวจ") || headerText(th).includes("Checker"));
+            const timeIdx = headers.findIndex(th => headerText(th).includes("เวลาตรวจ") || headerText(th).includes("Checked time"));
+
+            if (leaveIdx === -1 || checkedIdx === -1) return;
+
+            headers[leaveIdx]?.classList.add("wfh-col-leave");
+            headers[checkedIdx]?.classList.add("wfh-col-check");
+            if (checkerIdx >= 0) headers[checkerIdx]?.classList.add("wfh-col-checker");
+            if (timeIdx >= 0) headers[timeIdx]?.classList.add("wfh-col-time");
 
             Array.from(table.querySelectorAll("tbody tr")).forEach(row => {
-                const rowTextBefore = row.textContent || "";
+                const rowText = row.textContent || "";
                 const staff = (window.currentStaffList || []).find(p =>
-                    rowTextBefore.includes(String(p.name || "")) ||
-                    rowTextBefore.includes(String(p.code || "")) ||
-                    rowTextBefore.includes(String(p.id || ""))
+                    rowText.includes(String(p.name || "")) ||
+                    rowText.includes(String(p.code || "")) ||
+                    rowText.includes(String(p.id || ""))
                 );
                 if (!staff) return;
 
-                // ถ้าแถวเก่ามีจำนวนช่องน้อยกว่าหัวตาราง ให้แทรกช่องลา ณ leaveIdx ไม่ใช่ append ท้ายแถว
+                // ให้จำนวนช่องในแถวเท่าหัวตาราง และแทรกช่องที่ตำแหน่งลาเท่านั้น ห้าม append ท้ายมั่ว
                 while (row.children.length < headers.length) {
                     const td = document.createElement("td");
                     td.className = row.children[checkedIdx]?.className || "";
                     row.insertBefore(td, row.children[leaveIdx] || row.children[checkedIdx] || null);
                 }
 
-                const cells = Array.from(row.children);
-                const rec = getAttendanceRecord(staff, day, row);
-                const v = String(getStaffDayValueStrict(staff, day) || "").toUpperCase();
-
-                if (v === "L") {
-                    rec.leave = true;
-                    rec.checked = false;
+                // ถ้าแถวมีช่องเกินจากการแทรกซ้ำเก่า ให้ลบช่องเกินระหว่าง ลา/ตรวจแล้ว ก่อน
+                while (row.children.length > headers.length) {
+                    const removeIndex = Math.min(leaveIdx, row.children.length - 1);
+                    row.children[removeIndex].remove();
                 }
 
-                // ถ้าเคยพังจน checkbox ตรวจไปอยู่ใต้คอลัมน์ลา ให้ย้าย logic กลับ
-                const leaveCellText = cells[leaveIdx]?.textContent || "";
-                const checkedCellText = cells[checkedIdx]?.textContent || "";
-                if (!rec.leave && rec.checked) {
-                    // ทำงาน = ติ๊กเฉพาะตรวจแล้ว
+                const cells = Array.from(row.children);
+
+                const rec = getAttendanceRecord(staff, day, row);
+                const val = String(getStaffDayValueStrict(staff, day) || "").toUpperCase();
+
+                if (val === "L") {
+                    rec.leave = true;
+                    rec.checked = false;
                 }
 
                 const status = getWFHStatusText(staff, day, row);
@@ -6276,7 +6237,9 @@ function renderDynamicShiftStats() {
                     cells[statusIdx].innerHTML = `<span class="${cls} px-3 py-1 rounded-full text-xs font-bold">${status}</span>`;
                 }
 
+                // ล้าง 4 ช่องท้ายที่เกี่ยวข้องทั้งหมด แล้วใส่ใหม่ตามหัวตารางจริง
                 if (cells[leaveIdx]) {
+                    cells[leaveIdx].classList.add("wfh-col-leave");
                     cells[leaveIdx].innerHTML = "";
                     const cbLeave = document.createElement("input");
                     cbLeave.type = "checkbox";
@@ -6288,6 +6251,7 @@ function renderDynamicShiftStats() {
                 }
 
                 if (cells[checkedIdx]) {
+                    cells[checkedIdx].classList.add("wfh-col-check");
                     cells[checkedIdx].innerHTML = "";
                     const cbCheck = document.createElement("input");
                     cbCheck.type = "checkbox";
@@ -6299,10 +6263,12 @@ function renderDynamicShiftStats() {
                 }
 
                 if (checkerIdx >= 0 && cells[checkerIdx]) {
+                    cells[checkerIdx].classList.add("wfh-col-checker");
                     cells[checkerIdx].textContent = rec.checked && !rec.leave ? (rec.checker || "-") : "-";
                 }
 
                 if (timeIdx >= 0 && cells[timeIdx]) {
+                    cells[timeIdx].classList.add("wfh-col-time");
                     cells[timeIdx].textContent = rec.checked && !rec.leave ? (rec.time || "-") : "-";
                 }
 
