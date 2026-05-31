@@ -6429,6 +6429,145 @@ function renderDynamicShiftStats() {
         }
         exposeInlineHandlersV67();
         document.addEventListener('DOMContentLoaded', exposeInlineHandlersV67);
+  // ==========================================
+        // 🛠️ PATCH FIX: ชุดซ่อมแซมตาราง WFH & กันเว็บกระตุก (ฉบับสมบูรณ์)
+        // ==========================================
+
+        // 1. ปิด Loop ตัวการที่ทำให้เว็บกระตุกและค้าง
+        window.rebuildWFHCheckLeaveColumns = function() { return; };
+
+        // 2. แก้ Error บรรทัด 4163 ที่ Vercel แจ้งเตือน
+        window.restoreWFHAttendanceNow = function() {
+            if (typeof wfhRestoreMinimal === "function") return wfhRestoreMinimal();
+        };
+        window.persistWFHAttendanceNow = function() {
+            if (typeof wfhPersistMinimal === "function") return wfhPersistMinimal();
+        };
+
+        // 3. ซ่อมตาราง WFH ให้มี 13 คอลัมน์ตรงเป๊ะ ไม่เบี้ยว
+        window.renderWFHPresentInline = function(people, day) {
+            const panel = document.getElementById("wfh-present-inline-panel");
+            const tbody = document.getElementById("wfh-present-table-body");
+            const summary = document.getElementById("wfh-present-summary");
+            const dateLabel = document.getElementById("wfh-present-inline-date");
+            const countText = document.getElementById("wfh-present-count-text");
+
+            if (!panel || !tbody) return;
+
+            if (typeof wfhRestoreMinimal === "function") wfhRestoreMinimal();
+            
+            const checkKey = typeof getWFHCheckKeyStable === "function" ? getWFHCheckKeyStable() : `${day}`;
+            window.currentCheckDay = Number(String(day).split("/")[0]);
+
+            panel.classList.remove("hidden");
+            if (dateLabel) dateLabel.innerText = `กำลังดูข้อมูล : ${day}`;
+            if (countText) countText.innerText = `แสดง ${people.length} คน`;
+
+            const teamCounts = { WIN1: 0, WIN2: 0, WIN3: 0 };
+            people.forEach(p => { if (teamCounts[p.team] !== undefined) teamCounts[p.team]++; });
+
+            const checkedCount = people.filter(p => typeof isAttendanceVerifiedStable === "function" && isAttendanceVerifiedStable(p.id, checkKey)).length;
+
+            if (summary) {
+                summary.innerHTML = `
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
+                        <div class="text-[11px] text-slate-500">รวมทั้งหมด</div>
+                        <div class="text-2xl font-black text-emerald-400">${people.length} คน</div>
+                    </div>
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
+                        <div class="text-[11px] text-slate-500">WIN1 / WIN2 / WIN3</div>
+                        <div class="text-sm font-bold text-slate-200">WIN1 ${teamCounts.WIN1} | WIN2 ${teamCounts.WIN2} | WIN3 ${teamCounts.WIN3}</div>
+                    </div>
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
+                        <div class="text-[11px] text-slate-500">ตรวจแล้ว</div>
+                        <div class="text-sm font-bold text-slate-200">${checkedCount} / ${people.length} คน</div>
+                    </div>
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
+                        <div class="text-[11px] text-slate-500">ยังไม่ตรวจ</div>
+                        <div class="text-sm font-bold text-rose-400">${people.length - checkedCount} คน</div>
+                    </div>
+                `;
+            }
+
+            const table = tbody.closest("table");
+            const headerRow = table?.querySelector("thead tr");
+            if (headerRow) {
+                headerRow.innerHTML = `
+                    <th class="px-4 py-3 text-left">ลำดับ</th>
+                    <th class="px-4 py-3 text-left">ทีม</th>
+                    <th class="px-4 py-3 text-left">ยศ</th>
+                    <th class="px-4 py-3 text-left">รหัสพนักงาน</th>
+                    <th class="px-4 py-3 text-left">ชื่อพนักงาน</th>
+                    <th class="px-4 py-3 text-left">กะ</th>
+                    <th class="px-4 py-3 text-left">เวลาเข้า</th>
+                    <th class="px-4 py-3 text-left">เวลาพัก</th>
+                    <th class="px-4 py-3 text-center wfh-col-status">สถานะ</th>
+                    <th class="px-4 py-3 text-center wfh-col-leave">ลา</th>
+                    <th class="px-4 py-3 text-center wfh-col-check">ตรวจแล้ว</th>
+                    <th class="px-4 py-3 text-center wfh-col-checker">ผู้ตรวจ</th>
+                    <th class="px-4 py-3 text-center wfh-col-time">เวลาตรวจ</th>
+                `;
+            }
+
+            if (!people.length) {
+                tbody.innerHTML = `<tr><td colspan="13" class="px-4 py-8 text-center text-slate-500">ไม่พบพนักงาน WFH ที่มาทำงานตามวันที่เลือก</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = people.map((p, idx) => {
+                const checked = typeof isAttendanceVerifiedStable === "function" ? isAttendanceVerifiedStable(p.id, checkKey) : false;
+                const admin = typeof hasPermission === "function" ? hasPermission("checkWFH") : true;
+                const canLeave = typeof canEditStaffField === "function" ? canEditStaffField(p, "editDay") : admin;
+                const shiftClass = typeof getShiftClass === "function" ? getShiftClass(p.shift) : "shift-other";
+                const checker = typeof getAttendanceCheckerStable === "function" ? getAttendanceCheckerStable(p.id, checkKey) : "-";
+                const checkedTime = typeof getAttendanceTimeStable === "function" ? getAttendanceTimeStable(p.id, checkKey) : "-";
+                const resigned = typeof getResignedRecordByStaff === "function" ? getResignedRecordByStaff(p) : null;
+                const isLeave = !resigned && typeof isWFHLeaveInline === "function" ? isWFHLeaveInline(p, window.currentCheckDay) : false;
+
+                const statusHtml = resigned
+                    ? `<span class="status-resigned-pill">ออกแล้ว ${typeof getResignDateText === "function" ? getResignDateText(resigned) : ""}</span>`
+                    : isLeave
+                        ? `<span class="inline-flex px-2 py-1 rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/25 text-xs font-bold whitespace-nowrap">ลา</span>`
+                        : checked
+                            ? `<span class="inline-flex px-2 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 text-xs font-bold whitespace-nowrap">มาทำงาน</span>`
+                            : `<span class="inline-flex px-2 py-1 rounded-full bg-slate-500/15 text-slate-300 border border-slate-500/25 text-xs font-bold whitespace-nowrap">รอตรวจ</span>`;
+
+                return `
+                    <tr class="hover:bg-slate-800/40 transition-all ${resigned ? "resigned-row" : ""}">
+                        <td class="px-4 py-3 text-slate-400">${idx + 1}</td>
+                        <td class="px-4 py-3"><span class="px-2 py-1 rounded text-xs font-bold ${typeof getTeamBadgeClass === "function" ? getTeamBadgeClass(p.team) : ""}">${p.team}</span></td>
+                        <td class="px-4 py-3"><span class="px-2 py-1 rounded bg-purple-500/15 text-purple-300 border border-purple-500/25 text-xs font-bold">${p.rank}</span></td>
+                        <td class="px-4 py-3 font-mono text-slate-300">${p.code}</td>
+                        <td class="px-4 py-3 font-bold text-slate-100 ${resigned ? "resigned-name" : ""}">${p.name}</td>
+                        <td class="px-4 py-3"><span class="px-2 py-1 rounded border text-xs font-bold ${shiftClass}">${p.shift}</span></td>
+                        <td class="px-4 py-3 text-slate-300">${typeof getShiftLoginTime === "function" ? getShiftLoginTime(p.shift) : "-"}</td>
+                        <td class="px-4 py-3 text-slate-300">${typeof getShiftBreakTime === "function" ? getShiftBreakTime(p.shift) : "-"}</td>
+                        <td class="px-4 py-3 text-center" data-wfh-status-cell>${statusHtml}</td>
+                        <td class="px-4 py-3 text-center wfh-col-leave">
+                            <input type="checkbox"
+                                ${isLeave ? "checked" : ""}
+                                ${canLeave && !resigned ? "" : "disabled"}
+                                onchange="if(typeof toggleWFHLeaveInline === 'function') toggleWFHLeaveInline(${p.id}, this.checked, this)"
+                                class="wfh-leave-check ${canLeave && !resigned ? "cursor-pointer" : "cursor-not-allowed"}">
+                        </td>
+                        <td class="px-4 py-3 text-center wfh-col-check">
+                            <input type="checkbox"
+                                ${checked && !isLeave ? "checked" : ""}
+                                ${admin && !resigned ? "" : "disabled"}
+                                onchange="if(typeof toggleWFHPresentInline === 'function') toggleWFHPresentInline(${p.id}, this.checked, this)"
+                                class="wfh-present-check ${admin && !resigned ? "cursor-pointer" : "cursor-not-allowed"}">
+                        </td>
+                        <td class="px-4 py-3 text-center text-slate-300" data-wfh-checker-cell>${checked && !isLeave ? checker : "-"}</td>
+                        <td class="px-4 py-3 text-center text-slate-300" data-wfh-time-cell>${checked && !isLeave ? checkedTime : "-"}</td>
+                    </tr>
+                `;
+            }).join("");
+
+            if (typeof applyLanguage === "function") applyLanguage();
+            if (typeof applyRolePermissions === "function") applyRolePermissions();
+            if (typeof refreshWFHSummaryOnly === "function") refreshWFHSummaryOnly();
+        };
+        // ==========================================
 </script>
 </body>
 </html>
