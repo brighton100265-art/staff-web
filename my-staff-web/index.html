@@ -514,6 +514,91 @@
         .dynamic-stat-shift .dynamic-stat-value { color:#fbbf24; }
         .dynamic-stat-total .dynamic-stat-value { color:#f8fafc; }
 
+
+        /* v4.3 clean two-row summary */
+        #dynamic-shift-stats {
+            display: block !important;
+            margin: 14px 0 18px !important;
+        }
+        .summary-row-1,
+        .summary-row-2 {
+            display: grid;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .summary-row-1 {
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        }
+        .summary-row-2 {
+            grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+        }
+        .dynamic-stat-card {
+            background: rgba(15,23,42,.88);
+            border: 1px solid rgba(51,65,85,.9);
+            border-radius: 18px;
+            padding: 16px 18px;
+            min-height: 94px;
+        }
+        .dynamic-stat-title {
+            color:#93c5fd;
+            font-size:12px;
+            font-weight:800;
+            margin-bottom:6px;
+        }
+        .dynamic-stat-value {
+            color:#34d399;
+            font-size:28px;
+            line-height:1;
+            font-weight:1000;
+        }
+        .dynamic-stat-sub {
+            color:#64748b;
+            font-size:12px;
+            margin-top:8px;
+        }
+        .team-detail-card .dynamic-stat-value {
+            font-size: 22px;
+            color: #34d399;
+        }
+        .team-detail-line {
+            color:#cbd5e1;
+            font-size:12px;
+            margin-top:5px;
+            line-height:1.45;
+        }
+        .team-detail-line b {
+            color:#fbbf24;
+        }
+        .old-stat-hidden {
+            display:none !important;
+        }
+
+
+        /* v4.4 WFH leave sync */
+        .leave-sync-btn {
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            min-width:42px;
+            height:24px;
+            border-radius:999px;
+            border:1px solid rgba(168,85,247,.45);
+            background:rgba(168,85,247,.10);
+            color:#c084fc;
+            font-size:11px;
+            font-weight:900;
+            cursor:pointer;
+        }
+        .leave-sync-btn.active {
+            background:rgba(168,85,247,.28);
+            color:#f5d0fe;
+            border-color:rgba(216,180,254,.75);
+        }
+        .leave-sync-btn:disabled {
+            opacity:.45;
+            cursor:not-allowed;
+        }
+
 </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen antialiased selection:bg-indigo-500/30">
@@ -2694,6 +2779,10 @@ window.previewDeleteEmployeeByCode = function() {
         
             renderDynamicShiftStats();
             repairOldTopStats();
+        
+            hideOldDuplicateStats();
+        
+            enhanceWFHLeaveColumn();
         }
 
         
@@ -2822,6 +2911,10 @@ function renderTable() {
         
             renderDynamicShiftStats();
             repairOldTopStats();
+        
+            hideOldDuplicateStats();
+        
+            enhanceWFHLeaveColumn();
         }
 
         function renderDailySummary(filtered) {
@@ -2873,6 +2966,8 @@ function renderTable() {
         
             renderDynamicShiftStats();
             repairOldTopStats();
+        
+            hideOldDuplicateStats();
         }
 
         window.changeRank = async function(id, val) {
@@ -3933,6 +4028,8 @@ function renderWFHPresentInline(people, day) {
             applyLanguage();
         
             applyRolePermissions();
+        
+            enhanceWFHLeaveColumn();
         }
 
 window.generateWFHPresentToday = function() {
@@ -5144,6 +5241,8 @@ function applyLanguage(){
             applyLanguage();
             lockTableControlsByPermission();
             fixWorkTypeLabels();
+        
+            enhanceWFHLeaveColumn();
         }
 
 
@@ -5320,7 +5419,29 @@ function lockTableControlsByPermission() {
             return el;
         }
 
-        function renderDynamicShiftStats() {
+        function hideOldDuplicateStats() {
+            const dynamicBox = document.getElementById("dynamic-shift-stats");
+            if (!dynamicBox) return;
+
+            const dynamicRect = dynamicBox.getBoundingClientRect();
+            const cards = Array.from(document.querySelectorAll(".dynamic-stat-card, .dept-card"));
+
+            // ซ่อนเฉพาะการ์ดยอดเก่าที่อยู่ใกล้ ๆ และไม่ใช่ลูกของ dynamic box
+            document.querySelectorAll(".grid").forEach(grid => {
+                if (dynamicBox.contains(grid) || grid.id === "dynamic-shift-stats") return;
+                const txt = (grid.textContent || "").trim();
+                const rect = grid.getBoundingClientRect();
+                const isNearTopStats = rect.top > dynamicRect.bottom - 20 && rect.top < dynamicRect.bottom + 180;
+                const looksLikeOldStats =
+                    txt.includes("WIN1") && txt.includes("WIN2") && txt.includes("WIN3") ||
+                    txt.includes("พนักงานทั้งหมด") && (txt.includes("กะ S9") || txt.includes("กะ S12"));
+
+                if (isNearTopStats && looksLikeOldStats) {
+                    grid.classList.add("old-stat-hidden");
+                }
+            });
+        }
+function renderDynamicShiftStats() {
             const box = ensureDynamicStatsContainer();
             if (!box) return;
 
@@ -5329,40 +5450,39 @@ function lockTableControlsByPermission() {
             const office = list.filter(p => normalizeWorkTypeForStats(p.workType || p.type || p.work) === "Office").length;
             const wfh = list.filter(p => normalizeWorkTypeForStats(p.workType || p.type || p.work) === "WFH").length;
 
+            const shiftCounts = {};
             const teamCounts = {};
+
             list.forEach(p => {
                 const team = String(p.team || "OTHER").toUpperCase();
-                teamCounts[team] = (teamCounts[team] || 0) + 1;
+                const workType = normalizeWorkTypeForStats(p.workType || p.type || p.work);
+                const shift = String(p.shift || p.shiftCode || "").trim();
+
+                if (!teamCounts[team]) {
+                    teamCounts[team] = { total: 0, office: 0, wfh: 0, shifts: {} };
+                }
+
+                teamCounts[team].total++;
+                if (workType === "Office") teamCounts[team].office++;
+                if (workType === "WFH") teamCounts[team].wfh++;
+
+                if (shift && !(window.deletedShiftCodes || []).includes(shift)) {
+                    shiftCounts[shift] = (shiftCounts[shift] || 0) + 1;
+                    teamCounts[team].shifts[shift] = (teamCounts[team].shifts[shift] || 0) + 1;
+                }
             });
 
-            const shiftCounts = {};
-            list.forEach(p => {
-                const s = String(p.shift || p.shiftCode || "").trim();
-                if (!s) return;
-                if (window.deletedShiftCodes && window.deletedShiftCodes.includes(s)) return;
-                shiftCounts[s] = (shiftCounts[s] || 0) + 1;
-            });
-
-            const teamText = Object.keys(teamCounts).sort().map(t => `${t} ${teamCounts[t]}`).join(" | ") || "-";
-
-            const cards = [];
-            cards.push(`
+            const row1 = [];
+            row1.push(`
                 <div class="dynamic-stat-card dynamic-stat-total">
                     <div class="dynamic-stat-title">พนักงานทั้งหมด</div>
                     <div class="dynamic-stat-value">${total} คน</div>
                     <div class="dynamic-stat-sub">Office: ${office} | WFH: ${wfh}</div>
                 </div>
             `);
-            cards.push(`
-                <div class="dynamic-stat-card">
-                    <div class="dynamic-stat-title">แยกตามทีม</div>
-                    <div class="dynamic-stat-value" style="font-size:18px;color:#f8fafc">${teamText}</div>
-                    <div class="dynamic-stat-sub">นับเฉพาะพนักงานที่ยังไม่ออก</div>
-                </div>
-            `);
 
             Object.keys(shiftCounts).sort(shiftSortForStats).forEach(code => {
-                cards.push(`
+                row1.push(`
                     <div class="dynamic-stat-card dynamic-stat-shift">
                         <div class="dynamic-stat-title">กะ ${code}</div>
                         <div class="dynamic-stat-value">${shiftCounts[code]} คน</div>
@@ -5371,7 +5491,28 @@ function lockTableControlsByPermission() {
                 `);
             });
 
-            box.innerHTML = cards.join("");
+            const row2 = Object.keys(teamCounts).sort().map(team => {
+                const t = teamCounts[team];
+                const shiftText = Object.keys(t.shifts).sort(shiftSortForStats)
+                    .map(code => `<b>${code}</b> ${t.shifts[code]}`)
+                    .join(" | ") || "-";
+
+                return `
+                    <div class="dynamic-stat-card team-detail-card">
+                        <div class="dynamic-stat-title">${team}</div>
+                        <div class="dynamic-stat-value">${t.total} คน</div>
+                        <div class="team-detail-line">Office: ${t.office} | WFH: ${t.wfh}</div>
+                        <div class="team-detail-line">กะ: ${shiftText}</div>
+                    </div>
+                `;
+            });
+
+            box.innerHTML = `
+                <div class="summary-row-1">${row1.join("")}</div>
+                <div class="summary-row-2">${row2.join("")}</div>
+            `;
+
+            hideOldDuplicateStats();
         }
 
         function repairOldTopStats() {
@@ -5379,6 +5520,171 @@ function lockTableControlsByPermission() {
                 if (el.children.length === 0 && /--\s*คน/.test(el.textContent || "")) {
                     el.textContent = el.textContent.replace(/--\s*คน/g, "0 คน");
                 }
+            });
+        }
+
+
+        function getSelectedWFHCheckDay() {
+            const candidates = [
+                document.getElementById("wfh-check-day"),
+                document.getElementById("wfh-day"),
+                document.getElementById("present-day"),
+                document.querySelector("input[type='number'][min='1'][max='31']"),
+                document.querySelector("select[data-day-select]")
+            ].filter(Boolean);
+            for (const el of candidates) {
+                const n = Number(el.value);
+                if (n >= 1 && n <= 31) return n;
+            }
+            const d = Number(window.currentCheckDay || window.selectedCheckDay || new Date().getDate());
+            return d >= 1 && d <= 31 ? d : new Date().getDate();
+        }
+
+        function getStaffByAnyKey(key) {
+            const k = String(key || "").trim();
+            return (window.currentStaffList || []).find(p =>
+                String(p.id || "") === k ||
+                String(p.code || "") === k ||
+                String(p.name || "").toUpperCase() === k.toUpperCase()
+            );
+        }
+
+        function setScheduleValueForStaffDay(staff, day, value) {
+            if (!staff) return false;
+            const d = String(day);
+            if (!staff.days) staff.days = {};
+            staff.days[d] = value;
+
+            // sync legacy arrays
+            if (Array.isArray(staff.offDays)) {
+                staff.offDays = staff.offDays.filter(x => Number(x) !== Number(day));
+                if (value === "O") staff.offDays.push(Number(day));
+            }
+            if (Array.isArray(staff.leaveDays)) {
+                staff.leaveDays = staff.leaveDays.filter(x => Number(x) !== Number(day));
+                if (["L","PL","SL"].includes(String(value).toUpperCase())) staff.leaveDays.push(Number(day));
+            }
+            return true;
+        }
+
+        function getScheduleValueForStaffDay(staff, day) {
+            const d = String(day);
+            if (staff?.days && staff.days[d] !== undefined) return staff.days[d];
+            if (staff?.schedule && staff.schedule[d] !== undefined) return staff.schedule[d];
+            if (Array.isArray(staff?.offDays) && staff.offDays.includes(Number(day))) return "O";
+            if (Array.isArray(staff?.leaveDays) && staff.leaveDays.includes(Number(day))) return "L";
+            return "";
+        }
+
+        window.toggleWFHLeaveSync = async function(staffKey, explicitDay) {
+            const staff = getStaffByAnyKey(staffKey);
+            if (!staff) return alert("ไม่พบพนักงาน");
+
+            if (!canEditStaffField(staff, "editDay")) {
+                return alert("ไม่มีสิทธิ์แก้ไขวันลา");
+            }
+
+            const day = Number(explicitDay || getSelectedWFHCheckDay());
+            const oldValue = String(getScheduleValueForStaffDay(staff, day) || "").toUpperCase();
+            const nextValue = oldValue === "L" ? "" : "L";
+
+            if (typeof pushUndoSnapshot === "function") pushUndoSnapshot(`WFH leave ${staff.name} day ${day}`);
+
+            setScheduleValueForStaffDay(staff, day, nextValue);
+
+            if (typeof addAuditLog === "function") {
+                addAuditLog("WFH LEAVE", staff.name, `วันที่ ${day}: ${oldValue || "-"} → ${nextValue || "-"}`);
+            }
+
+            updateDynamicUI();
+            if (!window.draftMode && typeof commitData === "function") {
+                try { await commitData(); } catch(e) { console.warn(e); }
+            }
+            showToast(nextValue === "L" ? `ลงลา ${staff.name} วันที่ ${day}` : `ยกเลิกลา ${staff.name} วันที่ ${day}`);
+        };
+
+        function enhanceWFHLeaveColumn() {
+            const tables = Array.from(document.querySelectorAll("table"));
+            const table = tables.find(t => {
+                const txt = t.textContent || "";
+                return txt.includes("ตรวจแล้ว") && txt.includes("ผู้ตรวจ") && txt.includes("สถานะ");
+            });
+            if (!table) return;
+
+            const headerRow = table.querySelector("thead tr") || table.querySelector("tr");
+            if (!headerRow || headerRow.dataset.leaveHeaderFixed === "1") return;
+
+            const headers = Array.from(headerRow.children);
+            const statusIdx = headers.findIndex(th => (th.textContent || "").trim().includes("สถานะ") || (th.textContent || "").trim().includes("Status"));
+            const checkedIdx = headers.findIndex(th => (th.textContent || "").trim().includes("ตรวจแล้ว") || (th.textContent || "").trim().includes("Checked"));
+
+            if (statusIdx === -1 || checkedIdx === -1 || checkedIdx <= statusIdx) return;
+
+            // If there is already blank column between status and checked, name it "ลา"; otherwise insert one.
+            const between = headers[statusIdx + 1];
+            if (between && checkedIdx === statusIdx + 2 && !(between.textContent || "").trim()) {
+                between.textContent = "ลา";
+            } else if (!headers.some(th => (th.textContent || "").trim() === "ลา")) {
+                const th = document.createElement("th");
+                th.textContent = "ลา";
+                th.className = headers[statusIdx].className || "";
+                headerRow.insertBefore(th, headers[checkedIdx]);
+            }
+            headerRow.dataset.leaveHeaderFixed = "1";
+
+            const day = getSelectedWFHCheckDay();
+            const rows = Array.from(table.querySelectorAll("tbody tr"));
+            rows.forEach(row => {
+                if (row.dataset.leaveCellFixed === "1") return;
+                const cells = Array.from(row.children);
+                const nameText = row.textContent || "";
+                const staff = (window.currentStaffList || []).find(p =>
+                    nameText.includes(String(p.name || "")) ||
+                    nameText.includes(String(p.code || "")) ||
+                    nameText.includes(String(p.id || ""))
+                );
+                if (!staff) return;
+
+                const value = String(getScheduleValueForStaffDay(staff, day) || "").toUpperCase();
+                const btn = document.createElement("button");
+                btn.className = "leave-sync-btn" + (value === "L" ? " active" : "");
+                btn.textContent = value === "L" ? "ลา" : "ลงลา";
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    window.toggleWFHLeaveSync(staff.id || staff.code || staff.name, day);
+                };
+                btn.disabled = !canEditStaffField(staff, "editDay");
+
+                // use blank column if exists, otherwise insert before checked
+                const currentCells = Array.from(row.children);
+                const hNow = Array.from(headerRow.children);
+                const leaveIdx = hNow.findIndex(th => (th.textContent || "").trim() === "ลา");
+                if (currentCells[leaveIdx]) {
+                    currentCells[leaveIdx].innerHTML = "";
+                    currentCells[leaveIdx].appendChild(btn);
+                } else {
+                    const td = document.createElement("td");
+                    td.className = currentCells[statusIdx]?.className || "";
+                    td.appendChild(btn);
+                    const checkedCell = currentCells[checkedIdx] || null;
+                    row.insertBefore(td, checkedCell);
+                }
+                row.dataset.leaveCellFixed = "1";
+            });
+        }
+
+
+        if (!window.__wfhLeaveObserverInstalled) {
+            window.__wfhLeaveObserverInstalled = true;
+            const __wfhLeaveObserver = new MutationObserver(() => {
+                clearTimeout(window.__wfhLeaveObserverTimer);
+                window.__wfhLeaveObserverTimer = setTimeout(() => {
+                    try { enhanceWFHLeaveColumn(); } catch(e) {}
+                }, 150);
+            });
+            document.addEventListener("DOMContentLoaded", () => {
+                __wfhLeaveObserver.observe(document.body, { childList: true, subtree: true });
+                setTimeout(enhanceWFHLeaveColumn, 500);
             });
         }
 
