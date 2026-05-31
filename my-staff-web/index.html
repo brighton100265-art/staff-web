@@ -3827,15 +3827,19 @@ window.generateWFHOffReport = function() {
             const tbody = document.getElementById("wfh-present-table-body");
             const summary = document.getElementById("wfh-present-summary");
             if (!tbody || !summary) return;
-            const checks = Array.from(tbody.querySelectorAll('input.attendance-check[type="checkbox"]'));
-            const total = checks.length;
-            const checked = checks.filter(x => x.checked).length;
+
+            const rows = Array.from(tbody.querySelectorAll('tr[data-wfh-row="1"]'));
+            const total = rows.length;
+            const checked = rows.filter(row => row.dataset.verified === "1").length;
+            // คนที่ออกแล้วไม่ต้องนับในช่อง "ยังไม่ตรวจ" แต่ยังแสดงในตารางได้ตามเดิม
+            const unchecked = rows.filter(row => row.dataset.verified !== "1" && row.dataset.resigned !== "1").length;
+
             const cards = summary.querySelectorAll(".bg-slate-950");
             if (cards[2]) {
                 cards[2].innerHTML = `<div class="text-[11px] text-slate-500">ตรวจแล้ว</div><div class="text-sm font-bold text-slate-200">${checked} / ${total} คน</div>`;
             }
             if (cards[3]) {
-                cards[3].innerHTML = `<div class="text-[11px] text-slate-500">ยังไม่ตรวจ</div><div class="text-sm font-bold text-rose-400">${total - checked} คน</div>`;
+                cards[3].innerHTML = `<div class="text-[11px] text-slate-500">ยังไม่ตรวจ</div><div class="text-sm font-bold text-rose-400">${unchecked} คน</div>`;
             }
         }
 
@@ -3960,6 +3964,15 @@ window.generateWFHOffReport = function() {
 
             const row = checkboxEl?.closest("tr");
             if (row) {
+                row.dataset.verified = checked ? "1" : "0";
+                const leaveCell = row.querySelector('[data-wfh-leave-cell="1"]');
+                if (leaveCell) {
+                    if (checked) {
+                        leaveCell.innerHTML = `<span class="text-slate-600">-</span>`;
+                    } else {
+                        leaveCell.innerHTML = `<input type="checkbox" onchange="toggleWFHLeaveStatus(${id}, this.checked, this)" class="leave-check w-4 h-4 accent-purple-500 cursor-pointer" autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" spellcheck="false">`;
+                    }
+                }
                 const cells = row.querySelectorAll("td");
                 const checkerCell = cells[cells.length - 2];
                 const timeCell = cells[cells.length - 1];
@@ -4022,6 +4035,8 @@ function renderWFHPresentInline(people, day) {
             });
 
             const checkedCount = people.filter(p => isAttendanceVerifiedStable(p.id, checkKey)).length;
+            // คนที่ออกแล้วไม่ต้องนับใน "ยังไม่ตรวจ"
+            const uncheckedCount = people.filter(p => !isAttendanceVerifiedStable(p.id, checkKey) && !getResignedRecordByStaff(p)).length;
 
             if (summary) {
                 summary.innerHTML = `
@@ -4039,7 +4054,7 @@ function renderWFHPresentInline(people, day) {
                     </div>
                     <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
                         <div class="text-[11px] text-slate-500">ยังไม่ตรวจ</div>
-                        <div class="text-sm font-bold text-rose-400">${people.length - checkedCount} คน</div>
+                        <div class="text-sm font-bold text-rose-400">${uncheckedCount} คน</div>
                     </div>
                 `;
             }
@@ -4061,7 +4076,7 @@ function renderWFHPresentInline(people, day) {
                 const statusHtml = getWFHInlineStatusHtml(p, selectedDay);
 
                 return `
-                    <tr class="hover:bg-slate-800/40 transition-all ${resigned ? "resigned-row" : ""} ${leaveChecked ? "bg-purple-950/15" : ""}">
+                    <tr data-wfh-row="1" data-verified="${checked ? "1" : "0"}" data-resigned="${resigned ? "1" : "0"}" class="hover:bg-slate-800/40 transition-all ${resigned ? "resigned-row" : ""} ${leaveChecked ? "bg-purple-950/15" : ""}">
                         <td class="px-4 py-3 text-slate-400">${idx + 1}</td>
                         <td class="px-4 py-3"><span class="px-2 py-1 rounded text-xs font-bold ${getTeamBadgeClass(p.team)}">${p.team}</span></td>
                         <td class="px-4 py-3"><span class="px-2 py-1 rounded bg-purple-500/15 text-purple-300 border border-purple-500/25 text-xs font-bold">${p.rank}</span></td>
@@ -4071,19 +4086,19 @@ function renderWFHPresentInline(people, day) {
                         <td class="px-4 py-3 text-slate-300">${getShiftLoginTime(p.shift)}</td>
                         <td class="px-4 py-3 text-slate-300">${getShiftBreakTime(p.shift)}</td>
                         <td class="px-4 py-3" data-wfh-status-cell="1">${statusHtml}</td>
-                        <td class="px-4 py-3 text-center">
-                            <input type="checkbox"
+                        <td class="px-4 py-3 text-center" data-wfh-attendance-cell="1">
+                            ${leaveChecked ? `<span class="text-slate-600">-</span>` : `<input type="checkbox"
                                 ${checked ? "checked" : ""}
                                 ${canCheck && !resigned ? "" : "disabled"}
                                 onchange="toggleAttendanceVerified(${p.id}, this.checked, this)"
-                                class="attendance-check w-4 h-4 accent-emerald-500 ${canCheck && !resigned ? "cursor-pointer" : "cursor-not-allowed"}" autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" spellcheck="false">
+                                class="attendance-check w-4 h-4 accent-emerald-500 ${canCheck && !resigned ? "cursor-pointer" : "cursor-not-allowed"}" autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" spellcheck="false">`}
                         </td>
-                        <td class="px-4 py-3 text-center">
-                            <input type="checkbox"
+                        <td class="px-4 py-3 text-center" data-wfh-leave-cell="1">
+                            ${checked && !leaveChecked ? `<span class="text-slate-600">-</span>` : `<input type="checkbox"
                                 ${leaveChecked ? "checked" : ""}
                                 ${canMarkLeave && !resigned ? "" : "disabled"}
                                 onchange="toggleWFHLeaveStatus(${p.id}, this.checked, this)"
-                                class="leave-check w-4 h-4 accent-purple-500 ${canMarkLeave && !resigned ? "cursor-pointer" : "cursor-not-allowed opacity-60"}" autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" spellcheck="false">
+                                class="leave-check w-4 h-4 accent-purple-500 ${canMarkLeave && !resigned ? "cursor-pointer" : "cursor-not-allowed opacity-60"}" autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" spellcheck="false">`}
                         </td>
                         <td class="px-4 py-3 text-slate-300">${checker}</td>
                         <td class="px-4 py-3 text-slate-300">${checkedTime}</td>
