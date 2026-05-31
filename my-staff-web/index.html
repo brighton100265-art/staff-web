@@ -5997,11 +5997,17 @@ async function fetchAndUpdateLeaves() {
 
         if (typeof renderTable === 'function') {
             renderTable();
+            try {
+                updateDynamicUI && updateDynamicUI();
+                renderMonthlyStatusPanel && renderMonthlyStatusPanel();
+            } catch(e){}
         }
+
+        console.log('Leave sync:', empCode, leaveDay);
     } catch (e) {
         console.error('Update failed', e);
     }
 }
-fetchAndUpdateLeaves();
+setTimeout(fetchAndUpdateLeaves, 3000);
 setInterval(fetchAndUpdateLeaves, 60000);
 </script>
