@@ -599,6 +599,23 @@
             cursor:not-allowed;
         }
 
+
+        /* v4.5 remove duplicated summary cards */
+        .old-stat-hidden,
+        .legacy-summary-hidden,
+        .duplicate-summary-hidden {
+            display: none !important;
+            height: 0 !important;
+            min-height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+        }
+        #dynamic-shift-stats .summary-row-1,
+        #dynamic-shift-stats .summary-row-2 {
+            display: grid !important;
+        }
+
 </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen antialiased selection:bg-indigo-500/30">
@@ -5405,13 +5422,18 @@ function lockTableControlsByPermission() {
             let el = document.getElementById("dynamic-shift-stats");
             if (el) return el;
 
-            const candidates = Array.from(document.querySelectorAll(".grid"));
-            const cardGrid = candidates.find(g => g.textContent.includes("พนักงานทั้งหมด") || g.textContent.includes("TOTAL EMPLOYEES") || g.textContent.includes("WIN1"));
+            const grids = Array.from(document.querySelectorAll(".grid"));
+            const oldStatsGrid = grids.find(g => {
+                const txt = (g.textContent || "");
+                return txt.includes("พนักงานทั้งหมด") && (txt.includes("กะ S9") || txt.includes("กะ S12") || txt.includes("Office:"));
+            });
+
             el = document.createElement("div");
             el.id = "dynamic-shift-stats";
 
-            if (cardGrid && cardGrid.parentElement) {
-                cardGrid.parentElement.insertBefore(el, cardGrid.nextSibling);
+            if (oldStatsGrid && oldStatsGrid.parentElement) {
+                oldStatsGrid.parentElement.insertBefore(el, oldStatsGrid);
+                oldStatsGrid.classList.add("old-stat-hidden", "legacy-summary-hidden");
             } else {
                 const header = document.querySelector("header") || document.body.firstElementChild;
                 header?.insertAdjacentElement("afterend", el);
@@ -5423,21 +5445,50 @@ function lockTableControlsByPermission() {
             const dynamicBox = document.getElementById("dynamic-shift-stats");
             if (!dynamicBox) return;
 
+            const keep = new Set([dynamicBox]);
+            dynamicBox.querySelectorAll("*").forEach(el => keep.add(el));
+
+            const normalize = s => String(s || "").replace(/\s+/g, " ").trim();
+
+            const allBlocks = Array.from(document.querySelectorAll("body > div, main > div, section, .grid"));
             const dynamicRect = dynamicBox.getBoundingClientRect();
-            const cards = Array.from(document.querySelectorAll(".dynamic-stat-card, .dept-card"));
 
-            // ซ่อนเฉพาะการ์ดยอดเก่าที่อยู่ใกล้ ๆ และไม่ใช่ลูกของ dynamic box
+            allBlocks.forEach(block => {
+                if (keep.has(block) || dynamicBox.contains(block)) return;
+                if (block.closest("#dynamic-shift-stats")) return;
+
+                const txt = normalize(block.textContent);
+                if (!txt) return;
+
+                const rect = block.getBoundingClientRect();
+                const nearDynamicArea =
+                    rect.top >= dynamicRect.top - 40 &&
+                    rect.top <= dynamicRect.bottom + 260;
+
+                const isOldTopSummary =
+                    txt.includes("พนักงานทั้งหมด") &&
+                    (txt.includes("กะ S9") || txt.includes("กะ S12") || txt.includes("Office:") || txt.includes("WFH:"));
+
+                const isOldTeamOnlySummary =
+                    txt.includes("WIN1") &&
+                    txt.includes("WIN2") &&
+                    txt.includes("WIN3") &&
+                    !block.closest("#dynamic-shift-stats");
+
+                // ซ่อนเฉพาะแถวซ้ำที่อยู่ระหว่าง summary ใหม่กับฟอร์มด้านล่าง
+                if (nearDynamicArea && (isOldTopSummary || isOldTeamOnlySummary)) {
+                    block.classList.add("old-stat-hidden", "duplicate-summary-hidden");
+                }
+            });
+
+            // ซ่อน grid ลูกซ้ำที่เกิดจากระบบเดิมโดยตรง
             document.querySelectorAll(".grid").forEach(grid => {
-                if (dynamicBox.contains(grid) || grid.id === "dynamic-shift-stats") return;
-                const txt = (grid.textContent || "").trim();
+                if (dynamicBox.contains(grid)) return;
+                const txt = normalize(grid.textContent);
                 const rect = grid.getBoundingClientRect();
-                const isNearTopStats = rect.top > dynamicRect.bottom - 20 && rect.top < dynamicRect.bottom + 180;
-                const looksLikeOldStats =
-                    txt.includes("WIN1") && txt.includes("WIN2") && txt.includes("WIN3") ||
-                    txt.includes("พนักงานทั้งหมด") && (txt.includes("กะ S9") || txt.includes("กะ S12"));
-
-                if (isNearTopStats && looksLikeOldStats) {
-                    grid.classList.add("old-stat-hidden");
+                const underDynamic = rect.top > dynamicBox.getBoundingClientRect().top && rect.top < dynamicBox.getBoundingClientRect().bottom + 240;
+                if (underDynamic && txt.includes("พนักงานทั้งหมด") && (txt.includes("กะ S9") || txt.includes("กะ S12"))) {
+                    grid.classList.add("old-stat-hidden", "legacy-summary-hidden");
                 }
             });
         }
@@ -5685,6 +5736,21 @@ function renderDynamicShiftStats() {
             document.addEventListener("DOMContentLoaded", () => {
                 __wfhLeaveObserver.observe(document.body, { childList: true, subtree: true });
                 setTimeout(enhanceWFHLeaveColumn, 500);
+            });
+        }
+
+
+        if (!window.__duplicateSummaryCleanerInstalled) {
+            window.__duplicateSummaryCleanerInstalled = true;
+            const __dupCleaner = new MutationObserver(() => {
+                clearTimeout(window.__dupCleanerTimer);
+                window.__dupCleanerTimer = setTimeout(() => {
+                    try { hideOldDuplicateStats(); } catch(e) {}
+                }, 120);
+            });
+            document.addEventListener("DOMContentLoaded", () => {
+                __dupCleaner.observe(document.body, { childList: true, subtree: true });
+                setTimeout(() => { try { renderDynamicShiftStats(); hideOldDuplicateStats(); } catch(e) {} }, 500);
             });
         }
 
