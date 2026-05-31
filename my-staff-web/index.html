@@ -2355,7 +2355,14 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
         ];
         let db = null, auth = null, isCloudMode = false, isApplyingSnapshot = false;
 
-        function normalizeCode(code) { return String(code || "").trim().toUpperCase(); }
+        
+        function daysInMonth(year, month) {
+            const y = Number(year || window.currentYear || window.selectedYear || new Date().getFullYear());
+            const m = Number(month || window.currentMonth || window.selectedMonth || (new Date().getMonth() + 1));
+            return new Date(y, m, 0).getDate();
+        }
+
+function normalizeCode(code) { return String(code || "").trim().toUpperCase(); }
         function ensureStaffShape(list) {
             return (Array.isArray(list) ? list : []).map((p, idx) => ({
                 id: p.id || Date.now() + idx,
@@ -2382,7 +2389,20 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
         function getRankOrder(rank) { return rank === "S4" ? 1 : 2; }
 
         function setSyncStatus(mode, msg) {
-            const el = document.getElementById("sync-status");
+            const el =
+                document.getElementById("sync-status") ||
+                document.getElementById("cloud-status") ||
+                document.querySelector("[data-sync-status]") ||
+                Array.from(document.querySelectorAll("span,div,button")).find(x => {
+                    const t = (x.textContent || "").trim();
+                    return t.includes("ออนไลน์") || t.includes("โหลดคลาวด์") || t.includes("Cloud") || t.includes("Local") || t.includes("ซิงค์");
+                });
+
+            if (!el) {
+                console.warn("sync status element not found:", msg);
+                return;
+            }
+
             const styles = {
                 loading: "bg-slate-800 text-slate-400 border-slate-700",
                 online: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
@@ -2395,7 +2415,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                 local: "bg-amber-400",
                 error: "bg-rose-400"
             };
-            el.innerHTML = `<span class="px-2 py-1 ${styles[mode] || styles.loading} border rounded-lg text-xs font-semibold flex items-center gap-1.5"><span class="w-2 h-2 rounded-full ${dots[mode] || dots.loading}"></span>${msg}</span>`;
+            el.innerHTML = `<span class="px-2 py-1 ${styles[mode] || styles.loading} border rounded-lg text-xs font-semibold flex items-center gap-1.5"><span class="w-2 h-2 rounded-full ${dots[mode] || dots.loading}"></span>${msg || ""}</span>`;
         }
 
         function saveLocalBackup() {
@@ -2908,6 +2928,7 @@ window.previewDeleteEmployeeByCode = function() {
         }
 
         function updateDynamicUI() {
+            /* v5.4 safe updateDynamicUI */
             applyDeletedShiftFilter();
             renderResignedHistory();
             updateMonthUI();
@@ -2919,28 +2940,28 @@ window.previewDeleteEmployeeByCode = function() {
             updateRoleVisibility();
             updateStats();
         
-            applyRolePermissions();
+            try { applyRolePermissions(); } catch(e) { console.warn("applyRolePermissions( failed", e); }
         
-            applyLanguage();
+            try { applyLanguage(); } catch(e) { console.warn("applyLanguage( failed", e); }
         
-            markMainScheduleFullWidth();
+            try { markMainScheduleFullWidth(); } catch(e) { console.warn("markMainScheduleFullWidth( failed", e); }
         
-            lockTableControlsByPermission();
+            try { lockTableControlsByPermission(); } catch(e) { console.warn("lockTableControlsByPermission( failed", e); }
         
-            fixWorkTypeLabels();
+            try { fixWorkTypeLabels(); } catch(e) { console.warn("fixWorkTypeLabels( failed", e); }
         
-            renderDynamicShiftStats();
-            repairOldTopStats();
+            try { renderDynamicShiftStats(); } catch(e) { console.warn("renderDynamicShiftStats( failed", e); }
+            try { repairOldTopStats(); } catch(e) { console.warn("repairOldTopStats( failed", e); }
         
-            hideOldDuplicateStats();
+            try { hideOldDuplicateStats(); } catch(e) { console.warn("hideOldDuplicateStats( failed", e); }
         
-            enhanceWFHLeaveColumn();
+            try { enhanceWFHLeaveColumn(); } catch(e) { console.warn("enhanceWFHLeaveColumn( failed", e); }
         
-            rebuildWFHCheckLeaveColumns();
+            try { rebuildWFHCheckLeaveColumns(); } catch(e) { console.warn("rebuildWFHCheckLeaveColumns( failed", e); }
         
-            addDepartmentTracker();
-            enhanceTableAfterRender();
-            updateDraftBadge();
+            try { addDepartmentTracker(); } catch(e) { console.warn("addDepartmentTracker( failed", e); }
+            try { enhanceTableAfterRender(); } catch(e) { console.warn("enhanceTableAfterRender( failed", e); }
+            try { updateDraftBadge(); } catch(e) { console.warn("updateDraftBadge( failed", e); }
 
         }
 
@@ -2964,9 +2985,10 @@ window.previewDeleteEmployeeByCode = function() {
 
 function renderTable() {
             const tbody = document.getElementById("staff-table-body");
-            const fTeam = document.getElementById("filter-team").value;
-            const fShift = document.getElementById("filter-shift").value;
-            const q = document.getElementById("search-name").value.toLowerCase().trim();
+            if (!tbody) { console.warn("staff-table-body not found"); return; }
+            const fTeam = document.getElementById("filter-team")?.value || "ALL";
+            const fShift = document.getElementById("filter-shift")?.value || "ALL";
+            const q = (document.getElementById("search-name")?.value || "").toLowerCase().trim();
             const hideResigned = !!document.getElementById("hide-resigned-toggle")?.checked;
 
             tbody.innerHTML = "";
@@ -6448,9 +6470,12 @@ function renderDynamicShiftStats() {
         }
 
         function setCloudStatus(mode, message) {
-            const el = getCloudStatusElement();
-            if (!el) return;
-            el.textContent = message;
+            const el = typeof getCloudStatusElement === "function" ? getCloudStatusElement() : null;
+            if (!el) {
+                console.warn("cloud status element not found:", message);
+                return;
+            }
+            el.textContent = message || "";
             el.classList.remove("cloud-status-ok","cloud-status-warn","cloud-status-error");
             el.classList.add(mode === "ok" ? "cloud-status-ok" : mode === "warn" ? "cloud-status-warn" : "cloud-status-error");
         }
