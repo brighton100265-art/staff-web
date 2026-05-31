@@ -582,7 +582,7 @@
             <span id="toast-text">สำเร็จ!</span>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4" id="dashboard-widgets">
+        <div class="space-y-4" id="dashboard-widgets">
             <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex items-center justify-between shadow-md">
                 <div>
                     <p class="text-xs text-slate-400 uppercase tracking-wider font-semibold">พนักงานทั้งหมด</p>
@@ -2839,84 +2839,83 @@ function renderTable() {
         function updateStats() {
             applyDeletedShiftFilter();
 
-            const list = (window.currentStaffList || []).filter(p => window.currentUser && canViewTeam(p.team));
-            const totalCard = document.getElementById("stat-total");
-            const subTypeCard = document.getElementById("stat-sub-types");
             const cont = document.getElementById("dashboard-widgets");
-
             if (!cont) return;
 
+            const list = (window.currentStaffList || []).filter(p => window.currentUser && canViewTeam(p.team));
             const officeCount = list.filter(p => p.type === "Office").length;
             const wfhCount = list.filter(p => p.type === "WFH").length;
 
-            if (totalCard) totalCard.innerText = `${list.length} คน`;
-            if (subTypeCard) subTypeCard.innerText = `Office: ${officeCount} | WFH: ${wfhCount}`;
-
-            // Keep the first summary card, then rebuild all dynamic cards safely.
-            while (cont.children.length > 1) cont.removeChild(cont.lastChild);
-
-            const cardThemes = [
-                { text: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20", icon: "⏱" },
-                { text: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/20", icon: "⏱" },
-                { text: "text-indigo-400", bg: "bg-indigo-500/10", border: "border-indigo-500/20", icon: "⏱" },
-                { text: "text-pink-400", bg: "bg-pink-500/10", border: "border-pink-500/20", icon: "👥" },
-                { text: "text-cyan-400", bg: "bg-cyan-500/10", border: "border-cyan-500/20", icon: "👥" },
-                { text: "text-purple-400", bg: "bg-purple-500/10", border: "border-purple-500/20", icon: "👥" },
-                { text: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20", icon: "👥" },
-                { text: "text-rose-400", bg: "bg-rose-500/10", border: "border-rose-500/20", icon: "👥" }
+            const colorSets = [
+                { key: "blue",    text: "text-blue-400",    bg: "bg-blue-500/10",    border: "border-blue-500/20" },
+                { key: "emerald", text: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20" },
+                { key: "amber",   text: "text-amber-400",   bg: "bg-amber-500/10",   border: "border-amber-500/20" },
+                { key: "indigo",  text: "text-indigo-400",  bg: "bg-indigo-500/10",  border: "border-indigo-500/20" },
+                { key: "pink",    text: "text-pink-400",    bg: "bg-pink-500/10",    border: "border-pink-500/20" },
+                { key: "cyan",    text: "text-cyan-400",    bg: "bg-cyan-500/10",    border: "border-cyan-500/20" },
+                { key: "purple",  text: "text-purple-400",  bg: "bg-purple-500/10",  border: "border-purple-500/20" }
             ];
 
-            const makeStatCard = ({ label, count, sub, themeIndex, icon }) => {
-                const theme = cardThemes[themeIndex % cardThemes.length];
-                const w = document.createElement("div");
-                w.className = "bg-slate-900 border border-slate-800 p-5 rounded-2xl flex items-center justify-between shadow-md";
-                w.innerHTML = `
+            const makeCard = ({ title, amount, sub, icon = "👥", color = colorSets[0] }) => `
+                <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex items-center justify-between shadow-md min-w-[240px]">
                     <div>
-                        <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">${label}</p>
-                        <h3 class="text-2xl font-bold ${theme.text} mt-1">${count} คน</h3>
+                        <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">${title}</p>
+                        <h3 class="text-2xl font-bold ${color.text} mt-1">${amount} คน</h3>
                         <p class="text-[11px] text-slate-500 mt-1">${sub}</p>
                     </div>
-                    <div class="w-12 h-12 rounded-xl ${theme.bg} border ${theme.border} flex items-center justify-center ${theme.text}">${icon || theme.icon}</div>
-                `;
-                cont.appendChild(w);
-            };
+                    <div class="w-12 h-12 rounded-xl ${color.bg} border ${color.border} flex items-center justify-center ${color.text}">${icon}</div>
+                </div>
+            `;
 
-            // Row 1: shift summary cards after total card.
-            getSortedShiftKeys().slice(0, 3).forEach((shiftCode, idx) => {
-                const shiftList = list.filter(p => p.shift === shiftCode);
-                const loginTime = window.shiftTimes?.[shiftCode]?.login || "-";
-                makeStatCard({
-                    label: `กะ ${shiftCode}`,
-                    count: shiftList.length,
-                    sub: `เข้า ${loginTime}`,
-                    themeIndex: idx,
-                    icon: "⏱"
-                });
+            const shiftKeys = getSortedShiftKeys()
+                .filter(s => !window.deletedShiftCodes?.includes?.(s));
+
+            const shiftCards = [];
+            shiftCards.push(makeCard({
+                title: "พนักงานทั้งหมด",
+                amount: list.length,
+                sub: `Office: ${officeCount} | WFH: ${wfhCount}`,
+                icon: "👥",
+                color: colorSets[0]
+            }));
+
+            shiftKeys.forEach((s, idx) => {
+                const color = colorSets[(idx + 1) % colorSets.length];
+                const shiftInfo = window.shiftTimes?.[s] || {};
+                shiftCards.push(makeCard({
+                    title: `กะ ${s}`,
+                    amount: list.filter(p => p.shift === s).length,
+                    sub: `เข้า ${shiftInfo.login || "-"}`,
+                    icon: "⏱",
+                    color
+                }));
             });
 
-            // Row 2: team summary cards. This uses every team visible to the current user,
-            // so it will not break if WIN4/WIN8 or another team is added later.
-            const teamOrder = ["WIN1", "WIN2", "WIN3", "WIN4", "WIN5", "WIN6", "WIN7", "WIN8"];
-            const teams = [...new Set(list.map(p => p.team).filter(Boolean))]
-                .sort((a, b) => {
-                    const ai = teamOrder.indexOf(a);
-                    const bi = teamOrder.indexOf(b);
-                    if (ai !== -1 || bi !== -1) return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
-                    return String(a).localeCompare(String(b), "en", { numeric: true });
-                });
+            const teamNames = [...new Set(list.map(p => p.team).filter(Boolean))]
+                .sort((a, b) => String(a).localeCompare(String(b), "en", { numeric: true, sensitivity: "base" }));
 
-            teams.forEach((team, idx) => {
+            const teamCards = teamNames.map((team, idx) => {
                 const teamList = list.filter(p => p.team === team);
-                const teamOffice = teamList.filter(p => p.type === "Office").length;
-                const teamWFH = teamList.filter(p => p.type === "WFH").length;
-                makeStatCard({
-                    label: `ทีม ${team}`,
-                    count: teamList.length,
-                    sub: `Office: ${teamOffice} | WFH: ${teamWFH}`,
-                    themeIndex: idx + 3,
-                    icon: "👥"
+                const tOffice = teamList.filter(p => p.type === "Office").length;
+                const tWfh = teamList.filter(p => p.type === "WFH").length;
+                const color = colorSets[(idx + 4) % colorSets.length];
+                return makeCard({
+                    title: `ทีม ${team}`,
+                    amount: teamList.length,
+                    sub: `Office: ${tOffice} | WFH: ${tWfh}`,
+                    icon: "👥",
+                    color
                 });
-            });
+            }).join("");
+
+            cont.innerHTML = `
+                <div id="shift-summary-row" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+                    ${shiftCards.join("")}
+                </div>
+                <div id="team-summary-row" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+                    ${teamCards || `<div class="text-xs text-slate-500 bg-slate-900 border border-slate-800 p-5 rounded-2xl">ไม่พบข้อมูลทีม</div>`}
+                </div>
+            `;
 
             applyLanguage();
         }
