@@ -706,6 +706,24 @@
             display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;
         }
 
+
+        /* v5.3 cloud status fixed */
+        .cloud-status-ok {
+            background: rgba(16,185,129,.16) !important;
+            border-color: rgba(16,185,129,.45) !important;
+            color: #34d399 !important;
+        }
+        .cloud-status-warn {
+            background: rgba(245,158,11,.16) !important;
+            border-color: rgba(245,158,11,.45) !important;
+            color: #fbbf24 !important;
+        }
+        .cloud-status-error {
+            background: rgba(244,63,94,.16) !important;
+            border-color: rgba(244,63,94,.45) !important;
+            color: #fb7185 !important;
+        }
+
 </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen antialiased selection:bg-indigo-500/30">
@@ -2655,22 +2673,23 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
             const payload = buildSafeSchedulePayload();
 
             try {
-                if (typeof setDoc === "function" && typeof doc === "function" && typeof db !== "undefined") {
+                if (isFirebaseReady()) {
                     await setDoc(doc(db, "schedules", getScheduleDocId()), payload, { merge: true });
+                    setCloudStatus("ok", "● ออนไลน์: ซิงค์ล่าสุดแล้ว");
                     return true;
                 }
+
+                setCloudStatus("warn", "● บันทึกในเครื่องแล้ว");
                 return localOK;
             } catch (err) {
                 console.error("Cloud save failed, local backup kept:", err);
                 if (localOK) {
-                    if (typeof showToast === "function") showToast("บันทึกในเครื่องแล้ว / Cloud ไม่สำเร็จ");
+                    setCloudStatus("warn", "● บันทึกในเครื่องแล้ว / Cloud ไม่สำเร็จ");
                     return true;
                 }
+                setCloudStatus("error", "● บันทึกไม่สำเร็จ");
                 throw err;
             }
-        
-            renderDynamicShiftStats();
-            repairOldTopStats();
         }
 
 
@@ -6416,6 +6435,110 @@ function renderDynamicShiftStats() {
                         updateDraftBadge();
                     } catch(e) {}
                 }, 700);
+            });
+        }
+
+
+        function getCloudStatusElement() {
+            const all = Array.from(document.querySelectorAll("span,div,button"));
+            return all.find(el => {
+                const t = (el.textContent || "").trim();
+                return t.includes("ออนไลน์") || t.includes("โหลดคลาวด์") || t.includes("Cloud") || t.includes("Local");
+            });
+        }
+
+        function setCloudStatus(mode, message) {
+            const el = getCloudStatusElement();
+            if (!el) return;
+            el.textContent = message;
+            el.classList.remove("cloud-status-ok","cloud-status-warn","cloud-status-error");
+            el.classList.add(mode === "ok" ? "cloud-status-ok" : mode === "warn" ? "cloud-status-warn" : "cloud-status-error");
+        }
+
+        function isFirebaseReady() {
+            return typeof db !== "undefined" &&
+                   typeof doc === "function" &&
+                   typeof getDoc === "function" &&
+                   typeof setDoc === "function";
+        }
+
+        function loadLocalBackupIntoMemory() {
+            try {
+                const docId = getScheduleDocId();
+                const staff = localStorage.getItem(`staff_${docId}`);
+                const shift = localStorage.getItem(`shift_${docId}`);
+                const deleted = localStorage.getItem(`deletedShiftCodes_${docId}`);
+                const roles = localStorage.getItem(`rolePermissions_${docId}`);
+                const attendance = localStorage.getItem(`attendanceChecks_${docId}`);
+                const resigned = localStorage.getItem(`resignedEmployees_${docId}`);
+                const audit = localStorage.getItem(`auditLog_${docId}`);
+
+                if (staff) window.currentStaffList = JSON.parse(staff);
+                if (shift) window.shiftTimes = JSON.parse(shift);
+                if (deleted) window.deletedShiftCodes = JSON.parse(deleted);
+                if (roles) window.customRolePermissions = JSON.parse(roles);
+                if (attendance) window.attendanceChecks = JSON.parse(attendance);
+                if (resigned) window.resignedEmployees = JSON.parse(resigned);
+                if (audit) window.auditLog = JSON.parse(audit);
+                return !!staff;
+            } catch (e) {
+                console.warn("load local backup failed", e);
+                return false;
+            }
+        }
+
+        async function loadScheduleSafe() {
+            const docId = getScheduleDocId();
+
+            if (!isFirebaseReady()) {
+                loadLocalBackupIntoMemory();
+                setCloudStatus("warn", "● ใช้ข้อมูลในเครื่อง");
+                updateDynamicUI();
+                return false;
+            }
+
+            try {
+                const snap = await getDoc(doc(db, "schedules", docId));
+                if (snap.exists()) {
+                    const data = snap.data();
+                    if (data.staffList) window.currentStaffList = data.staffList;
+                    if (data.shiftTimes) window.shiftTimes = data.shiftTimes;
+                    if (data.deletedShiftCodes) window.deletedShiftCodes = data.deletedShiftCodes;
+                    if (data.rolePermissions) {
+                        window.customRolePermissions = data.rolePermissions;
+                        if (typeof saveRolePermissionsLocal === "function") saveRolePermissionsLocal();
+                    }
+                    if (data.attendanceChecks) window.attendanceChecks = data.attendanceChecks;
+                    if (data.resignedEmployees) window.resignedEmployees = data.resignedEmployees;
+                    if (data.auditLog) {
+                        window.auditLog = data.auditLog;
+                        localStorage.setItem("auditLog", JSON.stringify(window.auditLog));
+                    }
+                    saveLocalScheduleBackup();
+                    setCloudStatus("ok", "● ออนไลน์: ซิงค์ล่าสุดแล้ว");
+                    updateDynamicUI();
+                    return true;
+                }
+
+                // ไม่มีเอกสารบน Cloud ให้ใช้ local ก่อน แล้วพร้อม save ขึ้น Cloud ครั้งแรก
+                loadLocalBackupIntoMemory();
+                setCloudStatus("warn", "● ยังไม่มีข้อมูล Cloud: ใช้ข้อมูลในเครื่อง");
+                updateDynamicUI();
+                return false;
+            } catch (err) {
+                console.error("Cloud load failed:", err);
+                loadLocalBackupIntoMemory();
+                setCloudStatus("warn", "● โหลดคลาวด์ไม่ได้: ใช้ข้อมูลในเครื่อง");
+                updateDynamicUI();
+                return false;
+            }
+        }
+
+
+        if (!window.__v53CloudLoaderInstalled) {
+            window.__v53CloudLoaderInstalled = true;
+            document.addEventListener("DOMContentLoaded", () => {
+                setTimeout(() => { try { loadScheduleSafe(); } catch(e) { console.error(e); } }, 300);
             });
         }
 
