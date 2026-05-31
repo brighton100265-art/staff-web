@@ -644,85 +644,30 @@
         }
 
 
-        /* v5.2 complete stable upgrade */
-        .today-col {
-            background: rgba(59,130,246,.16) !important;
-            box-shadow: inset 0 0 0 1px rgba(96,165,250,.35);
-        }
-        .blank-alert {
-            background: rgba(250,204,21,.12) !important;
-            box-shadow: inset 0 0 0 1px rgba(250,204,21,.28);
-        }
-        .leave-pl-cell { background: rgba(168,85,247,.15) !important; color:#c084fc!important; }
-        .leave-sl-cell { background: rgba(14,165,233,.15) !important; color:#67e8f9!important; }
-        .quota-tooltip {
-            position: fixed;
-            z-index: 999999;
-            min-width: 190px;
-            background: rgba(2,6,23,.96);
-            border: 1px solid rgba(148,163,184,.35);
-            border-radius: 14px;
-            padding: 10px 12px;
-            color: #e2e8f0;
-            font-size: 12px;
-            pointer-events: none;
-            box-shadow: 0 18px 45px rgba(0,0,0,.45);
-        }
-        .quota-tooltip.hidden { display:none!important; }
-        .quota-line { display:flex; justify-content:space-between; gap:12px; margin:3px 0; }
-        .sticky-table-summary {
-            position: sticky;
-            bottom: 0;
-            z-index: 8;
-            background: rgba(2,6,23,.96) !important;
-            backdrop-filter: blur(8px);
-        }
-        .dept-card {
-            border: 1px solid rgba(51,65,85,.85);
-            border-radius: 16px;
-            background: rgba(15,23,42,.85);
-            padding: 12px 14px;
-        }
-        .dept-card b { color:#34d399; font-size:18px; }
-        .audit-modal-body { max-height: 70vh; overflow:auto; }
-        .audit-row {
-            display:grid;
-            grid-template-columns: 145px 110px 1fr;
-            gap:12px;
-            padding:10px 12px;
-            border-bottom:1px solid rgba(51,65,85,.55);
-            font-size:12px;
-        }
-        .quick-reset-btn {
-            border:1px solid rgba(244,63,94,.45);
-            color:#fb7185;
-            background:rgba(244,63,94,.08);
-            border-radius:8px;
-            padding:2px 6px;
-            font-size:10px;
-            margin-left:4px;
-        }
+        /* v5.5 stable production patch */
         .old-stat-hidden,.legacy-summary-hidden,.duplicate-summary-hidden {
             display:none!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;
         }
-
-
-        /* v5.3 cloud status fixed */
-        .cloud-status-ok {
-            background: rgba(16,185,129,.16) !important;
-            border-color: rgba(16,185,129,.45) !important;
-            color: #34d399 !important;
+        .wfh-present-check,.wfh-leave-check {
+            width:16px;height:16px;cursor:pointer;
         }
-        .cloud-status-warn {
-            background: rgba(245,158,11,.16) !important;
-            border-color: rgba(245,158,11,.45) !important;
-            color: #fbbf24 !important;
+        .wfh-present-check { accent-color:#10b981; }
+        .wfh-leave-check { accent-color:#a855f7; }
+        .wfh-status-work {
+            background:rgba(16,185,129,.18)!important;color:#34d399!important;
+            border:1px solid rgba(16,185,129,.35);
         }
-        .cloud-status-error {
-            background: rgba(244,63,94,.16) !important;
-            border-color: rgba(244,63,94,.45) !important;
-            color: #fb7185 !important;
+        .wfh-status-leave {
+            background:rgba(168,85,247,.20)!important;color:#f0abfc!important;
+            border:1px solid rgba(216,180,254,.45);
         }
+        .wfh-status-pending {
+            background:rgba(100,116,139,.18)!important;color:#cbd5e1!important;
+            border:1px solid rgba(148,163,184,.25);
+        }
+        .cloud-status-ok{background:rgba(16,185,129,.16)!important;border-color:rgba(16,185,129,.45)!important;color:#34d399!important}
+        .cloud-status-warn{background:rgba(245,158,11,.16)!important;border-color:rgba(245,158,11,.45)!important;color:#fbbf24!important}
+        .cloud-status-error{background:rgba(244,63,94,.16)!important;border-color:rgba(244,63,94,.45)!important;color:#fb7185!important}
 
 </style>
 </head>
@@ -815,8 +760,7 @@
                         <button onclick="openPermissionModal()" data-admin-only="true" class="px-4 py-2 bg-indigo-600/20 hover:bg-indigo-600/35 text-indigo-300 border border-indigo-500/30 rounded-xl text-xs font-bold">สิทธิ์</button>
 
                         <button onclick="toggleDraftMode()" id="draft-mode-btn" class="px-4 py-2 bg-amber-600/20 hover:bg-amber-600/35 text-amber-300 border border-amber-500/30 rounded-xl text-xs font-bold">📝 Draft</button>
-                        <button onclick="undoLastChange()" id="undo-btn" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold">↩ Undo (0)</button>
-                        <button onclick="openAuditModal()" class="px-4 py-2 bg-cyan-600/20 hover:bg-cyan-600/35 text-cyan-300 border border-cyan-500/30 rounded-xl text-xs font-bold">Audit Log</button>
+                        <button onclick="undoLastChange()" id="undo-btn" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold">↩ Undo</button>
                         <button onclick="exportScheduleCSV()" class="px-4 py-2 bg-emerald-600/20 hover:bg-emerald-600/35 text-emerald-300 border border-emerald-500/30 rounded-xl text-xs font-bold">Export CSV</button>
 
                     </div>
@@ -1329,26 +1273,6 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                 <div class="bg-slate-950/50 border border-slate-800 rounded-2xl p-4"><h4 class="font-black text-purple-300 mb-2">S4 หัวหน้า</h4><div class="text-sm text-slate-300 space-y-1" id="role-s4-list"></div></div>
                 <div class="bg-slate-950/50 border border-slate-800 rounded-2xl p-4"><h4 class="font-black text-blue-300 mb-2">พนักงาน</h4><div class="text-sm text-slate-300 space-y-1" id="role-staff-list"></div></div>
             </div>
-        </div>
-    </div>
-
-
-    <div id="quota-tooltip" class="quota-tooltip hidden"></div>
-
-    <div id="audit-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-[999999] hidden">
-        <div class="role-panel-card max-w-5xl w-full overflow-hidden shadow-2xl">
-            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-800">
-                <div>
-                    <h3 class="text-lg font-bold text-slate-100">Audit Log</h3>
-                    <p class="text-xs text-slate-500">ประวัติการแก้ไขข้อมูลย้อนหลัง</p>
-                </div>
-                <div class="flex gap-2">
-                    <button onclick="exportAuditLog()" class="px-4 py-2 bg-blue-600/20 hover:bg-blue-600/35 text-blue-300 border border-blue-500/30 rounded-xl text-xs font-bold">Export Log</button>
-                    <button onclick="clearAuditLog()" class="px-4 py-2 bg-rose-600/20 hover:bg-rose-600/35 text-rose-300 border border-rose-500/30 rounded-xl text-xs font-bold">ล้าง Log</button>
-                    <button onclick="closeAuditModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold">ปิด</button>
-                </div>
-            </div>
-            <div id="audit-log-list" class="audit-modal-body"></div>
         </div>
     </div>
 
@@ -2355,14 +2279,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
         ];
         let db = null, auth = null, isCloudMode = false, isApplyingSnapshot = false;
 
-        
-        function daysInMonth(year, month) {
-            const y = Number(year || window.currentYear || window.selectedYear || new Date().getFullYear());
-            const m = Number(month || window.currentMonth || window.selectedMonth || (new Date().getMonth() + 1));
-            return new Date(y, m, 0).getDate();
-        }
-
-function normalizeCode(code) { return String(code || "").trim().toUpperCase(); }
+        function normalizeCode(code) { return String(code || "").trim().toUpperCase(); }
         function ensureStaffShape(list) {
             return (Array.isArray(list) ? list : []).map((p, idx) => ({
                 id: p.id || Date.now() + idx,
@@ -2388,35 +2305,7 @@ function normalizeCode(code) { return String(code || "").trim().toUpperCase(); }
         function getRankLabel(rank) { return rank === "S4" ? "หัวหน้าทีม" : "พนักงาน"; }
         function getRankOrder(rank) { return rank === "S4" ? 1 : 2; }
 
-        function setSyncStatus(mode, msg) {
-            const el =
-                document.getElementById("sync-status") ||
-                document.getElementById("cloud-status") ||
-                document.querySelector("[data-sync-status]") ||
-                Array.from(document.querySelectorAll("span,div,button")).find(x => {
-                    const t = (x.textContent || "").trim();
-                    return t.includes("ออนไลน์") || t.includes("โหลดคลาวด์") || t.includes("Cloud") || t.includes("Local") || t.includes("ซิงค์");
-                });
-
-            if (!el) {
-                console.warn("sync status element not found:", msg);
-                return;
-            }
-
-            const styles = {
-                loading: "bg-slate-800 text-slate-400 border-slate-700",
-                online: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-                local: "bg-amber-500/10 text-amber-400 border-amber-500/20",
-                error: "bg-rose-500/10 text-rose-400 border-rose-500/20"
-            };
-            const dots = {
-                loading: "bg-slate-500",
-                online: "bg-emerald-400 animate-pulse",
-                local: "bg-amber-400",
-                error: "bg-rose-400"
-            };
-            el.innerHTML = `<span class="px-2 py-1 ${styles[mode] || styles.loading} border rounded-lg text-xs font-semibold flex items-center gap-1.5"><span class="w-2 h-2 rounded-full ${dots[mode] || dots.loading}"></span>${msg || ""}</span>`;
-        }
+        
 
         function saveLocalBackup() {
             localStorage.setItem(`staff_${getScheduleDocId()}`, JSON.stringify(window.currentStaffList));
@@ -2691,24 +2580,22 @@ function normalizeCode(code) { return String(code || "").trim().toUpperCase(); }
         async function commitData() {
             const localOK = saveLocalScheduleBackup();
             const payload = buildSafeSchedulePayload();
-
             try {
                 if (isFirebaseReady()) {
                     await setDoc(doc(db, "schedules", getScheduleDocId()), payload, { merge: true });
                     setCloudStatus("ok", "● ออนไลน์: ซิงค์ล่าสุดแล้ว");
                     return true;
                 }
-
                 setCloudStatus("warn", "● บันทึกในเครื่องแล้ว");
                 return localOK;
-            } catch (err) {
-                console.error("Cloud save failed, local backup kept:", err);
+            } catch(e) {
+                console.error("cloud save failed", e);
                 if (localOK) {
                     setCloudStatus("warn", "● บันทึกในเครื่องแล้ว / Cloud ไม่สำเร็จ");
                     return true;
                 }
                 setCloudStatus("error", "● บันทึกไม่สำเร็จ");
-                throw err;
+                throw e;
             }
         }
 
@@ -2928,7 +2815,7 @@ window.previewDeleteEmployeeByCode = function() {
         }
 
         function updateDynamicUI() {
-            /* v5.4 safe updateDynamicUI */
+            /* v5.5 safe updateDynamicUI */
             applyDeletedShiftFilter();
             renderResignedHistory();
             updateMonthUI();
@@ -2936,33 +2823,28 @@ window.previewDeleteEmployeeByCode = function() {
             refreshCurrentUserFromStaff();
             updateDeleteEmployeeSelect();
             refreshLoginUI();
-            renderTable();
+            safeCall("renderTable", () => { renderTable(); });
             updateRoleVisibility();
-            updateStats();
+            safeCall("updateStats", () => { updateStats(); });
         
-            try { applyRolePermissions(); } catch(e) { console.warn("applyRolePermissions( failed", e); }
+            applyRolePermissions();
         
-            try { applyLanguage(); } catch(e) { console.warn("applyLanguage( failed", e); }
+            applyLanguage();
         
-            try { markMainScheduleFullWidth(); } catch(e) { console.warn("markMainScheduleFullWidth( failed", e); }
+            markMainScheduleFullWidth();
         
-            try { lockTableControlsByPermission(); } catch(e) { console.warn("lockTableControlsByPermission( failed", e); }
+            lockTableControlsByPermission();
         
-            try { fixWorkTypeLabels(); } catch(e) { console.warn("fixWorkTypeLabels( failed", e); }
+            fixWorkTypeLabels();
         
-            try { renderDynamicShiftStats(); } catch(e) { console.warn("renderDynamicShiftStats( failed", e); }
-            try { repairOldTopStats(); } catch(e) { console.warn("repairOldTopStats( failed", e); }
+            safeCall("renderDynamicShiftStats", () => { renderDynamicShiftStats(); });
+            repairOldTopStats();
         
-            try { hideOldDuplicateStats(); } catch(e) { console.warn("hideOldDuplicateStats( failed", e); }
+            safeCall("hideOldDuplicateStats", () => { hideOldDuplicateStats(); });
         
-            try { enhanceWFHLeaveColumn(); } catch(e) { console.warn("enhanceWFHLeaveColumn( failed", e); }
+            enhanceWFHLeaveColumn();
         
-            try { rebuildWFHCheckLeaveColumns(); } catch(e) { console.warn("rebuildWFHCheckLeaveColumns( failed", e); }
-        
-            try { addDepartmentTracker(); } catch(e) { console.warn("addDepartmentTracker( failed", e); }
-            try { enhanceTableAfterRender(); } catch(e) { console.warn("enhanceTableAfterRender( failed", e); }
-            try { updateDraftBadge(); } catch(e) { console.warn("updateDraftBadge( failed", e); }
-
+            safeCall("rebuildWFHCheckLeaveColumns", () => { rebuildWFHCheckLeaveColumns(); });
         }
 
         
@@ -2986,9 +2868,9 @@ window.previewDeleteEmployeeByCode = function() {
 function renderTable() {
             const tbody = document.getElementById("staff-table-body");
             if (!tbody) { console.warn("staff-table-body not found"); return; }
-            const fTeam = document.getElementById("filter-team")?.value || "ALL";
-            const fShift = document.getElementById("filter-shift")?.value || "ALL";
-            const q = (document.getElementById("search-name")?.value || "").toLowerCase().trim();
+            const fTeam = safeVal("filter-team", "ALL");
+            const fShift = safeVal("filter-shift", "ALL");
+            const q = safeVal("search-name", "").toLowerCase().trim();
             const hideResigned = !!document.getElementById("hide-resigned-toggle")?.checked;
 
             tbody.innerHTML = "";
@@ -3098,11 +2980,6 @@ function renderTable() {
             enhanceWFHLeaveColumn();
         
             rebuildWFHCheckLeaveColumns();
-        
-            addDepartmentTracker();
-            enhanceTableAfterRender();
-            updateDraftBadge();
-
         }
 
         function renderDailySummary(filtered) {
@@ -3156,11 +3033,6 @@ function renderTable() {
             repairOldTopStats();
         
             hideOldDuplicateStats();
-        
-            addDepartmentTracker();
-            enhanceTableAfterRender();
-            updateDraftBadge();
-
         }
 
         window.changeRank = async function(id, val) {
@@ -4225,11 +4097,6 @@ function renderWFHPresentInline(people, day) {
             enhanceWFHLeaveColumn();
         
             rebuildWFHCheckLeaveColumns();
-        
-            addDepartmentTracker();
-            enhanceTableAfterRender();
-            updateDraftBadge();
-
         }
 
 window.generateWFHPresentToday = function() {
@@ -5525,43 +5392,11 @@ function lockTableControlsByPermission() {
         });
 
 
-        function sanitizeForSave(obj) {
-            return JSON.parse(JSON.stringify(obj, (key, value) => {
-                if (typeof value === "function") return undefined;
-                if (value === undefined) return null;
-                return value;
-            }));
-        }
+        
 
-        function buildSafeSchedulePayload() {
-            return sanitizeForSave({
-                staffList: window.currentStaffList || [],
-                shiftTimes: window.shiftTimes || {},
-                deletedShiftCodes: window.deletedShiftCodes || [],
-                rolePermissions: window.customRolePermissions || getRolePermissions(),
-                attendanceChecks: window.attendanceChecks || {},
-                resignedEmployees: window.resignedEmployees || [],
-                auditLog: window.auditLog || [],
-                updatedAt: new Date().toISOString(),
-                updatedBy: window.currentUser?.name || window.currentUser?.username || window.currentUser?.role || "UNKNOWN"
-            });
-        }
+        
 
-        function saveLocalScheduleBackup() {
-            try {
-                const payload = buildSafeSchedulePayload();
-                localStorage.setItem(`staff_${getScheduleDocId()}`, JSON.stringify(payload.staffList || []));
-                localStorage.setItem(`shift_${getScheduleDocId()}`, JSON.stringify(payload.shiftTimes || {}));
-                localStorage.setItem(`deletedShiftCodes_${getScheduleDocId()}`, JSON.stringify(payload.deletedShiftCodes || []));
-                localStorage.setItem(`rolePermissions_${getScheduleDocId()}`, JSON.stringify(payload.rolePermissions || {}));
-                localStorage.setItem(`attendanceChecks_${getScheduleDocId()}`, JSON.stringify(payload.attendanceChecks || {}));
-                localStorage.setItem(`resignedEmployees_${getScheduleDocId()}`, JSON.stringify(payload.resignedEmployees || []));
-                return true;
-            } catch (err) {
-                console.error("local backup failed", err);
-                return false;
-            }
-        }
+        
 
 
         function isStaffResignedForStats(staff) {
@@ -6167,132 +6002,173 @@ function renderDynamicShiftStats() {
         }
 
 
-        const LEAVE_QUOTAS = window.LEAVE_QUOTAS || { O: 5, PL: 1, SL: 99, L: 99 };
+        /* v5.5 runtime safety helpers */
+        function daysInMonth(year, month) {
+            const y = Number(year || window.currentYear || new Date().getFullYear());
+            const m = Number(month || window.currentMonth || (new Date().getMonth() + 1));
+            return new Date(y, m, 0).getDate();
+        }
+
+        function safeEl(id) {
+            return document.getElementById(id);
+        }
+
+        function safeVal(id, fallback = "") {
+            const el = document.getElementById(id);
+            return el ? el.value : fallback;
+        }
+
+        function safeCall(label, fn) {
+            try { return fn(); }
+            catch(e) {
+                console.warn("[safeCall]", label, e);
+                return null;
+            }
+        }
+
+
+        function getCloudStatusElement() {
+            return document.getElementById("sync-status") ||
+                   document.getElementById("cloud-status") ||
+                   document.querySelector("[data-sync-status]") ||
+                   Array.from(document.querySelectorAll("span,div,button")).find(el => {
+                       const t = (el.textContent || "").trim();
+                       return t.includes("ออนไลน์") || t.includes("โหลดคลาวด์") || t.includes("ซิงค์") || t.includes("Cloud") || t.includes("เครื่อง");
+                   });
+        }
+
+        function setCloudStatus(mode, message) {
+            const el = getCloudStatusElement();
+            if (!el) {
+                console.warn("cloud status element not found", message);
+                return;
+            }
+            el.textContent = message || "";
+            el.classList.remove("cloud-status-ok","cloud-status-warn","cloud-status-error");
+            el.classList.add(mode === "ok" ? "cloud-status-ok" : mode === "error" ? "cloud-status-error" : "cloud-status-warn");
+        }
+
+        function setSyncStatus(mode, msg) {
+            const message = msg || mode || "";
+            if (String(message).includes("ออนไลน์") || String(mode).includes("online")) setCloudStatus("ok", message);
+            else if (String(message).includes("ไม่ได้") || String(message).includes("เครื่อง")) setCloudStatus("warn", message);
+            else setCloudStatus(mode === "error" ? "error" : "warn", message);
+        }
+
+        function isFirebaseReady() {
+            return typeof db !== "undefined" && typeof doc === "function" && typeof getDoc === "function" && typeof setDoc === "function";
+        }
+
+        function sanitizeForSave(obj) {
+            return JSON.parse(JSON.stringify(obj, (key, value) => {
+                if (typeof value === "function") return undefined;
+                if (value === undefined) return null;
+                return value;
+            }));
+        }
+
+        function buildSafeSchedulePayload() {
+            return sanitizeForSave({
+                staffList: window.currentStaffList || [],
+                shiftTimes: window.shiftTimes || {},
+                deletedShiftCodes: window.deletedShiftCodes || [],
+                rolePermissions: window.customRolePermissions || (typeof getRolePermissions === "function" ? getRolePermissions() : {}),
+                attendanceChecks: window.attendanceChecks || {},
+                resignedEmployees: window.resignedEmployees || [],
+                updatedAt: new Date().toISOString(),
+                updatedBy: window.currentUser?.name || window.currentUser?.username || window.currentUser?.role || "UNKNOWN"
+            });
+        }
+
+        function saveLocalScheduleBackup() {
+            try {
+                const payload = buildSafeSchedulePayload();
+                const id = getScheduleDocId();
+                localStorage.setItem(`staff_${id}`, JSON.stringify(payload.staffList || []));
+                localStorage.setItem(`shift_${id}`, JSON.stringify(payload.shiftTimes || {}));
+                localStorage.setItem(`deletedShiftCodes_${id}`, JSON.stringify(payload.deletedShiftCodes || []));
+                localStorage.setItem(`rolePermissions_${id}`, JSON.stringify(payload.rolePermissions || {}));
+                localStorage.setItem(`attendanceChecks_${id}`, JSON.stringify(payload.attendanceChecks || {}));
+                localStorage.setItem(`resignedEmployees_${id}`, JSON.stringify(payload.resignedEmployees || []));
+                return true;
+            } catch(e) {
+                console.error("local backup failed", e);
+                return false;
+            }
+        }
+
+        function loadLocalScheduleBackup() {
+            try {
+                const id = getScheduleDocId();
+                const staff = localStorage.getItem(`staff_${id}`);
+                const shift = localStorage.getItem(`shift_${id}`);
+                const deleted = localStorage.getItem(`deletedShiftCodes_${id}`);
+                const roles = localStorage.getItem(`rolePermissions_${id}`);
+                const att = localStorage.getItem(`attendanceChecks_${id}`);
+                const resigned = localStorage.getItem(`resignedEmployees_${id}`);
+                if (staff) window.currentStaffList = JSON.parse(staff);
+                if (shift) window.shiftTimes = JSON.parse(shift);
+                if (deleted) window.deletedShiftCodes = JSON.parse(deleted);
+                if (roles) window.customRolePermissions = JSON.parse(roles);
+                if (att) window.attendanceChecks = JSON.parse(att);
+                if (resigned) window.resignedEmployees = JSON.parse(resigned);
+                return !!staff;
+            } catch(e) {
+                console.warn("load local failed", e);
+                return false;
+            }
+        }
+
+
+        /* v5.5 audit/undo/export minimal safe tools */
         window.auditLog = window.auditLog || JSON.parse(localStorage.getItem("auditLog") || "[]");
         window.undoStack = window.undoStack || [];
         window.draftMode = window.draftMode || false;
 
-        function getActorName() {
-            return String(window.currentUser?.name || window.currentUser?.username || window.currentUser?.role || "UNKNOWN").toUpperCase();
-        }
-
-        function calculateLeaveQuota(staff) {
-            const result = { O: 0, PL: 0, SL: 0, L: 0, work: 0, blank: 0 };
-            const days = daysInMonth(currentYear, currentMonth);
-            for (let d = 1; d <= days; d++) {
-                const v = String((typeof getStaffDayValueStrict === "function" ? getStaffDayValueStrict(staff,d) : "") || "").toUpperCase();
-                if (v === "O") result.O++;
-                else if (v === "PL") result.PL++;
-                else if (v === "SL") result.SL++;
-                else if (v === "L") result.L++;
-                else if (!v || v === "." || v === "-") result.blank++;
-                else result.work++;
-            }
-            return result;
-        }
-
-        function checkLeaveQuota(staff, day, nextValue) {
-            const v = String(nextValue || "").toUpperCase();
-            if (!["O","PL","SL","L"].includes(v)) return true;
-            const q = calculateLeaveQuota(staff);
-            const oldValue = String((typeof getStaffDayValueStrict === "function" ? getStaffDayValueStrict(staff,day) : "") || "").toUpperCase();
-            if (oldValue === v) return true;
-            const nextCount = (q[v] || 0) + 1;
-            const limit = LEAVE_QUOTAS[v] ?? 99;
-            if (nextCount > limit) {
-                alert(`โควตา ${v} เกินกำหนด (${nextCount}/${limit})\nไม่สามารถบันทึกเพิ่มได้`);
-                return false;
-            }
-            return true;
-        }
-
-        function pushUndoSnapshot(action = "แก้ไขข้อมูล") {
-            try {
-                const snapshot = JSON.stringify({
-                    staffList: window.currentStaffList || [],
-                    shiftTimes: window.shiftTimes || {},
-                    resignedEmployees: window.resignedEmployees || [],
-                    attendanceChecks: window.attendanceChecks || {}
-                });
-                window.undoStack.push({ time: new Date().toISOString(), action, snapshot });
-                if (window.undoStack.length > 30) window.undoStack.shift();
-                updateDraftBadge();
-            } catch (e) {
-                console.warn("undo snapshot failed", e);
-            }
-        }
-
-        window.undoLastChange = function() {
-            const item = window.undoStack.pop();
-            if (!item) return alert("ยังไม่มีรายการให้ย้อนกลับ");
-            try {
-                const data = JSON.parse(item.snapshot);
-                window.currentStaffList = data.staffList || [];
-                window.shiftTimes = data.shiftTimes || {};
-                window.resignedEmployees = data.resignedEmployees || [];
-                window.attendanceChecks = data.attendanceChecks || {};
-                addAuditLog("UNDO", "-", item.action);
-                updateDynamicUI();
-                showToast("ย้อนกลับแล้ว");
-            } catch (e) {
-                console.error(e);
-                alert("Undo ไม่สำเร็จ");
-            }
-        };
-
-        window.toggleDraftMode = function() {
-            window.draftMode = !window.draftMode;
-            updateDraftBadge();
-            showToast(window.draftMode ? "เปิด Draft Mode" : "ปิด Draft Mode");
-        };
-
-        function updateDraftBadge() {
-            const btn = document.getElementById("draft-mode-btn");
-            if (btn) btn.textContent = window.draftMode ? "📝 Draft ON" : "📝 Draft";
-            const undo = document.getElementById("undo-btn");
-            if (undo) undo.textContent = `↩ Undo (${window.undoStack.length})`;
-        }
-
         function addAuditLog(action, staffName, detail) {
-            const row = { time: new Date().toLocaleString("th-TH"), actor: getActorName(), action, staffName: staffName || "-", detail: detail || "" };
+            const row = {
+                time: new Date().toLocaleString("th-TH"),
+                actor: String(window.currentUser?.name || window.currentUser?.username || window.currentUser?.role || "UNKNOWN").toUpperCase(),
+                action,
+                staffName: staffName || "-",
+                detail: detail || ""
+            };
             window.auditLog.unshift(row);
             if (window.auditLog.length > 500) window.auditLog.length = 500;
             localStorage.setItem("auditLog", JSON.stringify(window.auditLog));
         }
 
-        window.openAuditModal = function() {
-            renderAuditLog();
-            document.getElementById("audit-modal")?.classList.remove("hidden");
-        };
-
-        window.closeAuditModal = function() {
-            document.getElementById("audit-modal")?.classList.add("hidden");
-        };
-
-        function renderAuditLog() {
-            const box = document.getElementById("audit-log-list");
-            if (!box) return;
-            if (!window.auditLog.length) {
-                box.innerHTML = `<div class="p-8 text-center text-slate-500">ยังไม่มีประวัติการแก้ไข</div>`;
-                return;
-            }
-            box.innerHTML = window.auditLog.map(r => `
-                <div class="audit-row">
-                    <div class="text-slate-400">${r.time}</div>
-                    <div class="text-indigo-300 font-bold">${r.actor}</div>
-                    <div>
-                        <div class="font-bold text-slate-100">${r.action} — ${r.staffName}</div>
-                        <div class="text-slate-400">${r.detail || ""}</div>
-                    </div>
-                </div>
-            `).join("");
+        function pushUndoSnapshot(action = "แก้ไขข้อมูล") {
+            try {
+                window.undoStack.push({
+                    action,
+                    snapshot: JSON.stringify({
+                        staffList: window.currentStaffList || [],
+                        shiftTimes: window.shiftTimes || {},
+                        resignedEmployees: window.resignedEmployees || [],
+                        attendanceChecks: window.attendanceChecks || {}
+                    })
+                });
+                if (window.undoStack.length > 30) window.undoStack.shift();
+            } catch(e) {}
         }
 
-        window.clearAuditLog = function() {
-            if (!confirm("ล้าง Audit Log ทั้งหมด?")) return;
-            window.auditLog = [];
-            localStorage.setItem("auditLog", "[]");
-            renderAuditLog();
+        window.undoLastChange = function() {
+            const item = window.undoStack.pop();
+            if (!item) return alert("ยังไม่มีรายการให้ย้อนกลับ");
+            const data = JSON.parse(item.snapshot);
+            window.currentStaffList = data.staffList || [];
+            window.shiftTimes = data.shiftTimes || {};
+            window.resignedEmployees = data.resignedEmployees || [];
+            window.attendanceChecks = data.attendanceChecks || {};
+            updateDynamicUI();
+            addAuditLog("UNDO", "-", item.action);
+        };
+
+        window.toggleDraftMode = function() {
+            window.draftMode = !window.draftMode;
+            const btn = document.getElementById("draft-mode-btn");
+            if (btn) btn.textContent = window.draftMode ? "📝 Draft ON" : "📝 Draft";
         };
 
         function downloadCsv(filename, rows) {
@@ -6305,265 +6181,26 @@ function renderDynamicShiftStats() {
             URL.revokeObjectURL(a.href);
         }
 
-        window.exportAuditLog = function() {
-            const rows = [["time","actor","action","staffName","detail"], ...window.auditLog.map(r => [r.time,r.actor,r.action,r.staffName,r.detail])];
-            downloadCsv("audit_log.csv", rows);
-        };
-
         window.exportScheduleCSV = function() {
-            const days = daysInMonth(currentYear, currentMonth);
+            const days = daysInMonth(window.currentYear, window.currentMonth);
             const header = ["team","rank","name","code","workType","shift","login","break", ...Array.from({length:days},(_,i)=>String(i+1))];
             const rows = [header];
             (window.currentStaffList || []).forEach(p => {
                 rows.push([p.team,p.rank,p.name,p.code,p.workType,p.shift,window.shiftTimes?.[p.shift]?.login || "",window.shiftTimes?.[p.shift]?.rest || "", ...Array.from({length:days},(_,i)=> typeof getStaffDayValueStrict === "function" ? getStaffDayValueStrict(p,i+1) : "")]);
             });
-            downloadCsv(`schedule_${currentYear}_${String(currentMonth).padStart(2,"0")}.csv`, rows);
-            addAuditLog("EXPORT", "-", "Export schedule CSV");
+            downloadCsv(`schedule_${window.currentYear || new Date().getFullYear()}_${String(window.currentMonth || new Date().getMonth()+1).padStart(2,"0")}.csv`, rows);
         };
 
-        function showQuotaTooltip(staff, event) {
-            const tip = document.getElementById("quota-tooltip");
-            if (!tip || !staff) return;
-            const q = calculateLeaveQuota(staff);
-            tip.innerHTML = `
-                <div class="font-black text-white mb-1">${staff.name || "-"}</div>
-                <div class="text-slate-400 text-[11px] mb-2">${staff.team || ""} | ${staff.code || ""}</div>
-                <div class="quota-line"><span>O วันหยุด</span><b>${q.O}/5</b></div>
-                <div class="quota-line"><span>PL ลากิจ</span><b>${q.PL}/1</b></div>
-                <div class="quota-line"><span>SL ลาป่วย</span><b>${q.SL}</b></div>
-                <div class="quota-line"><span>L วันลา</span><b>${q.L}</b></div>
-                <div class="quota-line"><span>ช่องว่าง</span><b>${q.blank}</b></div>
-            `;
-            tip.classList.remove("hidden");
-            tip.style.left = Math.min(event.clientX + 14, window.innerWidth - 230) + "px";
-            tip.style.top = Math.min(event.clientY + 14, window.innerHeight - 170) + "px";
-        }
 
-        function hideQuotaTooltip() {
-            document.getElementById("quota-tooltip")?.classList.add("hidden");
-        }
-
-        function addDepartmentTracker() {
-            let wrap = document.getElementById("department-tracker");
-            if (!wrap) {
-                const dynamicBox = document.getElementById("dynamic-shift-stats");
-                if (!dynamicBox) return;
-                wrap = document.createElement("div");
-                wrap.id = "department-tracker";
-                wrap.className = "grid grid-cols-2 md:grid-cols-4 gap-3 my-4";
-                dynamicBox.insertAdjacentElement("afterend", wrap);
-            }
-            const tags = {};
-            (typeof getActiveStaffForStats === "function" ? getActiveStaffForStats() : (window.currentStaffList || [])).forEach(p => {
-                const tag = String(p.department || p.dept || p.tag || p.line || p.roleTag || p.team || "OTHER").toUpperCase();
-                tags[tag] = (tags[tag] || 0) + 1;
-            });
-            wrap.innerHTML = Object.entries(tags).sort().slice(0,8).map(([k,v]) => `
-                <button onclick="setDepartmentFilter('${k}')" class="dept-card text-left">
-                    <div class="text-xs text-slate-400">${k}</div>
-                    <b>${v} คน</b>
-                </button>
-            `).join("");
-        }
-
-        window.setDepartmentFilter = function(tag) {
-            window.activeDepartmentFilter = tag;
-            renderTable();
-            showToast(`Filter: ${tag}`);
-        };
-
-        window.quickResetProfile = function(staffId) {
-            const staff = (window.currentStaffList || []).find(p => String(p.id) === String(staffId) || String(p.code) === String(staffId));
-            if (!staff) return alert("ไม่พบพนักงาน");
-            if (!canEditStaffField(staff, "editDay")) return alert("ไม่มีสิทธิ์ล้างตารางพนักงานคนนี้");
-            if (!confirm(`ล้าง O / L / PL / SL ของ ${staff.name} ทั้งเดือน?`)) return;
-            pushUndoSnapshot(`Quick reset ${staff.name}`);
-            const days = daysInMonth(currentYear, currentMonth);
-            for (let d=1; d<=days; d++) {
-                const v = String(typeof getStaffDayValueStrict === "function" ? getStaffDayValueStrict(staff,d) : "").toUpperCase();
-                if (["O","L","PL","SL"].includes(v)) setStaffDayValueStrict(staff,d,"");
-            }
-            addAuditLog("QUICK RESET", staff.name, "ล้าง O/L/PL/SL ทั้งเดือน");
-            updateDynamicUI();
-            if (!window.draftMode) commitData();
-        };
-
-        function enhanceTableAfterRender() {
-            const tbody = document.getElementById("staff-table-body");
-            if (!tbody) return;
-            const today = new Date().getDate();
-            const days = daysInMonth(currentYear, currentMonth);
-
-            (window.currentStaffList || []).forEach(staff => {
-                const row = Array.from(tbody.querySelectorAll("tr")).find(r => r.textContent.includes(staff.name) && r.textContent.includes(String(staff.code || "")));
-                if (!row) return;
-                const nameCell = Array.from(row.querySelectorAll("td")).find(td => td.textContent.trim().includes(staff.name));
-                if (nameCell && !nameCell.dataset.quotaBound) {
-                    nameCell.dataset.quotaBound = "1";
-                    nameCell.addEventListener("mousemove", e => showQuotaTooltip(staff, e));
-                    nameCell.addEventListener("mouseleave", hideQuotaTooltip);
-                    const btn = document.createElement("button");
-                    btn.className = "quick-reset-btn";
-                    btn.textContent = "🧹";
-                    btn.title = "ล้างตารางรายบุคคล";
-                    btn.onclick = ev => { ev.stopPropagation(); window.quickResetProfile(staff.id || staff.code); };
-                    nameCell.appendChild(btn);
-                }
-            });
-
-            document.querySelectorAll(".schedule-full-card tr").forEach(tr => {
-                const cells = tr.children;
-                for (let idx=11; idx<cells.length; idx++) {
-                    const day = idx - 10;
-                    if (day === today) cells[idx].classList.add("today-col");
-                    if (tr.querySelector("td") && day >= 1 && day <= days) {
-                        const tx = cells[idx].textContent.trim().toUpperCase();
-                        if (!tx || tx === "." || tx === "-") cells[idx].classList.add("blank-alert");
-                        if (tx === "PL") cells[idx].classList.add("leave-pl-cell");
-                        if (tx === "SL") cells[idx].classList.add("leave-sl-cell");
-                    }
-                }
-            });
-
-            const table = tbody.closest("table");
-            if (table) Array.from(table.querySelectorAll("tr")).slice(-5).forEach(r => r.classList.add("sticky-table-summary"));
-        }
-
-
-        if (!window.__v52ObserverInstalled) {
-            window.__v52ObserverInstalled = true;
-            const __v52obs = new MutationObserver(() => {
-                clearTimeout(window.__v52Timer);
-                window.__v52Timer = setTimeout(() => {
-                    try {
-                        renderDynamicShiftStats();
-                        hideOldDuplicateStats();
-                        rebuildWFHCheckLeaveColumns();
-                        addDepartmentTracker();
-                        enhanceTableAfterRender();
-                        updateDraftBadge();
-                    } catch(e) {}
-                }, 150);
-            });
+        if (!window.__v55StartupInstalled) {
+            window.__v55StartupInstalled = true;
             document.addEventListener("DOMContentLoaded", () => {
-                __v52obs.observe(document.body, { childList: true, subtree: true });
                 setTimeout(() => {
-                    try {
-                        renderDynamicShiftStats();
-                        hideOldDuplicateStats();
-                        rebuildWFHCheckLeaveColumns();
-                        addDepartmentTracker();
-                        enhanceTableAfterRender();
-                        updateDraftBadge();
-                    } catch(e) {}
-                }, 700);
-            });
-        }
-
-
-        function getCloudStatusElement() {
-            const all = Array.from(document.querySelectorAll("span,div,button"));
-            return all.find(el => {
-                const t = (el.textContent || "").trim();
-                return t.includes("ออนไลน์") || t.includes("โหลดคลาวด์") || t.includes("Cloud") || t.includes("Local");
-            });
-        }
-
-        function setCloudStatus(mode, message) {
-            const el = typeof getCloudStatusElement === "function" ? getCloudStatusElement() : null;
-            if (!el) {
-                console.warn("cloud status element not found:", message);
-                return;
-            }
-            el.textContent = message || "";
-            el.classList.remove("cloud-status-ok","cloud-status-warn","cloud-status-error");
-            el.classList.add(mode === "ok" ? "cloud-status-ok" : mode === "warn" ? "cloud-status-warn" : "cloud-status-error");
-        }
-
-        function isFirebaseReady() {
-            return typeof db !== "undefined" &&
-                   typeof doc === "function" &&
-                   typeof getDoc === "function" &&
-                   typeof setDoc === "function";
-        }
-
-        function loadLocalBackupIntoMemory() {
-            try {
-                const docId = getScheduleDocId();
-                const staff = localStorage.getItem(`staff_${docId}`);
-                const shift = localStorage.getItem(`shift_${docId}`);
-                const deleted = localStorage.getItem(`deletedShiftCodes_${docId}`);
-                const roles = localStorage.getItem(`rolePermissions_${docId}`);
-                const attendance = localStorage.getItem(`attendanceChecks_${docId}`);
-                const resigned = localStorage.getItem(`resignedEmployees_${docId}`);
-                const audit = localStorage.getItem(`auditLog_${docId}`);
-
-                if (staff) window.currentStaffList = JSON.parse(staff);
-                if (shift) window.shiftTimes = JSON.parse(shift);
-                if (deleted) window.deletedShiftCodes = JSON.parse(deleted);
-                if (roles) window.customRolePermissions = JSON.parse(roles);
-                if (attendance) window.attendanceChecks = JSON.parse(attendance);
-                if (resigned) window.resignedEmployees = JSON.parse(resigned);
-                if (audit) window.auditLog = JSON.parse(audit);
-                return !!staff;
-            } catch (e) {
-                console.warn("load local backup failed", e);
-                return false;
-            }
-        }
-
-        async function loadScheduleSafe() {
-            const docId = getScheduleDocId();
-
-            if (!isFirebaseReady()) {
-                loadLocalBackupIntoMemory();
-                setCloudStatus("warn", "● ใช้ข้อมูลในเครื่อง");
-                updateDynamicUI();
-                return false;
-            }
-
-            try {
-                const snap = await getDoc(doc(db, "schedules", docId));
-                if (snap.exists()) {
-                    const data = snap.data();
-                    if (data.staffList) window.currentStaffList = data.staffList;
-                    if (data.shiftTimes) window.shiftTimes = data.shiftTimes;
-                    if (data.deletedShiftCodes) window.deletedShiftCodes = data.deletedShiftCodes;
-                    if (data.rolePermissions) {
-                        window.customRolePermissions = data.rolePermissions;
-                        if (typeof saveRolePermissionsLocal === "function") saveRolePermissionsLocal();
-                    }
-                    if (data.attendanceChecks) window.attendanceChecks = data.attendanceChecks;
-                    if (data.resignedEmployees) window.resignedEmployees = data.resignedEmployees;
-                    if (data.auditLog) {
-                        window.auditLog = data.auditLog;
-                        localStorage.setItem("auditLog", JSON.stringify(window.auditLog));
-                    }
-                    saveLocalScheduleBackup();
-                    setCloudStatus("ok", "● ออนไลน์: ซิงค์ล่าสุดแล้ว");
-                    updateDynamicUI();
-                    return true;
-                }
-
-                // ไม่มีเอกสารบน Cloud ให้ใช้ local ก่อน แล้วพร้อม save ขึ้น Cloud ครั้งแรก
-                loadLocalBackupIntoMemory();
-                setCloudStatus("warn", "● ยังไม่มีข้อมูล Cloud: ใช้ข้อมูลในเครื่อง");
-                updateDynamicUI();
-                return false;
-            } catch (err) {
-                console.error("Cloud load failed:", err);
-                loadLocalBackupIntoMemory();
-                setCloudStatus("warn", "● โหลดคลาวด์ไม่ได้: ใช้ข้อมูลในเครื่อง");
-                updateDynamicUI();
-                return false;
-            }
-        }
-
-
-        if (!window.__v53CloudLoaderInstalled) {
-            window.__v53CloudLoaderInstalled = true;
-            document.addEventListener("DOMContentLoaded", () => {
-                setTimeout(() => { try { loadScheduleSafe(); } catch(e) { console.error(e); } }, 300);
+                    safeCall("initial load", () => {
+                        if (typeof window.loadFromCloud === "function") window.loadFromCloud();
+                        else updateDynamicUI();
+                    });
+                }, 300);
             });
         }
 
