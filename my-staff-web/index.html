@@ -479,6 +479,124 @@
         /* v3.7 modal autosave close + safe i18n */
         .auto-close-after-save {}
 
+
+
+        /* v4 sticky monthly status summary + today highlight + no-holiday warning */
+        .today-col-highlight {
+            background: rgba(245, 158, 11, 0.20) !important;
+            box-shadow: inset 1px 0 0 rgba(245, 158, 11, 0.55), inset -1px 0 0 rgba(245, 158, 11, 0.55);
+        }
+        th.today-col-highlight {
+            background: rgba(245, 158, 11, 0.34) !important;
+            color: #fde68a !important;
+        }
+        tr.no-holiday-warning-row td {
+            background: rgba(245, 158, 11, 0.20) !important;
+            color: #111827 !important;
+            box-shadow: inset 0 1px 0 rgba(245, 158, 11, 0.35), inset 0 -1px 0 rgba(245, 158, 11, 0.35);
+        }
+        tr.no-holiday-warning-row td * { color: inherit; }
+        tr.no-holiday-warning-row .shift-select,
+        tr.no-holiday-warning-row select {
+            color: inherit !important;
+        }
+        .monthly-status-sticky {
+            position: sticky;
+            bottom: 0;
+            z-index: 9990;
+            margin-top: 14px;
+            background: rgba(15, 23, 42, 0.96);
+            border: 1px solid rgba(51, 65, 85, 0.95);
+            border-radius: 18px;
+            padding: 12px;
+            box-shadow: 0 -12px 30px rgba(0,0,0,0.35);
+            backdrop-filter: blur(16px);
+        }
+        .monthly-status-grid {
+            display: grid;
+            grid-template-columns: 1.05fr repeat(5, minmax(170px, 1fr));
+            gap: 10px;
+            align-items: stretch;
+        }
+        @media (max-width: 1280px) {
+            .monthly-status-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        @media (max-width: 640px) {
+            .monthly-status-grid { grid-template-columns: 1fr; }
+        }
+        .monthly-status-card {
+            position: relative;
+            min-height: 96px;
+            border-radius: 14px;
+            border: 1px solid rgba(59,130,246,0.35);
+            background: linear-gradient(135deg, rgba(15,23,42,0.95), rgba(30,41,59,0.68));
+            padding: 14px 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            overflow: hidden;
+        }
+        .monthly-status-card .status-icon {
+            width: 54px;
+            min-width: 54px;
+            height: 54px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            opacity: .95;
+        }
+        .monthly-status-card .status-icon svg { width: 46px; height: 46px; }
+        .monthly-status-card .status-title {
+            font-size: 14px;
+            font-weight: 800;
+            color: #cbd5e1;
+            line-height: 1.1;
+        }
+        .monthly-status-card .status-value {
+            font-size: 28px;
+            font-weight: 950;
+            line-height: 1.1;
+            margin-top: 4px;
+        }
+        .monthly-status-card .status-list-btn {
+            position: absolute;
+            right: 10px;
+            bottom: 10px;
+            font-size: 11px;
+            font-weight: 900;
+            color: #fbbf24;
+            border: 1px solid rgba(245,158,11,.45);
+            background: rgba(15,23,42,.65);
+            padding: 6px 9px;
+            border-radius: 10px;
+        }
+        .monthly-status-card .status-list-btn:hover { background: rgba(245,158,11,.16); }
+        .status-date-card { border-color: rgba(96,165,250,.25); }
+        .status-date-card .status-value { color: #60a5fa; font-size: 22px; }
+        .status-office-card { border-color: rgba(59,130,246,.45); background: linear-gradient(135deg, rgba(30,64,175,.28), rgba(15,23,42,.85)); }
+        .status-office-card .status-value, .status-office-card .status-icon { color: #60a5fa; }
+        .status-wfh-card { border-color: rgba(16,185,129,.45); background: linear-gradient(135deg, rgba(6,95,70,.30), rgba(15,23,42,.85)); }
+        .status-wfh-card .status-value, .status-wfh-card .status-icon { color: #4ade80; }
+        .status-sl-card { border-color: rgba(168,85,247,.45); background: linear-gradient(135deg, rgba(88,28,135,.32), rgba(15,23,42,.85)); }
+        .status-sl-card .status-value, .status-sl-card .status-icon { color: #c084fc; }
+        .status-pl-card { border-color: rgba(236,72,153,.45); background: linear-gradient(135deg, rgba(131,24,67,.35), rgba(15,23,42,.85)); }
+        .status-pl-card .status-value, .status-pl-card .status-icon { color: #fb7185; }
+        .status-total-card { border-color: rgba(96,165,250,.42); background: linear-gradient(135deg, rgba(30,58,138,.35), rgba(15,23,42,.85)); }
+        .status-total-card .status-value, .status-total-card .status-icon { color: #60a5fa; }
+        .status-list-modal-row {
+            display: grid;
+            grid-template-columns: 52px 76px 1fr 110px 120px;
+            gap: 10px;
+            align-items: center;
+            padding: 10px 12px;
+            border-bottom: 1px solid rgba(51,65,85,.65);
+            font-size: 12px;
+        }
+        @media (max-width: 720px) {
+            .status-list-modal-row { grid-template-columns: 42px 70px 1fr; }
+            .status-list-modal-row .hide-sm { display: none; }
+        }
+
 </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen antialiased selection:bg-indigo-500/30">
@@ -2762,6 +2880,7 @@ function renderTable() {
                 const editable = canEditTeam(p.team);
                 const times = window.shiftTimes[p.shift] || { login: "", rest: "" };
                 const tOffs = p.offs.length, tLeaves = p.leaves.length;
+                const noHolidayWarning = !isResigned && Number(tOffs) === 0 && Number(tLeaves) === 0;
                 const tCol = typeof getTeamBadgeClass === "function"
                     ? getTeamBadgeClass(p.team)
                     : (p.team === "WIN2" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : p.team === "WIN3" ? "bg-indigo-500/10 text-indigo-400 border-indigo-500/20" : "bg-rose-500/10 text-rose-400 border-rose-500/20");
@@ -2801,6 +2920,8 @@ function renderTable() {
                     const isL = p.leaves.includes(d);
                     const isR = isResignDayForCell(p, d);
                     const isW = ["ส","อา"].includes(daysOfWeek[(d-1)%7]);
+                    const _nowForTodayCol = new Date();
+                    const isTodayCol = Number(window.selectedYear) === _nowForTodayCol.getFullYear() && Number(window.selectedMonth) === (_nowForTodayCol.getMonth() + 1) && d === _nowForTodayCol.getDate();
                     let bg = isW ? "bg-indigo-950/10" : "bg-slate-900/10";
                     let txt = "•", color = "text-blue-400";
                     if (isR) { bg = "resigned-day-cell"; txt = `<span class="resigned-day-mark">ออก</span>`; color = ""; }
@@ -2814,10 +2935,11 @@ function renderTable() {
                     const clickHandler = isResigned ? "" : `onclick="toggleDayOff(${p.id}, ${d})"`;
                     const cursorCls = isResigned ? "cursor-not-allowed opacity-90" : (editable ? "cursor-pointer" : "cursor-not-allowed opacity-70");
                     const tooltipName = isR ? `${p.name} | ออกแล้ว ${getResignDateText(resigned)}` : p.name;
-                    html += `<td ${clickHandler} data-day="${d}" data-name="${tooltipName}" data-team="${p.team}" class="day-cell text-center ${cursorCls} p-0.5 border-l border-slate-800/40 text-[11px] ${bg}"><div class="w-7 h-7 flex items-center justify-center mx-auto rounded-md ${color}">${txt}</div></td>`;
+                    html += `<td ${clickHandler} data-day="${d}" data-name="${tooltipName}" data-team="${p.team}" class="day-cell text-center ${cursorCls} p-0.5 border-l border-slate-800/40 text-[11px] ${bg} ${isTodayCol ? 'today-col-highlight' : ''}"><div class="w-7 h-7 flex items-center justify-center mx-auto rounded-md ${color}">${txt}</div></td>`;
                 }
                 const tr = document.createElement("tr");
-                tr.className = `data-row border-b border-slate-800 ${isResigned ? "resigned-row" : ""}`;
+                tr.className = `data-row border-b border-slate-800 ${isResigned ? "resigned-row" : ""} ${noHolidayWarning ? "no-holiday-warning-row" : ""}`;
+                tr.dataset.staffId = String(p.id);
                 tr.innerHTML = html;
                 tbody.appendChild(tr);
             });
@@ -5525,8 +5647,168 @@ function lockTableControlsByPermission() {
             if (e.target.closest(".day-cell")) document.getElementById("day-tooltip").style.display = "none";
         });
 
+
+
+        // v4 sticky summary cards + status list modal
+        function getMonthlyStatusDay() {
+            const now = new Date();
+            const selectedMonth = Number(window.selectedMonth || (now.getMonth() + 1));
+            const selectedYear = Number(window.selectedYear || now.getFullYear());
+            const maxDay = new Date(selectedYear, selectedMonth, 0).getDate();
+            const day = (selectedMonth === now.getMonth() + 1 && selectedYear === now.getFullYear()) ? now.getDate() : Math.min(now.getDate(), maxDay);
+            return { day, month: selectedMonth, year: selectedYear };
+        }
+
+        function getLeaveCodeForSummary(p, day) {
+            if (!p || !Array.isArray(p.leaves) || !p.leaves.map(Number).includes(Number(day))) return "";
+            if (p.leaveTypes && p.leaveTypes[String(day)]) return String(p.leaveTypes[String(day)]).toUpperCase();
+            if (p.leaveTypes && p.leaveTypes[day]) return String(p.leaveTypes[day]).toUpperCase();
+            return "L";
+        }
+
+        function isWorkingForSummary(p, day) {
+            if (!p) return false;
+            if (getResignedRecordByStaff(p)) return false;
+            const off = Array.isArray(p.offs) && p.offs.map(Number).includes(Number(day));
+            const leave = Array.isArray(p.leaves) && p.leaves.map(Number).includes(Number(day));
+            return !off && !leave;
+        }
+
+        function getMonthlyStatusPeople() {
+            const { day } = getMonthlyStatusDay();
+            const list = (window.currentStaffList || []).filter(p => window.currentUser && canViewTeam(p.team));
+            const active = list.filter(p => !getResignedRecordByStaff(p));
+            const office = active.filter(p => p.type === "Office" && isWorkingForSummary(p, day));
+            const wfh = active.filter(p => p.type === "WFH" && isWorkingForSummary(p, day));
+            const sl = active.filter(p => getLeaveCodeForSummary(p, day) === "SL");
+            const pl = active.filter(p => getLeaveCodeForSummary(p, day) === "PL");
+            const total = [...office, ...wfh, ...sl, ...pl];
+            return { day, list, active, office, wfh, sl, pl, total };
+        }
+
+        function statusIconSvg(type) {
+            const attrs = 'fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"';
+            const icons = {
+                date: `<svg ${attrs}><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></svg>`,
+                office: `<svg ${attrs}><path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16"/><path d="M16 8h2a2 2 0 0 1 2 2v11"/><path d="M8 7h4M8 11h4M8 15h4M8 21v-3h4v3M3 21h18"/></svg>`,
+                wfh: `<svg ${attrs}><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10.5V21h14V10.5"/><path d="M9 21v-6h6v6"/><path d="M16 5.8V3h3v5.3"/><path d="M8 12h8"/></svg>`,
+                sl: `<svg ${attrs}><path d="M4 19h16"/><path d="M5 19V9a3 3 0 0 1 3-3h3v13"/><path d="M11 12h6a3 3 0 0 1 3 3v4"/><path d="M7 14h2"/><path d="M15 8v4M13 10h4"/></svg>`,
+                pl: `<svg ${attrs}><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/><path d="M4 21a8 8 0 0 1 16 0"/><path d="M18 4v4M16 6h4"/></svg>`,
+                total: `<svg ${attrs}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`
+            };
+            return icons[type] || icons.total;
+        }
+
+        function ensureMonthlyStatusPanel() {
+            let panel = document.getElementById("monthly-status-sticky");
+            if (panel) return panel;
+            panel = document.createElement("div");
+            panel.id = "monthly-status-sticky";
+            panel.className = "monthly-status-sticky";
+            const tableCard = document.querySelector("#staff-table-body")?.closest(".bg-slate-900.border.border-slate-800.rounded-2xl");
+            if (tableCard && tableCard.parentElement) tableCard.parentElement.insertBefore(panel, tableCard.nextSibling);
+            else document.querySelector(".max-w-[1700px]")?.appendChild(panel);
+            return panel;
+        }
+
+        function makeStatusCard({ kind, title, count, cls, icon, showList = true }) {
+            const listBtn = showList ? `<button type="button" onclick="openStatusListModal('${kind}')" class="status-list-btn">ดูรายชื่อ ›</button>` : "";
+            return `<div class="monthly-status-card ${cls}">
+                <div class="status-icon">${statusIconSvg(icon)}</div>
+                <div>
+                    <div class="status-title">${title}</div>
+                    <div class="status-value">${count}</div>
+                </div>
+                ${listBtn}
+            </div>`;
+        }
+
+        function renderMonthlyStatusPanel() {
+            const panel = ensureMonthlyStatusPanel();
+            if (!panel) return;
+            const data = getMonthlyStatusPeople();
+            const monthLabel = monthNamesTH[data.month] || "";
+            panel.innerHTML = `<div class="monthly-status-grid">
+                <div class="monthly-status-card status-date-card">
+                    <div class="status-icon">${statusIconSvg("date")}</div>
+                    <div>
+                        <div class="status-title">วันนี้</div>
+                        <div class="status-value">${data.day} ${monthLabel.slice(0,3)}. ${data.year}</div>
+                    </div>
+                </div>
+                ${makeStatusCard({ kind:"office", title:"Office ทำงาน", count:`${data.office.length} คน`, cls:"status-office-card", icon:"office" })}
+                ${makeStatusCard({ kind:"wfh", title:"WFH ทำงาน", count:`${data.wfh.length} คน`, cls:"status-wfh-card", icon:"wfh" })}
+                ${makeStatusCard({ kind:"sl", title:"ลาป่วย (SL)", count:`${data.sl.length} คน`, cls:"status-sl-card", icon:"sl" })}
+                ${makeStatusCard({ kind:"pl", title:"ลากิจ (PL)", count:`${data.pl.length} คน`, cls:"status-pl-card", icon:"pl" })}
+                ${makeStatusCard({ kind:"total", title:"รวมทั้งหมด", count:`${data.total.length} คน`, cls:"status-total-card", icon:"total" })}
+            </div>`;
+            markTodayHeaderColumn();
+        }
+
+        function markTodayHeaderColumn() {
+            const now = new Date();
+            if (Number(window.selectedYear) !== now.getFullYear() || Number(window.selectedMonth) !== now.getMonth() + 1) return;
+            const day = now.getDate();
+            const table = document.querySelector("#staff-table-body")?.closest("table");
+            if (!table) return;
+            table.querySelectorAll("thead th").forEach((th, idx) => {
+                th.classList.toggle("today-col-highlight", idx === (10 + day));
+            });
+        }
+
+        window.closeStatusListModal = function() {
+            document.getElementById("status-list-modal")?.classList.add("hidden");
+        };
+
+        window.openStatusListModal = function(kind) {
+            const data = getMonthlyStatusPeople();
+            const map = {
+                office: { title: "รายชื่อ Office ทำงาน", people: data.office },
+                wfh: { title: "รายชื่อ WFH ทำงาน", people: data.wfh },
+                sl: { title: "รายชื่อลาป่วย (SL)", people: data.sl },
+                pl: { title: "รายชื่อลากิจ (PL)", people: data.pl },
+                total: { title: "รายชื่อรวมทั้งหมด", people: data.total }
+            };
+            const item = map[kind] || map.total;
+            const modal = document.getElementById("status-list-modal");
+            const title = document.getElementById("status-list-title");
+            const sub = document.getElementById("status-list-subtitle");
+            const body = document.getElementById("status-list-body");
+            if (!modal || !body) return;
+            if (title) title.textContent = `${item.title} (${item.people.length} คน)`;
+            if (sub) sub.textContent = `ประจำวันที่ ${data.day}/${pad2(data.month)}/${data.year}`;
+            if (!item.people.length) {
+                body.innerHTML = `<div class="p-8 text-center text-slate-500">ไม่พบรายชื่อ</div>`;
+            } else {
+                body.innerHTML = item.people.map((p, idx) => {
+                    const shift = p.shift || "-";
+                    const times = window.shiftTimes?.[shift] || {};
+                    return `<div class="status-list-modal-row">
+                        <div class="text-slate-500">${idx + 1}</div>
+                        <div><span class="px-2 py-0.5 rounded border text-[11px] font-bold ${getTeamBadgeClass ? getTeamBadgeClass(p.team) : 'text-blue-300 border-blue-500/30'}">${p.team || "-"}</span></div>
+                        <div class="font-bold text-slate-100">${p.name || "-"}<div class="text-[11px] text-slate-500 font-normal">${p.code || ""}</div></div>
+                        <div class="hide-sm text-slate-300">${p.type || "-"} / ${shift}</div>
+                        <div class="hide-sm text-slate-400">${times.login || "-"}</div>
+                    </div>`;
+                }).join("");
+            }
+            modal.classList.remove("hidden");
+        };
+
+        const _statusObserver = new MutationObserver(() => {
+            clearTimeout(window.__monthlyStatusTimer);
+            window.__monthlyStatusTimer = setTimeout(renderMonthlyStatusPanel, 80);
+        });
+        setTimeout(() => {
+            const body = document.getElementById("staff-table-body");
+            if (body) _statusObserver.observe(body, { childList: true, subtree: true });
+            renderMonthlyStatusPanel();
+        }, 500);
+
+
         startCloudSync();
         updateDynamicUI();
+        setTimeout(renderMonthlyStatusPanel, 1000);
     </script>
 </body>
 </html>
