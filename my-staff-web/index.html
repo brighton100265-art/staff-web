@@ -4031,7 +4031,20 @@ window.generateWFHOffReport = function() {
 
 
         
-        function wfhPersistMinimal() {
+        
+        /* v6.8 compatibility aliases for removed WFH restore/save functions */
+        function restoreWFHAttendanceNow() {
+            if (typeof wfhRestoreMinimal === "function") return wfhRestoreMinimal();
+        }
+
+        function persistWFHAttendanceNow() {
+            if (typeof wfhPersistMinimal === "function") return wfhPersistMinimal();
+        }
+
+        window.restoreWFHAttendanceNow = restoreWFHAttendanceNow;
+        window.persistWFHAttendanceNow = persistWFHAttendanceNow;
+
+function wfhPersistMinimal() {
             try {
                 const id = getScheduleDocId();
                 localStorage.setItem(`attendanceChecks_${id}`, JSON.stringify(window.attendanceChecks || {}));
