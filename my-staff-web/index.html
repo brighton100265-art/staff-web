@@ -770,7 +770,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
 
         <div class="flex items-center justify-between gap-3 px-5 py-3 border-t border-slate-800 text-[11px] text-slate-500">
             <span id="wfh-present-count-text">แสดง 0 คน</span>
-            <span>เฉพาะพนักงาน WFH ที่ไม่ใช่ O วันหยุด และไม่ใช่ L วันลา</span>
+            <span>เฉพาะพนักงาน WFH ที่ไม่ใช่ O วันหยุด หากติ๊กลา ระบบจะแสดงสถานะลาและอัปเดต L ในตารางหลัก</span>
         </div>
     </div>
 
@@ -3594,7 +3594,15 @@ window.generateWFHOffReport = function() {
                     lines.push(label);
 
                     if (names.length) {
-                        names.forEach(name => lines.push(`- ${name}`));
+                        const shiftPeople = (shiftMap[shiftLabel] || []);
+                        shiftPeople
+                            .map(name => presentPeople.find(p => p.name === name))
+                            .filter(Boolean)
+                            .sort((a,b)=>String(a.name).localeCompare(String(b.name), "en"))
+                            .forEach(p => {
+                                const isLeave = Array.isArray(p.leaves) && p.leaves.some(x => Number(x) === Number(day));
+                                lines.push(`- ${p.name}${isLeave ? " (ลา)" : ""}`);
+                            });
                     } else {
                         lines.push("• ไม่มีพนักงาน WFH หยุด");
                     }
@@ -3688,9 +3696,11 @@ window.generateWFHOffReport = function() {
 
         function isWFHPresentToday(p, day) {
             const isWFH = String(p.type || "").trim().toUpperCase() === "WFH";
-            const isOff = Array.isArray(p.offs) && p.offs.includes(day);
-            const isLeave = Array.isArray(p.leaves) && p.leaves.includes(day);
-            return isWFH && !isOff && !isLeave;
+            const d = Number(day);
+            const isOff = Array.isArray(p.offs) && p.offs.some(x => Number(x) === d);
+            // สำคัญ: คนที่ถูกติ๊ก "ลา" ต้องยังแสดงอยู่ในตารางตรวจ WFH
+            // เพื่อไม่ให้ชื่อหายหลังติ๊ก และให้เห็นสถานะ "ลา" พร้อม L ในตารางหลัก
+            return isWFH && !isOff;
         }
 
         function getPresentTeamShiftLabels(team) {
@@ -3876,18 +3886,45 @@ window.generateWFHOffReport = function() {
             if (checked) p.leaves.push(day);
             p.leaves.sort((a,b)=>Number(a)-Number(b));
 
+            // ทุกครั้งที่ติ๊ก/ยกเลิกลา ให้ถือว่ามีการตรวจแล้วด้วย
+            // เพื่อให้คอลัมน์ "ผู้ตรวจ" และ "เวลาตรวจ" ขึ้นเหมือนการติ๊กตรวจปกติ
+            const key = getWFHCheckKeyStable();
+            const store = ensureAttendanceStoreStable(key);
+            const idKey = String(id);
+            const now = new Date();
+            const checkerName = getCurrentAdminLabel();
+            store[idKey] = {
+                checked: true,
+                checkedBy: checkerName,
+                checkedAt: now.toISOString(),
+                leaveMarked: !!checked
+            };
+
             const row = checkboxEl?.closest("tr");
             if (row) {
                 const statusCell = row.querySelector('[data-wfh-status-cell="1"]');
                 if (statusCell) statusCell.innerHTML = getWFHInlineStatusHtml(p, day);
                 row.classList.toggle("bg-purple-950/15", checked);
+
+                const attendanceBox = row.querySelector('input.attendance-check[type="checkbox"]');
+                if (attendanceBox) attendanceBox.checked = true;
+
+                const cells = row.querySelectorAll("td");
+                const checkerCell = cells[cells.length - 2];
+                const timeCell = cells[cells.length - 1];
+                if (checkerCell) checkerCell.textContent = checkerName;
+                if (timeCell) timeCell.textContent = `${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
             }
+
+            refreshWFHSummaryOnly();
 
             try {
                 if (checkboxEl) checkboxEl.disabled = true;
                 updateDynamicUI();
                 await commitData();
-                showToast(checked ? "บันทึกลาและอัปเดตตาราง L แล้ว" : "ยกเลิกลาวันนี้แล้ว");
+                // รีเฟรชตาราง WFH หลังบันทึก โดยชื่อจะไม่หาย เพราะฟิลเตอร์ไม่ตัดคนที่เป็น L แล้ว
+                if (typeof generateWFHPresentToday === "function") generateWFHPresentToday();
+                showToast(checked ? "บันทึกลา + ผู้ตรวจ/เวลาตรวจแล้ว" : "ยกเลิกลาวันนี้ + อัปเดตผู้ตรวจแล้ว");
             } catch (err) {
                 console.error(err);
                 if (checkboxEl) checkboxEl.checked = !checked;
