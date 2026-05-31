@@ -697,21 +697,7 @@
         .wfh-col-status,.wfh-col-leave,.wfh-col-check,.wfh-col-checker,.wfh-col-time{text-align:center!important;white-space:nowrap}
 
 
-        /* v6.1 WFH persistence + resign count fix */
-        .wfh-present-check,.wfh-leave-check{width:16px;height:16px;cursor:pointer;display:inline-block}
-        .wfh-present-check{accent-color:#10b981}
-        .wfh-leave-check{accent-color:#a855f7}
-        .wfh-col-status,.wfh-col-leave,.wfh-col-check,.wfh-col-checker,.wfh-col-time{text-align:center!important;white-space:nowrap}
-
-
-        /* v6.2 fix WFH persistence/checker/main-table-sync */
-        .wfh-present-check,.wfh-leave-check{width:16px;height:16px;cursor:pointer;display:inline-block}
-        .wfh-present-check{accent-color:#10b981}
-        .wfh-leave-check{accent-color:#a855f7}
-        .wfh-col-status,.wfh-col-leave,.wfh-col-check,.wfh-col-checker,.wfh-col-time{text-align:center!important;white-space:nowrap}
-
-
-        /* v6.3 WFH save and reload fixed */
+        /* v6.7 rollback stable minimal WFH */
         .wfh-present-check,.wfh-leave-check{width:16px;height:16px;cursor:pointer;display:inline-block}
         .wfh-present-check{accent-color:#10b981}
         .wfh-leave-check{accent-color:#a855f7}
@@ -2362,12 +2348,10 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
             localStorage.setItem(`deletedShiftCodes_${getScheduleDocId()}`, JSON.stringify(window.deletedShiftCodes || []));
             localStorage.setItem(`resigned_${getScheduleDocId()}`, JSON.stringify(window.resignedRecords || {}));
             localStorage.setItem(`attendance_${getScheduleDocId()}`, JSON.stringify(window.attendanceChecks || {}));
-            localStorage.setItem(`attendanceChecks_${getScheduleDocId()}`, JSON.stringify(window.attendanceChecks || {}));
         }
         function loadLocalBackup() {
             const s1 = localStorage.getItem(`staff_${getScheduleDocId()}`);
             const s2 = localStorage.getItem(`shift_${getScheduleDocId()}`);
-            const att1 = localStorage.getItem(`attendanceChecks_${getScheduleDocId()}`) || localStorage.getItem(`attendance_${getScheduleDocId()}`);
             if (s1) {
                 const parsed = ensureStaffShape(JSON.parse(s1));
                 if (parsed.length) window.currentStaffList = parsed;
@@ -2375,9 +2359,6 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
             if (s2) {
                 const parsedShift = JSON.parse(s2);
                 if (parsedShift && Object.keys(parsedShift).length) window.shiftTimes = parsedShift;
-            }
-            if (att1) {
-                try { window.attendanceChecks = JSON.parse(att1) || window.attendanceChecks || {}; } catch(e) {}
             }
         }
 
@@ -2633,21 +2614,17 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
 
         async function commitData() {
             const localOK = saveLocalScheduleBackup();
-            persistWFHAttendanceNow();
             const payload = buildSafeSchedulePayload();
-
             try {
                 if (isFirebaseReady()) {
                     await setDoc(doc(db, "schedules", getScheduleDocId()), payload, { merge: true });
                     setCloudStatus("ok", "● ออนไลน์: ซิงค์ล่าสุดแล้ว");
                     return true;
                 }
-
                 setCloudStatus("warn", "● บันทึกในเครื่องแล้ว");
                 return localOK;
             } catch(e) {
                 console.error("cloud save failed", e);
-                persistWFHAttendanceNow();
                 if (localOK) {
                     setCloudStatus("warn", "● บันทึกในเครื่องแล้ว / Cloud ไม่สำเร็จ");
                     return true;
@@ -2899,7 +2876,11 @@ window.previewDeleteEmployeeByCode = function() {
             repairOldTopStats();
         
             safeCall("hideOldDuplicateStats", () => { hideOldDuplicateStats(); });
-}
+        
+            
+        
+            safeCall("rebuildWFHCheckLeaveColumns", () => {  });
+        }
 
         
         function getResignedRecordByStaff(p) {
@@ -3897,7 +3878,7 @@ window.generateWFHOffReport = function() {
                 return;
             }
 
-            const admin = (typeof hasPermission === "function" && hasPermission("checkWFH")) || (typeof isAdminUser === "function" && isAdminUser());
+            const admin = hasPermission("checkWFH");
             let html = `
                 <div class="grid grid-cols-[48px_80px_1fr_72px_86px] gap-2 px-4 py-2 bg-slate-900 border-b border-slate-800 text-slate-400 font-semibold">
                     <div>ลำดับ</div>
@@ -3967,23 +3948,20 @@ window.generateWFHOffReport = function() {
         }
 
         function isAttendanceVerifiedStable(id, key = getWFHCheckKeyStable()) {
-            const rec = getWFHAttendanceRecord(id, getWFHInlineDay());
-            return !!rec?.checked;
+            const rec = getAttendanceRecordStable(id, key);
+            return !!(rec && rec.checked !== false);
         }
 
         function getAttendanceCheckerStable(id, key = getWFHCheckKeyStable()) {
-            const rec = getWFHAttendanceRecord(id, getWFHInlineDay());
-            return rec?.checkedBy || rec?.checker || "-";
+            return getAttendanceRecordStable(id, key)?.checkedBy || "-";
         }
 
         function getAttendanceTimeStable(id, key = getWFHCheckKeyStable()) {
-            const rec = getWFHAttendanceRecord(id, getWFHInlineDay());
-            const raw = rec?.time || rec?.checkedAt || rec?.checkedTime || "";
-            if (!raw) return "-";
-            if (/^\d{1,2}:\d{2}$/.test(String(raw))) return raw;
-            const d = new Date(raw);
-            if (Number.isNaN(d.getTime())) return "-";
-            return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+            const rec = getAttendanceRecordStable(id, key);
+            if (!rec || !rec.checkedAt) return "-";
+            const t = new Date(rec.checkedAt);
+            if (Number.isNaN(t.getTime())) return "-";
+            return `${pad2(t.getHours())}:${pad2(t.getMinutes())}`;
         }
 
         function refreshWFHSummaryOnly() {
@@ -4003,7 +3981,6 @@ window.generateWFHOffReport = function() {
         }
 
         window.toggleAttendanceVerified = async function(id, checked, checkboxEl) {
-            const staff = getStaffByInlineId(id);
             const canCheck = (typeof hasPermission === "function" && hasPermission("checkWFH")) ||
                 (typeof isAdminUser === "function" && isAdminUser());
 
@@ -4013,38 +3990,37 @@ window.generateWFHOffReport = function() {
                 return;
             }
 
+            if (typeof ensureAttendanceStoreStable !== "function" || typeof getWFHCheckKeyStable !== "function") {
+                alert("ระบบบันทึกตรวจยังไม่พร้อม");
+                if (checkboxEl) checkboxEl.checked = !checked;
+                return;
+            }
+
+            const store = ensureAttendanceStoreStable(getWFHCheckKeyStable());
             const now = new Date();
-            const checkerName = getAdminLabelV63();
+            const checker = getAdminLabelMinimal();
             const timeText = `${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
             const row = checkboxEl?.closest("tr");
 
             if (checked) {
-                saveWFHAttendanceRecord(id, {
-                    checked: true,
-                    checkedBy: checkerName,
-                    checkedAt: now.toISOString(),
-                    time: timeText
-                });
-
-                // ตรวจแล้ว = มาทำงาน ต้องยกเลิก L ในตารางหลักทันที
-                if (staff && typeof setStaffDayValueStrict === "function") {
-                    setStaffDayValueStrict(staff, getWFHInlineDay(), "");
-                }
-
-                setWFHRowDisplay(row, "work", checkerName, timeText);
+                store[String(id)] = { checked:true, checkedBy: checker, checkedAt: now.toISOString(), time: timeText };
             } else {
-                removeWFHAttendanceRecord(id);
-                setWFHRowDisplay(row, "pending", "-", "-");
+                delete store[String(id)];
             }
 
-            refreshWFHSummaryOnly();
-            saveWFHAndRefreshMain();
+            const statusCell = row?.querySelector("[data-wfh-status-cell]");
+            const checkerCell = row?.querySelector("[data-wfh-checker-cell]");
+            const timeCell = row?.querySelector("[data-wfh-time-cell]");
+            if (statusCell) statusCell.innerHTML = checked
+                ? `<span class="inline-flex px-2 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 text-xs font-bold whitespace-nowrap">มาทำงาน</span>`
+                : `<span class="inline-flex px-2 py-1 rounded-full bg-slate-500/15 text-slate-300 border border-slate-500/25 text-xs font-bold whitespace-nowrap">รอตรวจ</span>`;
+            if (checkerCell) checkerCell.textContent = checked ? checker : "-";
+            if (timeCell) timeCell.textContent = checked ? timeText : "-";
 
-            try {
-                await commitData();
-            } catch(e) {
-                console.warn("cloud save failed, local persisted", e);
-            }
+            wfhPersistMinimal();
+            if (typeof refreshWFHSummaryOnly === "function") refreshWFHSummaryOnly();
+
+            try { await commitData(); } catch(e) { console.warn(e); }
         };
 
 
@@ -4054,7 +4030,43 @@ window.generateWFHOffReport = function() {
         
 
 
-        window.toggleWFHLeaveInline = async function(id, checked, checkboxEl) {
+        
+        function wfhPersistMinimal() {
+            try {
+                const id = getScheduleDocId();
+                localStorage.setItem(`attendanceChecks_${id}`, JSON.stringify(window.attendanceChecks || {}));
+                localStorage.setItem(`staff_${id}`, JSON.stringify(window.currentStaffList || []));
+            } catch(e) { console.warn(e); }
+        }
+
+        function wfhRestoreMinimal() {
+            try {
+                const id = getScheduleDocId();
+                const a = localStorage.getItem(`attendanceChecks_${id}`);
+                if (a) window.attendanceChecks = JSON.parse(a) || {};
+            } catch(e) { console.warn(e); }
+        }
+
+        function getWFHInlineDay() {
+            return Number(document.getElementById("wfh-present-day")?.value || window.currentCheckDay || new Date().getDate());
+        }
+
+        function getStaffByInlineId(id) {
+            return (window.currentStaffList || []).find(p => String(p.id) === String(id) || String(p.code) === String(id));
+        }
+
+        function getAdminLabelMinimal() {
+            if (typeof getCurrentAdminLabel === "function") return getCurrentAdminLabel();
+            return String(window.currentUser?.name || window.currentUser?.username || window.currentUser?.role || "ADMIN").toUpperCase();
+        }
+
+        function isWFHLeaveInline(p, day) {
+            const n = Number(day);
+            const v = String(typeof getStaffDayValueStrict === "function" ? getStaffDayValueStrict(p, n) : "").toUpperCase();
+            return ["L","PL","SL"].includes(v);
+        }
+
+window.toggleWFHLeaveInline = async function(id, checked, checkboxEl) {
             const staff = getStaffByInlineId(id);
             if (!staff) {
                 alert("ไม่พบพนักงาน");
@@ -4062,7 +4074,11 @@ window.generateWFHOffReport = function() {
                 return;
             }
 
-            if (typeof canEditStaffField === "function" && !canEditStaffField(staff, "editDay")) {
+            const canLeave = (typeof canEditStaffField === "function" && canEditStaffField(staff, "editDay")) ||
+                (typeof hasPermission === "function" && hasPermission("editDay")) ||
+                (typeof isAdminUser === "function" && isAdminUser());
+
+            if (!canLeave) {
                 alert("ไม่มีสิทธิ์แก้ไขวันลา");
                 if (checkboxEl) checkboxEl.checked = !checked;
                 return;
@@ -4071,26 +4087,28 @@ window.generateWFHOffReport = function() {
             const day = getWFHInlineDay();
             const row = checkboxEl?.closest("tr");
             const presentBox = row?.querySelector("input.wfh-present-check");
+            const statusCell = row?.querySelector("[data-wfh-status-cell]");
+            const checkerCell = row?.querySelector("[data-wfh-checker-cell]");
+            const timeCell = row?.querySelector("[data-wfh-time-cell]");
 
             if (checked) {
-                if (typeof setStaffDayValueStrict === "function") setStaffDayValueStrict(staff, day, "L");
-                removeWFHAttendanceRecord(id, day);
-
+                setStaffDayValueStrict(staff, day, "L");
                 if (presentBox) presentBox.checked = false;
-                setWFHRowDisplay(row, "leave", "-", "-");
+                if (typeof ensureAttendanceStoreStable === "function" && typeof getWFHCheckKeyStable === "function") {
+                    delete ensureAttendanceStoreStable(getWFHCheckKeyStable())[String(id)];
+                }
+                if (statusCell) statusCell.innerHTML = `<span class="inline-flex px-2 py-1 rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/25 text-xs font-bold whitespace-nowrap">ลา</span>`;
+                if (checkerCell) checkerCell.textContent = "-";
+                if (timeCell) timeCell.textContent = "-";
             } else {
-                if (typeof setStaffDayValueStrict === "function") setStaffDayValueStrict(staff, day, "");
-                setWFHRowDisplay(row, "pending", "-", "-");
+                setStaffDayValueStrict(staff, day, "");
+                if (statusCell) statusCell.innerHTML = `<span class="inline-flex px-2 py-1 rounded-full bg-slate-500/15 text-slate-300 border border-slate-500/25 text-xs font-bold whitespace-nowrap">รอตรวจ</span>`;
             }
 
-            refreshWFHSummaryOnly();
-            saveWFHAndRefreshMain();
-
-            try {
-                await commitData();
-            } catch(e) {
-                console.warn("cloud save failed, local persisted", e);
-            }
+            wfhPersistMinimal();
+            if (typeof refreshWFHSummaryOnly === "function") refreshWFHSummaryOnly();
+            try { if (typeof renderTable === "function") renderTable(); } catch(e) { console.warn(e); }
+            try { await commitData(); } catch(e) { console.warn(e); }
         };
 
         window.toggleWFHPresentInline = async function(id, checked, checkboxEl) {
@@ -4101,265 +4119,19 @@ window.generateWFHOffReport = function() {
                 return;
             }
 
-            if (typeof hasPermission === "function" && !hasPermission("checkWFH")) {
-                alert("ไม่มีสิทธิ์ตรวจ WFH");
-                if (checkboxEl) checkboxEl.checked = !checked;
-                return;
-            }
-
             const day = getWFHInlineDay();
             const row = checkboxEl?.closest("tr");
             const leaveBox = row?.querySelector("input.wfh-leave-check");
 
             if (checked) {
                 if (leaveBox) leaveBox.checked = false;
-                if (typeof setStaffDayValueStrict === "function") setStaffDayValueStrict(staff, day, "");
+                setStaffDayValueStrict(staff, day, "");
             }
 
             await window.toggleAttendanceVerified(id, checked, checkboxEl);
-            saveWFHAndRefreshMain();
-        };
-
-
-        
-        
-
-
-        
-
-
-        
-
-
-        
-
-
-
-
-
-        
-
-
-        
-
-
-        
-
-
-        
-
-
-        
-
-
-        
-
-
-
-        if (!window.__v62RestoreInstalled) {
-            window.__v62RestoreInstalled = true;
-            document.addEventListener("DOMContentLoaded", () => {
-                setTimeout(() => {
-                    try { restoreWFHAttendanceNow(); } catch(e) { console.warn(e); }
-                }, 100);
-            });
-        }
-
-
-        /* v6.3 WFH save and reload helpers */
-        function getAdminLabelV63() {
-            if (typeof getCurrentAdminLabel === "function") return getCurrentAdminLabel();
-            return String(window.currentUser?.name || window.currentUser?.username || window.currentUser?.role || "ADMIN").toUpperCase();
-        }
-
-        function getWFHInlineDay() {
-            const v =
-                document.getElementById("wfh-present-day")?.value ||
-                document.getElementById("wfh-search-day")?.value ||
-                document.getElementById("wfh-report-day")?.value ||
-                window.currentCheckDay ||
-                new Date().getDate();
-            return Number(v);
-        }
-
-        function makeWFHAttendanceKey(day = getWFHInlineDay()) {
-            const y = Number(window.currentYear || document.getElementById("year-select")?.value || document.getElementById("year")?.value || new Date().getFullYear());
-            const m = Number(window.currentMonth || document.getElementById("month-select")?.value || document.getElementById("month")?.value || (new Date().getMonth() + 1));
-            const d = Number(day || new Date().getDate());
-            return `${y}_${String(m).padStart(2,"0")}_${String(d).padStart(2,"0")}`;
-        }
-
-        function getAllWFHStoresForDay(day = getWFHInlineDay()) {
-            if (!window.attendanceChecks || typeof window.attendanceChecks !== "object") window.attendanceChecks = {};
-            const stores = [];
-
-            const newKey = makeWFHAttendanceKey(day);
-            if (!window.attendanceChecks[newKey] || typeof window.attendanceChecks[newKey] !== "object") window.attendanceChecks[newKey] = {};
-            stores.push(window.attendanceChecks[newKey]);
-
-            if (typeof getWFHCheckKeyStable === "function" && typeof ensureAttendanceStoreStable === "function") {
-                const oldKey = getWFHCheckKeyStable();
-                const oldStore = ensureAttendanceStoreStable(oldKey);
-                if (oldStore && !stores.includes(oldStore)) stores.push(oldStore);
-            }
-
-            return stores;
-        }
-
-        function getStaffByInlineId(id) {
-            return (window.currentStaffList || []).find(p =>
-                String(p.id) === String(id) ||
-                String(p.code) === String(id)
-            );
-        }
-
-        function getWFHAttendanceRecord(id, day = getWFHInlineDay()) {
-            const sid = String(id);
-            const stores = getAllWFHStoresForDay(day);
-            for (const store of stores) {
-                const raw = store[sid];
-                if (!raw) continue;
-                if (typeof raw === "boolean") {
-                    if (raw) return { checked: true, checkedBy: "ADMIN", checkedAt: "", time: "" };
-                    continue;
-                }
-                return {
-                    checked: !!(raw.checked ?? raw.present ?? raw.isChecked ?? raw.work ?? raw.working ?? true),
-                    checkedBy: raw.checkedBy || raw.checker || raw.admin || raw.user || "ADMIN",
-                    checkedAt: raw.checkedAt || raw.time || raw.checkedTime || "",
-                    time: raw.time || raw.checkedTime || ""
-                };
-            }
-            return null;
-        }
-
-        function saveWFHAttendanceRecord(id, rec, day = getWFHInlineDay()) {
-            const sid = String(id);
-            const stores = getAllWFHStoresForDay(day);
-            stores.forEach(store => { store[sid] = rec; });
-            persistWFHDataHard();
-        }
-
-        function removeWFHAttendanceRecord(id, day = getWFHInlineDay()) {
-            const sid = String(id);
-            const stores = getAllWFHStoresForDay(day);
-            stores.forEach(store => { delete store[sid]; });
-            persistWFHDataHard();
-        }
-
-        function persistWFHDataHard() {
-            try {
-                const docId = getScheduleDocId();
-                localStorage.setItem(`attendanceChecks_${docId}`, JSON.stringify(window.attendanceChecks || {}));
-                localStorage.setItem(`staff_${docId}`, JSON.stringify(window.currentStaffList || []));
-                localStorage.setItem(`resignedEmployees_${docId}`, JSON.stringify(window.resignedEmployees || []));
-                localStorage.setItem(`wfhDataBackup_${docId}`, JSON.stringify({
-                    attendanceChecks: window.attendanceChecks || {},
-                    staffList: window.currentStaffList || [],
-                    resignedEmployees: window.resignedEmployees || [],
-                    savedAt: new Date().toISOString()
-                }));
-            } catch(e) {
-                console.warn("persistWFHDataHard failed", e);
-            }
-        }
-
-        function restoreWFHDataHard() {
-            try {
-                const docId = getScheduleDocId();
-                const direct = localStorage.getItem(`attendanceChecks_${docId}`);
-                if (direct) window.attendanceChecks = JSON.parse(direct) || window.attendanceChecks || {};
-
-                const staff = localStorage.getItem(`staff_${docId}`);
-                if (staff && (!window.currentStaffList || !window.currentStaffList.length)) {
-                    window.currentStaffList = JSON.parse(staff) || [];
-                }
-
-                const resigned = localStorage.getItem(`resignedEmployees_${docId}`);
-                if (resigned && (!window.resignedEmployees || !window.resignedEmployees.length)) {
-                    window.resignedEmployees = JSON.parse(resigned) || [];
-                }
-
-                const backup = localStorage.getItem(`wfhDataBackup_${docId}`);
-                if (backup && (!window.attendanceChecks || !Object.keys(window.attendanceChecks).length)) {
-                    const data = JSON.parse(backup);
-                    if (data.attendanceChecks) window.attendanceChecks = data.attendanceChecks;
-                    if (data.staffList && (!window.currentStaffList || !window.currentStaffList.length)) window.currentStaffList = data.staffList;
-                    if (data.resignedEmployees && (!window.resignedEmployees || !window.resignedEmployees.length)) window.resignedEmployees = data.resignedEmployees;
-                }
-            } catch(e) {
-                console.warn("restoreWFHDataHard failed", e);
-            }
-        }
-
-        function isWFHLeaveInline(p, day = getWFHInlineDay()) {
-            const n = Number(day);
-            const v = String(typeof getStaffDayValueStrict === "function" ? getStaffDayValueStrict(p, n) : "").toUpperCase();
-            return ["L","PL","SL"].includes(v) ||
-                (Array.isArray(p?.leaves) && p.leaves.map(Number).includes(n)) ||
-                (Array.isArray(p?.leaveDays) && p.leaveDays.map(Number).includes(n));
-        }
-
-        function setWFHRowDisplay(row, status, checker = "-", time = "-") {
-            const statusCell = row?.querySelector("[data-wfh-status-cell]");
-            const checkerCell = row?.querySelector("[data-wfh-checker-cell]");
-            const timeCell = row?.querySelector("[data-wfh-time-cell]");
-
-            if (statusCell) {
-                if (status === "leave") {
-                    statusCell.innerHTML = `<span class="inline-flex px-2 py-1 rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/25 text-xs font-bold whitespace-nowrap">ลา</span>`;
-                } else if (status === "work") {
-                    statusCell.innerHTML = `<span class="inline-flex px-2 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 text-xs font-bold whitespace-nowrap">มาทำงาน</span>`;
-                } else {
-                    statusCell.innerHTML = `<span class="inline-flex px-2 py-1 rounded-full bg-slate-500/15 text-slate-300 border border-slate-500/25 text-xs font-bold whitespace-nowrap">รอตรวจ</span>`;
-                }
-            }
-
-            if (checkerCell) checkerCell.textContent = checker || "-";
-            if (timeCell) timeCell.textContent = time || "-";
-        }
-
-        function saveWFHAndRefreshMain() {
-            persistWFHDataHard();
+            wfhPersistMinimal();
             try { if (typeof renderTable === "function") renderTable(); } catch(e) { console.warn(e); }
-            try { if (typeof updateStats === "function") updateStats(); } catch(e) { console.warn(e); }
-            try { if (typeof renderDynamicShiftStats === "function") renderDynamicShiftStats(); } catch(e) { console.warn(e); }
-        }
-
-
-        if (!window.__v63WFHRestoreInstalled) {
-            window.__v63WFHRestoreInstalled = true;
-            document.addEventListener("DOMContentLoaded", () => {
-                setTimeout(() => {
-                    try { restoreWFHDataHard(); } catch(e) { console.warn(e); }
-                }, 100);
-            });
-        }
-
-
-        if (!window.__v64WFHClickDelegateInstalled) {
-            window.__v64WFHClickDelegateInstalled = true;
-            document.addEventListener("change", function(e) {
-                const target = e.target;
-                if (!target || !target.matches) return;
-                if (!target.matches("input.wfh-present-check, input.wfh-leave-check")) return;
-                if (target.dataset.v64Handled === "1") {
-                    target.dataset.v64Handled = "0";
-                    return;
-                }
-                const row = target.closest("tr");
-                if (!row) return;
-                const codeText = Array.from(row.querySelectorAll("td")).map(td => td.textContent.trim()).find(v => /^\d{5,}$/.test(v));
-                const staff = (window.currentStaffList || []).find(p => String(p.code) === String(codeText));
-                if (!staff) return;
-                target.dataset.v64Handled = "1";
-                if (target.classList.contains("wfh-present-check")) {
-                    window.toggleWFHPresentInline(staff.id, target.checked, target);
-                } else if (target.classList.contains("wfh-leave-check")) {
-                    window.toggleWFHLeaveInline(staff.id, target.checked, target);
-                }
-            }, true);
-        }
+        };
 
 function renderWFHPresentInline(people, day) {
             const panel = document.getElementById("wfh-present-inline-panel");
@@ -4370,27 +4142,27 @@ function renderWFHPresentInline(people, day) {
 
             if (!panel || !tbody) return;
 
-            restoreWFHDataHard();
-            window.currentCheckDay = Number(day);
+            wfhRestoreMinimal();
 
-            const activePeople = (people || []).filter(p => !(typeof getResignedRecordByStaff === "function" && getResignedRecordByStaff(p)));
+            const checkKey = getWFHCheckKeyStable();
+            window.currentCheckDay = Number(day);
 
             panel.classList.remove("hidden");
             if (dateLabel) dateLabel.innerText = `กำลังดูข้อมูล : ${day}`;
-            if (countText) countText.innerText = `แสดง ${activePeople.length} คน`;
+            if (countText) countText.innerText = `แสดง ${people.length} คน`;
 
             const teamCounts = { WIN1: 0, WIN2: 0, WIN3: 0 };
-            activePeople.forEach(p => {
+            people.forEach(p => {
                 if (teamCounts[p.team] !== undefined) teamCounts[p.team]++;
             });
 
-            const checkedCount = activePeople.filter(p => isAttendanceVerifiedStable(p.id)).length;
+            const checkedCount = people.filter(p => isAttendanceVerifiedStable(p.id, checkKey)).length;
 
             if (summary) {
                 summary.innerHTML = `
                     <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
                         <div class="text-[11px] text-slate-500">รวมทั้งหมด</div>
-                        <div class="text-2xl font-black text-emerald-400">${activePeople.length} คน</div>
+                        <div class="text-2xl font-black text-emerald-400">${people.length} คน</div>
                     </div>
                     <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
                         <div class="text-[11px] text-slate-500">WIN1 / WIN2 / WIN3</div>
@@ -4398,11 +4170,11 @@ function renderWFHPresentInline(people, day) {
                     </div>
                     <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
                         <div class="text-[11px] text-slate-500">ตรวจแล้ว</div>
-                        <div class="text-sm font-bold text-slate-200">${checkedCount} / ${activePeople.length} คน</div>
+                        <div class="text-sm font-bold text-slate-200">${checkedCount} / ${people.length} คน</div>
                     </div>
                     <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
                         <div class="text-[11px] text-slate-500">ยังไม่ตรวจ</div>
-                        <div class="text-sm font-bold text-rose-400">${activePeople.length - checkedCount} คน</div>
+                        <div class="text-sm font-bold text-rose-400">${people.length - checkedCount} คน</div>
                     </div>
                 `;
             }
@@ -4427,34 +4199,36 @@ function renderWFHPresentInline(people, day) {
                 `;
             }
 
-            if (!activePeople.length) {
+            if (!people.length) {
                 tbody.innerHTML = `<tr><td colspan="13" class="px-4 py-8 text-center text-slate-500">ไม่พบพนักงาน WFH ที่มาทำงานตามวันที่เลือก</td></tr>`;
                 return;
             }
 
-            tbody.innerHTML = activePeople.map((p, idx) => {
-                const rec = getWFHAttendanceRecord(p.id);
-                const checked = !!rec?.checked;
-                const admin = (typeof hasPermission === "function" && hasPermission("checkWFH")) || (typeof isAdminUser === "function" && isAdminUser());
-                const canLeave = (typeof canEditStaffField === "function" ? canEditStaffField(p, "editDay") : admin) || admin;
+            tbody.innerHTML = people.map((p, idx) => {
+                const checked = isAttendanceVerifiedStable(p.id, checkKey);
+                const admin = hasPermission("checkWFH");
+                const canLeave = typeof canEditStaffField === "function" ? canEditStaffField(p, "editDay") : admin;
                 const shiftClass = typeof getShiftClass === "function" ? getShiftClass(p.shift) : "shift-other";
-                const checker = getAttendanceCheckerStable(p.id);
-                const checkedTime = getAttendanceTimeStable(p.id);
-                const isLeave = isWFHLeaveInline(p, Number(day));
+                const checker = getAttendanceCheckerStable(p.id, checkKey);
+                const checkedTime = getAttendanceTimeStable(p.id, checkKey);
+                const resigned = getResignedRecordByStaff(p);
+                const isLeave = !resigned && isWFHLeaveInline(p, Number(day));
 
-                const statusHtml = isLeave
-                    ? `<span class="inline-flex px-2 py-1 rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/25 text-xs font-bold whitespace-nowrap">ลา</span>`
-                    : checked
-                        ? `<span class="inline-flex px-2 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 text-xs font-bold whitespace-nowrap">มาทำงาน</span>`
-                        : `<span class="inline-flex px-2 py-1 rounded-full bg-slate-500/15 text-slate-300 border border-slate-500/25 text-xs font-bold whitespace-nowrap">รอตรวจ</span>`;
+                const statusHtml = resigned
+                    ? `<span class="status-resigned-pill">ออกแล้ว ${getResignDateText(resigned)}</span>`
+                    : isLeave
+                        ? `<span class="inline-flex px-2 py-1 rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/25 text-xs font-bold whitespace-nowrap">ลา</span>`
+                        : checked
+                            ? `<span class="inline-flex px-2 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 text-xs font-bold whitespace-nowrap">มาทำงาน</span>`
+                            : `<span class="inline-flex px-2 py-1 rounded-full bg-slate-500/15 text-slate-300 border border-slate-500/25 text-xs font-bold whitespace-nowrap">รอตรวจ</span>`;
 
                 return `
-                    <tr class="hover:bg-slate-800/40 transition-all">
+                    <tr class="hover:bg-slate-800/40 transition-all ${resigned ? "resigned-row" : ""}">
                         <td class="px-4 py-3 text-slate-400">${idx + 1}</td>
                         <td class="px-4 py-3"><span class="px-2 py-1 rounded text-xs font-bold ${getTeamBadgeClass(p.team)}">${p.team}</span></td>
                         <td class="px-4 py-3"><span class="px-2 py-1 rounded bg-purple-500/15 text-purple-300 border border-purple-500/25 text-xs font-bold">${p.rank}</span></td>
                         <td class="px-4 py-3 font-mono text-slate-300">${p.code}</td>
-                        <td class="px-4 py-3 font-bold text-slate-100">${p.name}</td>
+                        <td class="px-4 py-3 font-bold text-slate-100 ${resigned ? "resigned-name" : ""}">${p.name}</td>
                         <td class="px-4 py-3"><span class="px-2 py-1 rounded border text-xs font-bold ${shiftClass}">${p.shift}</span></td>
                         <td class="px-4 py-3 text-slate-300">${getShiftLoginTime(p.shift)}</td>
                         <td class="px-4 py-3 text-slate-300">${getShiftBreakTime(p.shift)}</td>
@@ -4462,16 +4236,16 @@ function renderWFHPresentInline(people, day) {
                         <td class="px-4 py-3 text-center wfh-col-leave">
                             <input type="checkbox"
                                 ${isLeave ? "checked" : ""}
-                                ${canLeave ? "" : "disabled"}
+                                ${canLeave && !resigned ? "" : "disabled"}
                                 onchange="toggleWFHLeaveInline(${p.id}, this.checked, this)"
-                                class="wfh-leave-check ${canLeave ? "cursor-pointer" : "cursor-not-allowed"}" autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" spellcheck="false">
+                                class="wfh-leave-check ${canLeave && !resigned ? "cursor-pointer" : "cursor-not-allowed"}" autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" spellcheck="false">
                         </td>
                         <td class="px-4 py-3 text-center wfh-col-check">
                             <input type="checkbox"
                                 ${checked && !isLeave ? "checked" : ""}
-                                ${admin ? "" : "disabled"}
+                                ${admin && !resigned ? "" : "disabled"}
                                 onchange="toggleWFHPresentInline(${p.id}, this.checked, this)"
-                                class="wfh-present-check ${admin ? "cursor-pointer" : "cursor-not-allowed"}" autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" spellcheck="false">
+                                class="wfh-present-check ${admin && !resigned ? "cursor-pointer" : "cursor-not-allowed"}" autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" spellcheck="false">
                         </td>
                         <td class="px-4 py-3 text-center text-slate-300" data-wfh-checker-cell>${checked && !isLeave ? checker : "-"}</td>
                         <td class="px-4 py-3 text-center text-slate-300" data-wfh-time-cell>${checked && !isLeave ? checkedTime : "-"}</td>
@@ -5976,31 +5750,101 @@ function renderDynamicShiftStats() {
         }
 
 
-        
+        function getSelectedWFHCheckDay() {
+            const candidates = [
+                document.getElementById("wfh-check-day"),
+                document.getElementById("wfh-day"),
+                document.getElementById("present-day"),
+                document.querySelector("input[type='number'][min='1'][max='31']"),
+                document.querySelector("select[data-day-select]")
+            ].filter(Boolean);
+            for (const el of candidates) {
+                const n = Number(el.value);
+                if (n >= 1 && n <= 31) return n;
+            }
+            const d = Number(window.currentCheckDay || window.selectedCheckDay || new Date().getDate());
+            return d >= 1 && d <= 31 ? d : new Date().getDate();
+        }
+
+        function getStaffByAnyKey(key) {
+            const k = String(key || "").trim();
+            return (window.currentStaffList || []).find(p =>
+                String(p.id || "") === k ||
+                String(p.code || "") === k ||
+                String(p.name || "").toUpperCase() === k.toUpperCase()
+            );
+        }
+
+        function setScheduleValueForStaffDay(staff, day, value) {
+            if (!staff) return false;
+            const d = String(day);
+            if (!staff.days) staff.days = {};
+            staff.days[d] = value;
+
+            // sync legacy arrays
+            if (Array.isArray(staff.offDays)) {
+                staff.offDays = staff.offDays.filter(x => Number(x) !== Number(day));
+                if (value === "O") staff.offDays.push(Number(day));
+            }
+            if (Array.isArray(staff.leaveDays)) {
+                staff.leaveDays = staff.leaveDays.filter(x => Number(x) !== Number(day));
+                if (["L","PL","SL"].includes(String(value).toUpperCase())) staff.leaveDays.push(Number(day));
+            }
+            return true;
+        }
+
+        function getScheduleValueForStaffDay(staff, day) {
+            const d = String(day);
+            if (staff?.days && staff.days[d] !== undefined) return staff.days[d];
+            if (staff?.schedule && staff.schedule[d] !== undefined) return staff.schedule[d];
+            if (Array.isArray(staff?.offDays) && staff.offDays.includes(Number(day))) return "O";
+            if (Array.isArray(staff?.leaveDays) && staff.leaveDays.includes(Number(day))) return "L";
+            return "";
+        }
+
+        window.toggleWFHLeaveSync = async function(staffKey, explicitDay) {
+            const oldDay = window.currentCheckDay;
+            if (explicitDay) window.currentCheckDay = explicitDay;
+            const staff = findStaffStrict(staffKey);
+            const day = getWFHCheckDay();
+            const current = staff ? (getAttendanceRecord(staff, day).leave || String(getStaffDayValueStrict(staff, day)).toUpperCase() === "L") : false;
+            await setWFHAttendanceState(staffKey, "leave", !current);
+            if (explicitDay) window.currentCheckDay = oldDay;
+        };
+
+        function enhanceWFHLeaveColumn() {
+            // v6: disabled. WFH columns are rendered directly in renderWFHPresentInline().
+        }
 
 
-        
+        if (!window.__wfhLeaveObserverInstalled) {
+            window.__wfhLeaveObserverInstalled = true;
+            const __wfhLeaveObserver = new MutationObserver(() => {
+                clearTimeout(window.__wfhLeaveObserverTimer);
+                window.__wfhLeaveObserverTimer = setTimeout(() => {
+                    try {  } catch(e) {}
+                }, 150);
+            });
+            document.addEventListener("DOMContentLoaded", () => {
+                __wfhLeaveObserver.observe(document.body, { childList: true, subtree: true });
+                setTimeout(enhanceWFHLeaveColumn, 500);
+            });
+        }
 
 
-        
-
-
-        
-
-
-        
-
-
-        
-
-
-
-
-
-
-
-
-
+        if (!window.__duplicateSummaryCleanerInstalled) {
+            window.__duplicateSummaryCleanerInstalled = true;
+            const __dupCleaner = new MutationObserver(() => {
+                clearTimeout(window.__dupCleanerTimer);
+                window.__dupCleanerTimer = setTimeout(() => {
+                    try { hideOldDuplicateStats(); } catch(e) {}
+                }, 120);
+            });
+            document.addEventListener("DOMContentLoaded", () => {
+                __dupCleaner.observe(document.body, { childList: true, subtree: true });
+                setTimeout(() => { try { renderDynamicShiftStats(); hideOldDuplicateStats(); } catch(e) {} }, 500);
+            });
+        }
 
 
         function isResignedStaffStrict(staff) {
@@ -6019,8 +5863,22 @@ function renderDynamicShiftStats() {
             return (window.currentStaffList || []).filter(p => !isResignedStaffStrict(p));
         }
 
-        
+        function getWFHCheckDay() {
+            const explicit = Number(window.currentCheckDay || window.selectedCheckDay || window.wfhCheckDay || 0);
+            if (explicit >= 1 && explicit <= 31) return explicit;
 
+            const controls = Array.from(document.querySelectorAll("input,select")).filter(el => {
+                const txt = `${el.id || ""} ${el.name || ""} ${el.placeholder || ""}`.toLowerCase();
+                return txt.includes("day") || txt.includes("วัน");
+            });
+            for (const el of controls) {
+                const n = Number(el.value);
+                if (n >= 1 && n <= 31) return n;
+            }
+
+            const n = new Date().getDate();
+            return n >= 1 && n <= 31 ? n : 1;
+        }
 
         function findStaffStrict(key) {
             const k = String(key || "").trim();
@@ -6036,7 +5894,6 @@ function renderDynamicShiftStats() {
             const n = Number(day);
             const d = String(n);
             if (staff?.days && staff.days[d] !== undefined && staff.days[d] !== "") return staff.days[d];
-            if (staff?.schedule && staff.schedule[d] !== undefined && staff.schedule[d] !== "") return staff.schedule[d];
             if (Array.isArray(staff?.offs) && staff.offs.map(Number).includes(n)) return "O";
             if (Array.isArray(staff?.offDays) && staff.offDays.map(Number).includes(n)) return "O";
             if (Array.isArray(staff?.leaves) && staff.leaves.map(Number).includes(n)) return "L";
@@ -6058,7 +5915,6 @@ function renderDynamicShiftStats() {
             if (!Array.isArray(staff.offDays)) staff.offDays = [];
             if (!Array.isArray(staff.leaveDays)) staff.leaveDays = [];
 
-            // ลบค่าวันนี้จากทุก array ก่อน เพื่อไม่ให้ O/L ชนกัน
             staff.offs = staff.offs.filter(x => Number(x) !== n);
             staff.leaves = staff.leaves.filter(x => Number(x) !== n);
             staff.offDays = staff.offDays.filter(x => Number(x) !== n);
@@ -6087,8 +5943,19 @@ function renderDynamicShiftStats() {
         
 
 
-
-
+        if (!window.__wfhCheckLeaveFixedObserver) {
+            window.__wfhCheckLeaveFixedObserver = true;
+            const __obs = new MutationObserver(() => {
+                clearTimeout(window.__wfhFixTimer);
+                window.__wfhFixTimer = setTimeout(() => {
+                    try {  } catch(e) {}
+                }, 120);
+            });
+            document.addEventListener("DOMContentLoaded", () => {
+                __obs.observe(document.body, { childList: true, subtree: true });
+                setTimeout(() => { try {  renderDynamicShiftStats(); } catch(e) {} }, 600);
+            });
+        }
 
 
         /* v5.5 runtime safety helpers */
@@ -6294,31 +6161,160 @@ function renderDynamicShiftStats() {
         }
 
 
-        
+        function makeAttendanceKeys(staff, day) {
+            const d = String(day);
+            const id = String(staff?.id || "").trim();
+            const code = String(staff?.code || "").trim();
+            const name = String(staff?.name || "").trim();
+            const keys = [];
+            [id, code, name].filter(Boolean).forEach(k => {
+                keys.push(`${k}_${d}`, `${k}-${d}`, `${d}_${k}`, `${k}_${currentYear || ""}_${currentMonth || ""}_${d}`);
+            });
+            return [...new Set(keys)];
+        }
 
+        function normalizeAttendanceRecord(raw) {
+            if (raw == null) return null;
+            if (typeof raw === "boolean") return { checked: raw, leave: false, checker: raw ? "ADMIN" : "", time: "" };
+            if (typeof raw === "string") {
+                const u = raw.toUpperCase();
+                if (u === "L" || u.includes("ลา")) return { checked: false, leave: true, checker: "", time: "" };
+                if (u.includes("ทำงาน") || u === "TRUE" || u === "CHECKED") return { checked: true, leave: false, checker: "", time: "" };
+            }
+            return {
+                checked: !!(raw.checked ?? raw.present ?? raw.isChecked ?? raw.work ?? raw.working),
+                leave: !!(raw.leave ?? raw.isLeave ?? raw.absent),
+                checker: raw.checker || raw.checkedBy || raw.admin || raw.user || "",
+                time: raw.time || raw.checkedTime || raw.updatedAt || ""
+            };
+        }
 
-        
+        function findAttendanceRecordFlexible(staff, day, row = null) {
+            if (!window.attendanceChecks) window.attendanceChecks = {};
+            const keys = makeAttendanceKeys(staff, day);
+            for (const k of keys) {
+                if (window.attendanceChecks[k] !== undefined) {
+                    const rec = normalizeAttendanceRecord(window.attendanceChecks[k]) || { checked:false, leave:false, checker:"", time:"" };
+                    window.attendanceChecks[keys[0]] = rec;
+                    return rec;
+                }
+            }
 
+            const code = String(staff?.code || "").trim().toUpperCase();
+            const id = String(staff?.id || "").trim().toUpperCase();
+            const name = String(staff?.name || "").trim().toUpperCase();
+            const d = String(day);
+            for (const [k,v] of Object.entries(window.attendanceChecks)) {
+                const ku = String(k).toUpperCase();
+                const hitPerson = (code && ku.includes(code)) || (id && ku.includes(id)) || (name && ku.includes(name));
+                const hitDay = ku.endsWith(`_${d}`) || ku.endsWith(`-${d}`) || ku.split(/[^0-9A-Z]+/).includes(d);
+                if (hitPerson && hitDay) {
+                    const rec = normalizeAttendanceRecord(v) || { checked:false, leave:false, checker:"", time:"" };
+                    window.attendanceChecks[keys[0]] = rec;
+                    return rec;
+                }
+            }
 
-        
+            if (row) {
+                const txt = row.textContent || "";
+                const checkedBoxes = row.querySelectorAll("input[type='checkbox']:checked").length;
+                const hasWork = txt.includes("มาทำงาน");
+                const hasLeave = txt.includes("ลา") && !txt.includes("เวลาพัก");
+                if (checkedBoxes || hasWork || hasLeave) {
+                    const rec = {
+                        checked: !!checkedBoxes || hasWork,
+                        leave: hasLeave && !hasWork,
+                        checker: txt.includes("BRIGHTON") ? "BRIGHTON" : txt.includes("ADMIN") ? "ADMIN" : "",
+                        time: ""
+                    };
+                    if (rec.leave) rec.checked = false;
+                    window.attendanceChecks[keys[0]] = rec;
+                    return rec;
+                }
+            }
 
+            const rec = { checked:false, leave:false, checker:"", time:"" };
+            window.attendanceChecks[keys[0]] = rec;
+            return rec;
+        }
 
         function getAttendanceRecord(staff, day, row = null) {
             return findAttendanceRecordFlexible(staff, day, row);
         }
 
-        
+        async function setWFHAttendanceState(staffKey, mode, checked) {
+            const staff = findStaffStrict(staffKey);
+            if (!staff) return alert("ไม่พบพนักงาน");
+            if (isResignedStaffStrict(staff)) return alert("พนักงานออกแล้ว ไม่สามารถตรวจ/ลาได้");
+            if (mode === "leave" && !canEditStaffField(staff, "editDay")) return alert("ไม่มีสิทธิ์แก้ไขวันลา");
+            if (mode === "check" && !canEditStaffField(staff, "checkWFH")) return alert("ไม่มีสิทธิ์ตรวจ WFH");
+
+            const day = getWFHCheckDay();
+            const rec = getAttendanceRecord(staff, day);
+            const actor = String(window.currentUser?.name || window.currentUser?.username || window.currentUser?.role || "ADMIN").toUpperCase();
+            const now = new Date().toLocaleTimeString("th-TH", {hour:"2-digit", minute:"2-digit"});
+
+            if (mode === "leave") {
+                rec.leave = !!checked;
+                if (checked) {
+                    rec.checked = false; rec.checker = ""; rec.time = "";
+                    setStaffDayValueStrict(staff, day, "L");
+                } else {
+                    setStaffDayValueStrict(staff, day, "");
+                }
+            } else {
+                rec.checked = !!checked;
+                if (checked) {
+                    rec.leave = false; rec.checker = actor; rec.time = now;
+                    const old = String(getStaffDayValueStrict(staff, day) || "").toUpperCase();
+                    if (["L","PL","SL"].includes(old)) setStaffDayValueStrict(staff, day, "");
+                } else {
+                    rec.checker = ""; rec.time = "";
+                }
+            }
+
+            window.attendanceChecks[makeAttendanceKeys(staff, day)[0]] = rec;
+            if (typeof addAuditLog === "function") addAuditLog(mode === "leave" ? "WFH LEAVE" : "WFH CHECK", staff.name, `วันที่ ${day}: ${checked ? "ON" : "OFF"}`);
+
+            
+            if (!window.draftMode && typeof commitData === "function") {
+                try { await commitData(); } catch(e) { console.warn(e); }
+            }
+            if (typeof updateStats === "function") safeCall("updateStats", () => updateStats());
+            if (typeof renderDynamicShiftStats === "function") safeCall("renderDynamicShiftStats", () => renderDynamicShiftStats());
+        }
+
+        function getWFHStatusText(staff, day, row = null) {
+            if (isResignedStaffStrict(staff)) {
+                const r = (window.resignedEmployees || []).find(x =>
+                    String(x.code || x.id || "") === String(staff.code || staff.id || "") ||
+                    String(x.name || "").toUpperCase() === String(staff.name || "").toUpperCase()
+                );
+                return r?.date ? `ออกแล้ว ${r.date}` : "ออกแล้ว";
+            }
+            const rec = getAttendanceRecord(staff, day, row);
+            const v = String(getStaffDayValueStrict(staff, day) || "").toUpperCase();
+            if (rec.leave || v === "L") return "ลา";
+            if (rec.checked) return "มาทำงาน";
+            return "รอตรวจ";
+        }
+
+        function rebuildWFHCheckLeaveColumns() {
+            // v6: disabled. WFH columns are rendered directly in renderWFHPresentInline().
+        }
 
 
-        
-
-
-        
-
-
-
-
-
+        if (!window.__v56WFHStateObserver) {
+            window.__v56WFHStateObserver = true;
+            const __obs56 = new MutationObserver(() => {
+                clearTimeout(window.__obs56Timer);
+                window.__obs56Timer = setTimeout(() => safeCall("rebuildWFHCheckLeaveColumns", () => rebuildWFHCheckLeaveColumns()), 120);
+            });
+            document.addEventListener("DOMContentLoaded", () => {
+                __obs56.observe(document.body, { childList: true, subtree: true });
+                setTimeout(() => safeCall("rebuildWFHCheckLeaveColumns", () => rebuildWFHCheckLeaveColumns()), 600);
+            });
+        }
 
         function showToast(msg) {
             const t = document.getElementById("toast");
@@ -6356,8 +6352,8 @@ function renderDynamicShiftStats() {
         startCloudSync();
         updateDynamicUI();
     
-        /* v6.6 expose inline handlers for type=module */
-        function exposeInlineHandlersV66() {
+        /* v6.7 expose inline handlers */
+        function exposeInlineHandlersV67() {
             try { if (typeof applyFilters === "function") window.applyFilters = applyFilters; } catch(e) {}
             try { if (typeof autoSort === "function") window.autoSort = autoSort; } catch(e) {}
             try { if (typeof cancelResignedEmployee === "function") window.cancelResignedEmployee = cancelResignedEmployee; } catch(e) {}
@@ -6416,15 +6412,8 @@ function renderDynamicShiftStats() {
             try { if (typeof undoLastChange === "function") window.undoLastChange = undoLastChange; } catch(e) {}
             try { if (typeof updateDynamicUI === "function") window.updateDynamicUI = updateDynamicUI; } catch(e) {}
         }
-        exposeInlineHandlersV66();
-        document.addEventListener('DOMContentLoaded', exposeInlineHandlersV66);
-
-        function rebuildWFHCheckLeaveColumns(){ /* v6.6 no-op compatibility */ }
-
-        function enhanceWFHLeaveColumn(){ /* v6.6 no-op compatibility */ }
-
-        window.rebuildWFHCheckLeaveColumns = rebuildWFHCheckLeaveColumns;
-        window.enhanceWFHLeaveColumn = enhanceWFHLeaveColumn;
+        exposeInlineHandlersV67();
+        document.addEventListener('DOMContentLoaded', exposeInlineHandlersV67);
 </script>
 </body>
 </html>
