@@ -683,6 +683,12 @@
         .wfh-present-check,.wfh-leave-check{width:16px;height:16px;cursor:pointer;display:inline-block}
         .wfh-present-check{accent-color:#10b981}.wfh-leave-check{accent-color:#a855f7}
 
+
+        /* v5.9 WFH rebuild fixed columns */
+        .wfh-col-status,.wfh-col-leave,.wfh-col-check,.wfh-col-checker,.wfh-col-time{text-align:center!important;white-space:nowrap}
+        .wfh-present-check,.wfh-leave-check{width:16px;height:16px;cursor:pointer;display:inline-block}
+        .wfh-present-check{accent-color:#10b981}.wfh-leave-check{accent-color:#a855f7}
+
 </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen antialiased selection:bg-indigo-500/30">
@@ -6145,7 +6151,7 @@ function renderDynamicShiftStats() {
         function rebuildWFHCheckLeaveColumns() {
             const table = Array.from(document.querySelectorAll("table")).find(t => {
                 const txt = t.textContent || "";
-                return txt.includes("ตรวจแล้ว") && txt.includes("ผู้ตรวจ") && txt.includes("สถานะ");
+                return txt.includes("สถานะ") && txt.includes("ตรวจแล้ว") && txt.includes("ผู้ตรวจ");
             });
             if (!table) return;
 
@@ -6155,73 +6161,40 @@ function renderDynamicShiftStats() {
 
             const headerText = th => (th.textContent || "").trim();
             let headers = Array.from(headerRow.children);
-
             const statusIdx = headers.findIndex(th => headerText(th).includes("สถานะ") || headerText(th).includes("Status"));
             if (statusIdx === -1) return;
 
-            // ลบหัว "ลา" ที่ซ้ำกันออกให้เหลืออันเดียว
-            headers = Array.from(headerRow.children);
-            const leaveHeaders = headers
-                .map((th, i) => ({ th, i }))
-                .filter(x => headerText(x.th) === "ลา");
-            leaveHeaders.slice(1).reverse().forEach(x => x.th.remove());
-
-            headers = Array.from(headerRow.children);
-            let checkedIdx = headers.findIndex(th => headerText(th).includes("ตรวจแล้ว") || headerText(th).includes("Checked"));
-            if (checkedIdx === -1) return;
-
-            let leaveIdx = headers.findIndex(th => headerText(th) === "ลา");
-            if (leaveIdx === -1) {
-                const th = document.createElement("th");
-                th.textContent = "ลา";
-                th.className = headers[checkedIdx]?.className || "";
-                headerRow.insertBefore(th, headers[checkedIdx]);
-            } else {
-                const leaveTh = headers[leaveIdx];
-                const checkTh = headers[checkedIdx];
-                // บังคับให้หัว "ลา" อยู่ก่อน "ตรวจแล้ว" เสมอ
-                if (leaveIdx !== checkedIdx - 1) {
-                    headerRow.insertBefore(leaveTh, checkTh);
-                }
+            // เก็บหัวคอลัมน์ก่อน "สถานะ" ไว้ แล้วสร้าง 5 คอลัมน์ท้ายใหม่ทั้งหมด
+            const oldHeaderClass = headers[statusIdx]?.className || "";
+            while (headerRow.children.length > statusIdx) {
+                headerRow.removeChild(headerRow.children[statusIdx]);
             }
 
-            headers = Array.from(headerRow.children);
-            leaveIdx = headers.findIndex(th => headerText(th) === "ลา");
-            checkedIdx = headers.findIndex(th => headerText(th).includes("ตรวจแล้ว") || headerText(th).includes("Checked"));
-            const checkerIdx = headers.findIndex(th => headerText(th).includes("ผู้ตรวจ") || headerText(th).includes("Checker"));
-            const timeIdx = headers.findIndex(th => headerText(th).includes("เวลาตรวจ") || headerText(th).includes("Checked time"));
+            const tailHeaders = [
+                ["สถานะ", "wfh-col-status"],
+                ["ลา", "wfh-col-leave"],
+                ["ตรวจแล้ว", "wfh-col-check"],
+                ["ผู้ตรวจ", "wfh-col-checker"],
+                ["เวลาตรวจ", "wfh-col-time"]
+            ];
 
-            if (leaveIdx === -1 || checkedIdx === -1) return;
-
-            headers[leaveIdx]?.classList.add("wfh-col-leave");
-            headers[checkedIdx]?.classList.add("wfh-col-check");
-            if (checkerIdx >= 0) headers[checkerIdx]?.classList.add("wfh-col-checker");
-            if (timeIdx >= 0) headers[timeIdx]?.classList.add("wfh-col-time");
+            tailHeaders.forEach(([label, cls]) => {
+                const th = document.createElement("th");
+                th.textContent = label;
+                th.className = `${oldHeaderClass} ${cls}`.trim();
+                headerRow.appendChild(th);
+            });
 
             Array.from(table.querySelectorAll("tbody tr")).forEach(row => {
-                const rowText = row.textContent || "";
+                const rowTextBefore = row.textContent || "";
                 const staff = (window.currentStaffList || []).find(p =>
-                    rowText.includes(String(p.name || "")) ||
-                    rowText.includes(String(p.code || "")) ||
-                    rowText.includes(String(p.id || ""))
+                    rowTextBefore.includes(String(p.name || "")) ||
+                    rowTextBefore.includes(String(p.code || "")) ||
+                    rowTextBefore.includes(String(p.id || ""))
                 );
                 if (!staff) return;
 
-                // ให้จำนวนช่องในแถวเท่าหัวตาราง และแทรกช่องที่ตำแหน่งลาเท่านั้น ห้าม append ท้ายมั่ว
-                while (row.children.length < headers.length) {
-                    const td = document.createElement("td");
-                    td.className = row.children[checkedIdx]?.className || "";
-                    row.insertBefore(td, row.children[leaveIdx] || row.children[checkedIdx] || null);
-                }
-
-                // ถ้าแถวมีช่องเกินจากการแทรกซ้ำเก่า ให้ลบช่องเกินระหว่าง ลา/ตรวจแล้ว ก่อน
-                while (row.children.length > headers.length) {
-                    const removeIndex = Math.min(leaveIdx, row.children.length - 1);
-                    row.children[removeIndex].remove();
-                }
-
-                const cells = Array.from(row.children);
-
+                // อ่านสถานะเดิมก่อนลบช่องท้าย
                 const rec = getAttendanceRecord(staff, day, row);
                 const val = String(getStaffDayValueStrict(staff, day) || "").toUpperCase();
 
@@ -6230,47 +6203,62 @@ function renderDynamicShiftStats() {
                     rec.checked = false;
                 }
 
+                // ถ้า DOM เดิมมี checkbox ติ๊กและยังไม่มี rec ให้ถือว่าเคยตรวจแล้ว
+                if (!rec.checked && !rec.leave && row.querySelector("input[type='checkbox']:checked")) {
+                    rec.checked = true;
+                    if (!rec.checker && rowTextBefore.includes("BRIGHTON")) rec.checker = "BRIGHTON";
+                    if (!rec.time) {
+                        const timeMatch = rowTextBefore.match(/\b\d{1,2}:\d{2}\b/);
+                        if (timeMatch) rec.time = timeMatch[0];
+                    }
+                }
+
+                const oldCellClass = row.children[statusIdx]?.className || "";
+
+                // ตัดทุกช่องตั้งแต่สถานะเป็นต้นไปทิ้ง แล้วสร้างใหม่ 5 ช่องให้ตรงหัวตาราง 100%
+                while (row.children.length > statusIdx) {
+                    row.removeChild(row.children[statusIdx]);
+                }
+
                 const status = getWFHStatusText(staff, day, row);
 
-                if (cells[statusIdx]) {
-                    const cls = status === "ลา" ? "wfh-status-leave" : status === "มาทำงาน" ? "wfh-status-work" : "wfh-status-pending";
-                    cells[statusIdx].innerHTML = `<span class="${cls} px-3 py-1 rounded-full text-xs font-bold">${status}</span>`;
-                }
+                const tdStatus = document.createElement("td");
+                tdStatus.className = `${oldCellClass} wfh-col-status`.trim();
+                const cls = status === "ลา" ? "wfh-status-leave" : status === "มาทำงาน" ? "wfh-status-work" : "wfh-status-pending";
+                tdStatus.innerHTML = `<span class="${cls} px-3 py-1 rounded-full text-xs font-bold">${status}</span>`;
+                row.appendChild(tdStatus);
 
-                // ล้าง 4 ช่องท้ายที่เกี่ยวข้องทั้งหมด แล้วใส่ใหม่ตามหัวตารางจริง
-                if (cells[leaveIdx]) {
-                    cells[leaveIdx].classList.add("wfh-col-leave");
-                    cells[leaveIdx].innerHTML = "";
-                    const cbLeave = document.createElement("input");
-                    cbLeave.type = "checkbox";
-                    cbLeave.className = "wfh-leave-check";
-                    cbLeave.checked = !!rec.leave;
-                    cbLeave.disabled = isResignedStaffStrict(staff) || !canEditStaffField(staff, "editDay");
-                    cbLeave.onchange = () => setWFHAttendanceState(String(staff.id || staff.code || staff.name), "leave", cbLeave.checked);
-                    cells[leaveIdx].appendChild(cbLeave);
-                }
+                const tdLeave = document.createElement("td");
+                tdLeave.className = `${oldCellClass} wfh-col-leave`.trim();
+                const cbLeave = document.createElement("input");
+                cbLeave.type = "checkbox";
+                cbLeave.className = "wfh-leave-check";
+                cbLeave.checked = !!rec.leave;
+                cbLeave.disabled = isResignedStaffStrict(staff) || !canEditStaffField(staff, "editDay");
+                cbLeave.onchange = () => setWFHAttendanceState(String(staff.id || staff.code || staff.name), "leave", cbLeave.checked);
+                tdLeave.appendChild(cbLeave);
+                row.appendChild(tdLeave);
 
-                if (cells[checkedIdx]) {
-                    cells[checkedIdx].classList.add("wfh-col-check");
-                    cells[checkedIdx].innerHTML = "";
-                    const cbCheck = document.createElement("input");
-                    cbCheck.type = "checkbox";
-                    cbCheck.className = "wfh-present-check";
-                    cbCheck.checked = !!rec.checked && !rec.leave;
-                    cbCheck.disabled = isResignedStaffStrict(staff) || !canEditStaffField(staff, "checkWFH");
-                    cbCheck.onchange = () => setWFHAttendanceState(String(staff.id || staff.code || staff.name), "check", cbCheck.checked);
-                    cells[checkedIdx].appendChild(cbCheck);
-                }
+                const tdCheck = document.createElement("td");
+                tdCheck.className = `${oldCellClass} wfh-col-check`.trim();
+                const cbCheck = document.createElement("input");
+                cbCheck.type = "checkbox";
+                cbCheck.className = "wfh-present-check";
+                cbCheck.checked = !!rec.checked && !rec.leave;
+                cbCheck.disabled = isResignedStaffStrict(staff) || !canEditStaffField(staff, "checkWFH");
+                cbCheck.onchange = () => setWFHAttendanceState(String(staff.id || staff.code || staff.name), "check", cbCheck.checked);
+                tdCheck.appendChild(cbCheck);
+                row.appendChild(tdCheck);
 
-                if (checkerIdx >= 0 && cells[checkerIdx]) {
-                    cells[checkerIdx].classList.add("wfh-col-checker");
-                    cells[checkerIdx].textContent = rec.checked && !rec.leave ? (rec.checker || "-") : "-";
-                }
+                const tdChecker = document.createElement("td");
+                tdChecker.className = `${oldCellClass} wfh-col-checker`.trim();
+                tdChecker.textContent = rec.checked && !rec.leave ? (rec.checker || "-") : "-";
+                row.appendChild(tdChecker);
 
-                if (timeIdx >= 0 && cells[timeIdx]) {
-                    cells[timeIdx].classList.add("wfh-col-time");
-                    cells[timeIdx].textContent = rec.checked && !rec.leave ? (rec.time || "-") : "-";
-                }
+                const tdTime = document.createElement("td");
+                tdTime.className = `${oldCellClass} wfh-col-time`.trim();
+                tdTime.textContent = rec.checked && !rec.leave ? (rec.time || "-") : "-";
+                row.appendChild(tdTime);
 
                 window.attendanceChecks[makeAttendanceKeys(staff, day)[0]] = rec;
             });
