@@ -5243,6 +5243,24 @@ function lockTableControlsByPermission() {
 
         startCloudSync();
         updateDynamicUI();
+    
+// --- อัปเดตสถานะการลาอัตโนมัติ ---
+async function fetchAndUpdateLeaves() {
+    try {
+        const response = await fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vTQ8I6o22-nbdeWf1hd5m-7wSwDOtZBImLW-Jg5o0ROWqlPrmGLKuz4GteSgJTRIg7h1S_z2kgR61kE/pub?output=csv');
+        const data = await response.text();
+        const rows = data.split('\n');
+        rows.forEach(row => {
+            const cols = row.split(',');
+            if (cols[0] && document.getElementById('emp-' + cols[0])) {
+                document.getElementById('emp-' + cols[0]).innerText = 'L';
+            }
+        });
+    } catch (e) { console.error("Update failed", e); }
+}
+fetchAndUpdateLeaves();
+setInterval(fetchAndUpdateLeaves, 60000);
+    
     </script>
 </body>
 </html>
