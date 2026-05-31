@@ -689,6 +689,13 @@
         .wfh-present-check,.wfh-leave-check{width:16px;height:16px;cursor:pointer;display:inline-block}
         .wfh-present-check{accent-color:#10b981}.wfh-leave-check{accent-color:#a855f7}
 
+
+        /* v6 clean WFH source render */
+        .wfh-present-check,.wfh-leave-check{width:16px;height:16px;cursor:pointer;display:inline-block}
+        .wfh-present-check{accent-color:#10b981}
+        .wfh-leave-check{accent-color:#a855f7}
+        .wfh-col-status,.wfh-col-leave,.wfh-col-check,.wfh-col-checker,.wfh-col-time{text-align:center!important;white-space:nowrap}
+
 </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen antialiased selection:bg-indigo-500/30">
@@ -972,10 +979,11 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                         <th class="px-4 py-3 text-left">กะ</th>
                         <th class="px-4 py-3 text-left">เวลาเข้า</th>
                         <th class="px-4 py-3 text-left">เวลาพัก</th>
-                        <th class="px-4 py-3 text-left">สถานะ</th>
-                        <th class="px-4 py-3 text-center">ตรวจแล้ว</th>
-                        <th class="px-4 py-3 text-left">ผู้ตรวจ</th>
-                        <th class="px-4 py-3 text-left">เวลาตรวจ</th>
+                        <th class="px-4 py-3 text-center wfh-col-status">สถานะ</th>
+                        <th class="px-4 py-3 text-center wfh-col-leave">ลา</th>
+                        <th class="px-4 py-3 text-center wfh-col-check">ตรวจแล้ว</th>
+                        <th class="px-4 py-3 text-center wfh-col-checker">ผู้ตรวจ</th>
+                        <th class="px-4 py-3 text-center wfh-col-time">เวลาตรวจ</th>
                     </tr>
                 </thead>
                 <tbody id="wfh-present-table-body" class="divide-y divide-slate-800"></tbody>
@@ -2862,9 +2870,9 @@ window.previewDeleteEmployeeByCode = function() {
         
             safeCall("hideOldDuplicateStats", () => { hideOldDuplicateStats(); });
         
-            enhanceWFHLeaveColumn();
+            
         
-            safeCall("rebuildWFHCheckLeaveColumns", () => { rebuildWFHCheckLeaveColumns(); });
+            safeCall("rebuildWFHCheckLeaveColumns", () => {  });
         }
 
         
@@ -2997,9 +3005,9 @@ function renderTable() {
         
             hideOldDuplicateStats();
         
-            enhanceWFHLeaveColumn();
+            
         
-            rebuildWFHCheckLeaveColumns();
+            
         }
 
         function renderDailySummary(filtered) {
@@ -3953,7 +3961,7 @@ window.generateWFHOffReport = function() {
             const tbody = document.getElementById("wfh-present-table-body");
             const summary = document.getElementById("wfh-present-summary");
             if (!tbody || !summary) return;
-            const checks = Array.from(tbody.querySelectorAll('input[type="checkbox"]'));
+            const checks = Array.from(tbody.querySelectorAll("input.wfh-present-check"));
             const total = checks.length;
             const checked = checks.filter(x => x.checked).length;
             const cards = summary.querySelectorAll(".bg-slate-950");
@@ -4029,6 +4037,98 @@ window.generateWFHOffReport = function() {
             }
         };
 
+
+        function getWFHInlineDay() {
+            return Number(document.getElementById("wfh-present-day")?.value || window.currentCheckDay || new Date().getDate());
+        }
+
+        function isWFHLeaveInline(p, day) {
+            const v = String(typeof getStaffDayValueStrict === "function" ? getStaffDayValueStrict(p, day) : "").toUpperCase();
+            return ["L","PL","SL"].includes(v);
+        }
+
+        window.toggleWFHLeaveInline = async function(id, checked, checkboxEl) {
+            const staff = (window.currentStaffList || []).find(p => String(p.id) === String(id) || String(p.code) === String(id));
+            if (!staff) {
+                alert("ไม่พบพนักงาน");
+                if (checkboxEl) checkboxEl.checked = !checked;
+                return;
+            }
+
+            if (typeof canEditStaffField === "function" && !canEditStaffField(staff, "editDay")) {
+                alert("ไม่มีสิทธิ์แก้ไขวันลา");
+                if (checkboxEl) checkboxEl.checked = !checked;
+                return;
+            }
+
+            const day = getWFHInlineDay();
+            const row = checkboxEl?.closest("tr");
+            const presentBox = row?.querySelector("input.wfh-present-check");
+            const statusCell = row?.querySelector("[data-wfh-status-cell]");
+            const checkerCell = row?.querySelector("[data-wfh-checker-cell]");
+            const timeCell = row?.querySelector("[data-wfh-time-cell]");
+
+            if (checked) {
+                if (typeof setStaffDayValueStrict === "function") setStaffDayValueStrict(staff, day, "L");
+
+                if (typeof getWFHCheckKeyStable === "function" && typeof ensureAttendanceStoreStable === "function") {
+                    const store = ensureAttendanceStoreStable(getWFHCheckKeyStable());
+                    delete store[String(id)];
+                }
+
+                if (presentBox) presentBox.checked = false;
+                if (statusCell) statusCell.innerHTML = `<span class="inline-flex px-2 py-1 rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/25 text-xs font-bold whitespace-nowrap">ลา</span>`;
+                if (checkerCell) checkerCell.textContent = "-";
+                if (timeCell) timeCell.textContent = "-";
+            } else {
+                if (typeof setStaffDayValueStrict === "function") setStaffDayValueStrict(staff, day, "");
+                if (statusCell) statusCell.innerHTML = `<span class="inline-flex px-2 py-1 rounded-full bg-slate-500/15 text-slate-300 border border-slate-500/25 text-xs font-bold whitespace-nowrap">รอตรวจ</span>`;
+            }
+
+            if (typeof refreshWFHSummaryOnly === "function") refreshWFHSummaryOnly();
+
+            try { if (typeof commitData === "function") await commitData(); } catch(e) { console.warn(e); }
+            try { if (typeof renderTable === "function") renderTable(); } catch(e) { console.warn(e); }
+        };
+
+        window.toggleWFHPresentInline = async function(id, checked, checkboxEl) {
+            const staff = (window.currentStaffList || []).find(p => String(p.id) === String(id) || String(p.code) === String(id));
+            if (!staff) {
+                alert("ไม่พบพนักงาน");
+                if (checkboxEl) checkboxEl.checked = !checked;
+                return;
+            }
+
+            if (typeof hasPermission === "function" && !hasPermission("checkWFH")) {
+                alert("ไม่มีสิทธิ์ตรวจ WFH");
+                if (checkboxEl) checkboxEl.checked = !checked;
+                return;
+            }
+
+            const day = getWFHInlineDay();
+            const row = checkboxEl?.closest("tr");
+            const leaveBox = row?.querySelector("input.wfh-leave-check");
+            const statusCell = row?.querySelector("[data-wfh-status-cell]");
+
+            if (checked) {
+                if (leaveBox) leaveBox.checked = false;
+                if (typeof setStaffDayValueStrict === "function") setStaffDayValueStrict(staff, day, "");
+            }
+
+            if (typeof window.toggleAttendanceVerified === "function") {
+                await window.toggleAttendanceVerified(id, checked, checkboxEl);
+            }
+
+            if (statusCell) {
+                statusCell.innerHTML = checked
+                    ? `<span class="inline-flex px-2 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 text-xs font-bold whitespace-nowrap">มาทำงาน</span>`
+                    : `<span class="inline-flex px-2 py-1 rounded-full bg-slate-500/15 text-slate-300 border border-slate-500/25 text-xs font-bold whitespace-nowrap">รอตรวจ</span>`;
+            }
+
+            if (typeof refreshWFHSummaryOnly === "function") refreshWFHSummaryOnly();
+            try { if (typeof renderTable === "function") renderTable(); } catch(e) { console.warn(e); }
+        };
+
 function renderWFHPresentInline(people, day) {
             const panel = document.getElementById("wfh-present-inline-panel");
             const tbody = document.getElementById("wfh-present-table-body");
@@ -4039,6 +4139,7 @@ function renderWFHPresentInline(people, day) {
             if (!panel || !tbody) return;
 
             const checkKey = getWFHCheckKeyStable();
+            window.currentCheckDay = Number(day);
 
             panel.classList.remove("hidden");
             if (dateLabel) dateLabel.innerText = `กำลังดูข้อมูล : ${day}`;
@@ -4072,21 +4173,48 @@ function renderWFHPresentInline(people, day) {
                 `;
             }
 
+            const table = tbody.closest("table");
+            const headerRow = table?.querySelector("thead tr");
+            if (headerRow) {
+                headerRow.innerHTML = `
+                    <th class="px-4 py-3 text-left">ลำดับ</th>
+                    <th class="px-4 py-3 text-left">ทีม</th>
+                    <th class="px-4 py-3 text-left">ยศ</th>
+                    <th class="px-4 py-3 text-left">รหัสพนักงาน</th>
+                    <th class="px-4 py-3 text-left">ชื่อพนักงาน</th>
+                    <th class="px-4 py-3 text-left">กะ</th>
+                    <th class="px-4 py-3 text-left">เวลาเข้า</th>
+                    <th class="px-4 py-3 text-left">เวลาพัก</th>
+                    <th class="px-4 py-3 text-center wfh-col-status">สถานะ</th>
+                    <th class="px-4 py-3 text-center wfh-col-leave">ลา</th>
+                    <th class="px-4 py-3 text-center wfh-col-check">ตรวจแล้ว</th>
+                    <th class="px-4 py-3 text-center wfh-col-checker">ผู้ตรวจ</th>
+                    <th class="px-4 py-3 text-center wfh-col-time">เวลาตรวจ</th>
+                `;
+            }
+
             if (!people.length) {
-                tbody.innerHTML = `<tr><td colspan="12" class="px-4 py-8 text-center text-slate-500">ไม่พบพนักงาน WFH ที่มาทำงานตามวันที่เลือก</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="13" class="px-4 py-8 text-center text-slate-500">ไม่พบพนักงาน WFH ที่มาทำงานตามวันที่เลือก</td></tr>`;
                 return;
             }
 
             tbody.innerHTML = people.map((p, idx) => {
                 const checked = isAttendanceVerifiedStable(p.id, checkKey);
                 const admin = hasPermission("checkWFH");
+                const canLeave = typeof canEditStaffField === "function" ? canEditStaffField(p, "editDay") : admin;
                 const shiftClass = typeof getShiftClass === "function" ? getShiftClass(p.shift) : "shift-other";
                 const checker = getAttendanceCheckerStable(p.id, checkKey);
                 const checkedTime = getAttendanceTimeStable(p.id, checkKey);
                 const resigned = getResignedRecordByStaff(p);
+                const isLeave = !resigned && isWFHLeaveInline(p, Number(day));
+
                 const statusHtml = resigned
                     ? `<span class="status-resigned-pill">ออกแล้ว ${getResignDateText(resigned)}</span>`
-                    : `<span class="inline-flex px-2 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 text-xs font-bold whitespace-nowrap">มาทำงาน</span>`;
+                    : isLeave
+                        ? `<span class="inline-flex px-2 py-1 rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/25 text-xs font-bold whitespace-nowrap">ลา</span>`
+                        : checked
+                            ? `<span class="inline-flex px-2 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 text-xs font-bold whitespace-nowrap">มาทำงาน</span>`
+                            : `<span class="inline-flex px-2 py-1 rounded-full bg-slate-500/15 text-slate-300 border border-slate-500/25 text-xs font-bold whitespace-nowrap">รอตรวจ</span>`;
 
                 return `
                     <tr class="hover:bg-slate-800/40 transition-all ${resigned ? "resigned-row" : ""}">
@@ -4098,27 +4226,30 @@ function renderWFHPresentInline(people, day) {
                         <td class="px-4 py-3"><span class="px-2 py-1 rounded border text-xs font-bold ${shiftClass}">${p.shift}</span></td>
                         <td class="px-4 py-3 text-slate-300">${getShiftLoginTime(p.shift)}</td>
                         <td class="px-4 py-3 text-slate-300">${getShiftBreakTime(p.shift)}</td>
-                        <td class="px-4 py-3">${statusHtml}</td>
-                        <td class="px-4 py-3 text-center">
+                        <td class="px-4 py-3 text-center" data-wfh-status-cell>${statusHtml}</td>
+                        <td class="px-4 py-3 text-center wfh-col-leave">
                             <input type="checkbox"
-                                ${checked ? "checked" : ""}
-                                ${admin && !resigned ? "" : "disabled"}
-                                onchange="toggleAttendanceVerified(${p.id}, this.checked, this)"
-                                class="w-4 h-4 accent-emerald-500 ${admin && !resigned ? "cursor-pointer" : "cursor-not-allowed"}" autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" spellcheck="false">
+                                ${isLeave ? "checked" : ""}
+                                ${canLeave && !resigned ? "" : "disabled"}
+                                onchange="toggleWFHLeaveInline(${p.id}, this.checked, this)"
+                                class="wfh-leave-check ${canLeave && !resigned ? "cursor-pointer" : "cursor-not-allowed"}" autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" spellcheck="false">
                         </td>
-                        <td class="px-4 py-3 text-slate-300">${checker}</td>
-                        <td class="px-4 py-3 text-slate-300">${checkedTime}</td>
+                        <td class="px-4 py-3 text-center wfh-col-check">
+                            <input type="checkbox"
+                                ${checked && !isLeave ? "checked" : ""}
+                                ${admin && !resigned ? "" : "disabled"}
+                                onchange="toggleWFHPresentInline(${p.id}, this.checked, this)"
+                                class="wfh-present-check ${admin && !resigned ? "cursor-pointer" : "cursor-not-allowed"}" autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" spellcheck="false">
+                        </td>
+                        <td class="px-4 py-3 text-center text-slate-300" data-wfh-checker-cell>${checked && !isLeave ? checker : "-"}</td>
+                        <td class="px-4 py-3 text-center text-slate-300" data-wfh-time-cell>${checked && !isLeave ? checkedTime : "-"}</td>
                     </tr>
                 `;
             }).join("");
-        
+
             applyLanguage();
-        
             applyRolePermissions();
-        
-            enhanceWFHLeaveColumn();
-        
-            rebuildWFHCheckLeaveColumns();
+            refreshWFHSummaryOnly();
         }
 
 window.generateWFHPresentToday = function() {
@@ -5328,9 +5459,9 @@ function applyLanguage(){
             lockTableControlsByPermission();
             fixWorkTypeLabels();
         
-            enhanceWFHLeaveColumn();
+            
         
-            rebuildWFHCheckLeaveColumns();
+            
         }
 
 
@@ -5676,10 +5807,7 @@ function renderDynamicShiftStats() {
         };
 
         function enhanceWFHLeaveColumn() {
-            // v5.8: ปิดตัวเก่า เพราะทำให้คอลัมน์ ลา/ตรวจแล้ว เลื่อนผิด
-            if (typeof rebuildWFHCheckLeaveColumns === "function") {
-                rebuildWFHCheckLeaveColumns();
-            }
+            // v6: disabled. WFH columns are rendered directly in renderWFHPresentInline().
         }
 
 
@@ -5688,7 +5816,7 @@ function renderDynamicShiftStats() {
             const __wfhLeaveObserver = new MutationObserver(() => {
                 clearTimeout(window.__wfhLeaveObserverTimer);
                 window.__wfhLeaveObserverTimer = setTimeout(() => {
-                    try { enhanceWFHLeaveColumn(); } catch(e) {}
+                    try {  } catch(e) {}
                 }, 150);
             });
             document.addEventListener("DOMContentLoaded", () => {
@@ -5797,12 +5925,12 @@ function renderDynamicShiftStats() {
             const __obs = new MutationObserver(() => {
                 clearTimeout(window.__wfhFixTimer);
                 window.__wfhFixTimer = setTimeout(() => {
-                    try { rebuildWFHCheckLeaveColumns(); } catch(e) {}
+                    try {  } catch(e) {}
                 }, 120);
             });
             document.addEventListener("DOMContentLoaded", () => {
                 __obs.observe(document.body, { childList: true, subtree: true });
-                setTimeout(() => { try { rebuildWFHCheckLeaveColumns(); renderDynamicShiftStats(); } catch(e) {} }, 600);
+                setTimeout(() => { try {  renderDynamicShiftStats(); } catch(e) {} }, 600);
             });
         }
 
@@ -6125,7 +6253,7 @@ function renderDynamicShiftStats() {
             window.attendanceChecks[makeAttendanceKeys(staff, day)[0]] = rec;
             if (typeof addAuditLog === "function") addAuditLog(mode === "leave" ? "WFH LEAVE" : "WFH CHECK", staff.name, `วันที่ ${day}: ${checked ? "ON" : "OFF"}`);
 
-            rebuildWFHCheckLeaveColumns();
+            
             if (!window.draftMode && typeof commitData === "function") {
                 try { await commitData(); } catch(e) { console.warn(e); }
             }
@@ -6149,119 +6277,7 @@ function renderDynamicShiftStats() {
         }
 
         function rebuildWFHCheckLeaveColumns() {
-            const table = Array.from(document.querySelectorAll("table")).find(t => {
-                const txt = t.textContent || "";
-                return txt.includes("สถานะ") && txt.includes("ตรวจแล้ว") && txt.includes("ผู้ตรวจ");
-            });
-            if (!table) return;
-
-            const day = getWFHCheckDay();
-            const headerRow = table.querySelector("thead tr") || table.querySelector("tr");
-            if (!headerRow) return;
-
-            const headerText = th => (th.textContent || "").trim();
-            let headers = Array.from(headerRow.children);
-            const statusIdx = headers.findIndex(th => headerText(th).includes("สถานะ") || headerText(th).includes("Status"));
-            if (statusIdx === -1) return;
-
-            // เก็บหัวคอลัมน์ก่อน "สถานะ" ไว้ แล้วสร้าง 5 คอลัมน์ท้ายใหม่ทั้งหมด
-            const oldHeaderClass = headers[statusIdx]?.className || "";
-            while (headerRow.children.length > statusIdx) {
-                headerRow.removeChild(headerRow.children[statusIdx]);
-            }
-
-            const tailHeaders = [
-                ["สถานะ", "wfh-col-status"],
-                ["ลา", "wfh-col-leave"],
-                ["ตรวจแล้ว", "wfh-col-check"],
-                ["ผู้ตรวจ", "wfh-col-checker"],
-                ["เวลาตรวจ", "wfh-col-time"]
-            ];
-
-            tailHeaders.forEach(([label, cls]) => {
-                const th = document.createElement("th");
-                th.textContent = label;
-                th.className = `${oldHeaderClass} ${cls}`.trim();
-                headerRow.appendChild(th);
-            });
-
-            Array.from(table.querySelectorAll("tbody tr")).forEach(row => {
-                const rowTextBefore = row.textContent || "";
-                const staff = (window.currentStaffList || []).find(p =>
-                    rowTextBefore.includes(String(p.name || "")) ||
-                    rowTextBefore.includes(String(p.code || "")) ||
-                    rowTextBefore.includes(String(p.id || ""))
-                );
-                if (!staff) return;
-
-                // อ่านสถานะเดิมก่อนลบช่องท้าย
-                const rec = getAttendanceRecord(staff, day, row);
-                const val = String(getStaffDayValueStrict(staff, day) || "").toUpperCase();
-
-                if (val === "L") {
-                    rec.leave = true;
-                    rec.checked = false;
-                }
-
-                // ถ้า DOM เดิมมี checkbox ติ๊กและยังไม่มี rec ให้ถือว่าเคยตรวจแล้ว
-                if (!rec.checked && !rec.leave && row.querySelector("input[type='checkbox']:checked")) {
-                    rec.checked = true;
-                    if (!rec.checker && rowTextBefore.includes("BRIGHTON")) rec.checker = "BRIGHTON";
-                    if (!rec.time) {
-                        const timeMatch = rowTextBefore.match(/\b\d{1,2}:\d{2}\b/);
-                        if (timeMatch) rec.time = timeMatch[0];
-                    }
-                }
-
-                const oldCellClass = row.children[statusIdx]?.className || "";
-
-                // ตัดทุกช่องตั้งแต่สถานะเป็นต้นไปทิ้ง แล้วสร้างใหม่ 5 ช่องให้ตรงหัวตาราง 100%
-                while (row.children.length > statusIdx) {
-                    row.removeChild(row.children[statusIdx]);
-                }
-
-                const status = getWFHStatusText(staff, day, row);
-
-                const tdStatus = document.createElement("td");
-                tdStatus.className = `${oldCellClass} wfh-col-status`.trim();
-                const cls = status === "ลา" ? "wfh-status-leave" : status === "มาทำงาน" ? "wfh-status-work" : "wfh-status-pending";
-                tdStatus.innerHTML = `<span class="${cls} px-3 py-1 rounded-full text-xs font-bold">${status}</span>`;
-                row.appendChild(tdStatus);
-
-                const tdLeave = document.createElement("td");
-                tdLeave.className = `${oldCellClass} wfh-col-leave`.trim();
-                const cbLeave = document.createElement("input");
-                cbLeave.type = "checkbox";
-                cbLeave.className = "wfh-leave-check";
-                cbLeave.checked = !!rec.leave;
-                cbLeave.disabled = isResignedStaffStrict(staff) || !canEditStaffField(staff, "editDay");
-                cbLeave.onchange = () => setWFHAttendanceState(String(staff.id || staff.code || staff.name), "leave", cbLeave.checked);
-                tdLeave.appendChild(cbLeave);
-                row.appendChild(tdLeave);
-
-                const tdCheck = document.createElement("td");
-                tdCheck.className = `${oldCellClass} wfh-col-check`.trim();
-                const cbCheck = document.createElement("input");
-                cbCheck.type = "checkbox";
-                cbCheck.className = "wfh-present-check";
-                cbCheck.checked = !!rec.checked && !rec.leave;
-                cbCheck.disabled = isResignedStaffStrict(staff) || !canEditStaffField(staff, "checkWFH");
-                cbCheck.onchange = () => setWFHAttendanceState(String(staff.id || staff.code || staff.name), "check", cbCheck.checked);
-                tdCheck.appendChild(cbCheck);
-                row.appendChild(tdCheck);
-
-                const tdChecker = document.createElement("td");
-                tdChecker.className = `${oldCellClass} wfh-col-checker`.trim();
-                tdChecker.textContent = rec.checked && !rec.leave ? (rec.checker || "-") : "-";
-                row.appendChild(tdChecker);
-
-                const tdTime = document.createElement("td");
-                tdTime.className = `${oldCellClass} wfh-col-time`.trim();
-                tdTime.textContent = rec.checked && !rec.leave ? (rec.time || "-") : "-";
-                row.appendChild(tdTime);
-
-                window.attendanceChecks[makeAttendanceKeys(staff, day)[0]] = rec;
-            });
+            // v6: disabled. WFH columns are rendered directly in renderWFHPresentInline().
         }
 
 
