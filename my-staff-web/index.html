@@ -782,7 +782,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                 <div class="flex gap-4 text-xs">
                     <span class="text-blue-400">● วันทำงาน</span>
                     <span class="text-red-400">O วันหยุด</span>
-                    <span class="text-purple-400">L วันลา</span>
+                    <span class="text-purple-400">SL ลาป่วย</span><span class="text-pink-400">PL ลากิจ</span>
                 </div>
             </div>
 
@@ -938,10 +938,11 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                 <label class="text-xs text-slate-400 font-medium">เลือกสถานะที่ต้องการ</label>
                 <div class="grid grid-cols-3 gap-2">
                     <button type="button" onclick="selectDayConfirmStatus('WORK')" id="day-status-work" class="day-status-btn px-3 py-2 rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold">วันทำงาน</button>
-                    <button type="button" onclick="selectDayConfirmStatus('O')" id="day-status-off" class="day-status-btn px-3 py-2 rounded-xl border border-rose-500/40 bg-rose-950/20 hover:bg-rose-950/35 text-rose-300 text-xs font-semibold">วันหยุด O</button>
-                    <button type="button" onclick="selectDayConfirmStatus('L')" id="day-status-leave" class="day-status-btn px-3 py-2 rounded-xl border border-purple-500/40 bg-purple-950/20 hover:bg-purple-950/35 text-purple-300 text-xs font-semibold">วันลา L</button>
+                    <button type="button" onclick="selectDayConfirmStatus('O')" id="day-status-off" class="day-status-btn px-3 py-2 rounded-xl border border-rose-500/40 bg-rose-950/20 hover:bg-rose-950/35 text-rose-300 text-xs font-semibold">วันหยุด</button>
+                    <button type="button" onclick="selectDayConfirmStatus('L')" id="day-status-leave" class="day-status-btn px-3 py-2 rounded-xl border border-purple-500/40 bg-purple-950/20 hover:bg-purple-950/35 text-purple-300 text-xs font-semibold">วันลา</button>
                 </div>
                 <input type="hidden" id="day-confirm-status" value="">
+                <input type="hidden" id="day-confirm-leave-type" value="">
             </div>
 
             <div class="flex justify-end gap-2">
@@ -950,6 +951,28 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                 </button>
                 <button onclick="confirmToggleDayOff()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-xl">
                     ยืนยัน
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+
+    <div id="leave-type-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-[1000000] hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-base font-bold text-slate-200">เลือกประเภทวันลา</h3>
+                <button onclick="closeLeaveTypeModal()" class="text-slate-400 hover:text-slate-200">ปิด</button>
+            </div>
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 text-sm text-slate-400 leading-6">
+                กรุณาเลือกประเภทวันลา ระบบจะบันทึกตัวย่อลงในตารางหลักทันที
+            </div>
+            <div class="grid grid-cols-1 gap-3">
+                <button type="button" onclick="selectLeaveType('SL')" class="w-full px-4 py-3 rounded-xl border border-purple-500/40 bg-purple-950/20 hover:bg-purple-950/35 text-purple-300 text-sm font-bold text-left">
+                    ลาป่วย <span class="text-slate-400">(SL)</span>
+                </button>
+                <button type="button" onclick="selectLeaveType('PL')" class="w-full px-4 py-3 rounded-xl border border-pink-500/40 bg-pink-950/20 hover:bg-pink-950/35 text-pink-300 text-sm font-bold text-left">
+                    ลากิจ <span class="text-slate-400">(PL)</span>
                 </button>
             </div>
         </div>
@@ -2097,6 +2120,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                 shift: p.shift || "S9",
                 offs: Array.isArray(p.offs) ? p.offs : [],
                 leaves: Array.isArray(p.leaves) ? p.leaves : [],
+                leaveTypes: (p.leaveTypes && typeof p.leaveTypes === "object") ? p.leaveTypes : {},
                 position: typeof p.position === "number" ? p.position : idx + 1
             }));
         }
@@ -2781,7 +2805,12 @@ function renderTable() {
                     let txt = "•", color = "text-blue-400";
                     if (isR) { bg = "resigned-day-cell"; txt = `<span class="resigned-day-mark">ออก</span>`; color = ""; }
                     else if (isO) { bg = "bg-rose-950/30"; txt = "O"; color = "text-red-400 font-bold"; }
-                    else if (isL) { bg = "bg-purple-950/30"; txt = "L"; color = "text-purple-400 font-bold"; }
+                    else if (isL) {
+                        const lt = getLeaveTypeCode(p, d);
+                        bg = "bg-purple-950/30";
+                        txt = lt;
+                        color = lt === "SL" ? "text-purple-400 font-bold" : (lt === "PL" ? "text-pink-400 font-bold" : "text-purple-400 font-bold");
+                    }
                     const clickHandler = isResigned ? "" : `onclick="toggleDayOff(${p.id}, ${d})"`;
                     const cursorCls = isResigned ? "cursor-not-allowed opacity-90" : (editable ? "cursor-pointer" : "cursor-not-allowed opacity-70");
                     const tooltipName = isR ? `${p.name} | ออกแล้ว ${getResignDateText(resigned)}` : p.name;
@@ -2974,34 +3003,48 @@ window.changeShift = async function(id, val) {
         
         window.pendingDayToggle = null;
 
+        function getLeaveTypeCode(p, d) {
+            const raw = p?.leaveTypes?.[String(d)] || p?.leaveTypes?.[d] || "L";
+            return ["SL", "PL"].includes(raw) ? raw : "L";
+        }
+
         function getDayStatusText(p, d) {
-            if (Array.isArray(p.offs) && p.offs.includes(d)) return "วันหยุด O";
-            if (Array.isArray(p.leaves) && p.leaves.includes(d)) return "วันลา L";
+            if (Array.isArray(p.offs) && p.offs.includes(d)) return "วันหยุด";
+            if (Array.isArray(p.leaves) && p.leaves.includes(d)) {
+                const lt = getLeaveTypeCode(p, d);
+                if (lt === "SL") return "ลาป่วย (SL)";
+                if (lt === "PL") return "ลากิจ (PL)";
+                return "วันลา";
+            }
             return "วันทำงาน";
         }
 
         function getNextDayStatusText(p, d) {
-            if (Array.isArray(p.offs) && p.offs.includes(d)) return "วันลา L";
+            if (Array.isArray(p.offs) && p.offs.includes(d)) return "วันลา";
             if (Array.isArray(p.leaves) && p.leaves.includes(d)) return "วันทำงาน";
-            return "วันหยุด O";
+            return "วันหยุด";
         }
 
         
         function getDayStatusCode(p, d) {
             if (Array.isArray(p.offs) && p.offs.includes(d)) return "O";
-            if (Array.isArray(p.leaves) && p.leaves.includes(d)) return "L";
+            if (Array.isArray(p.leaves) && p.leaves.includes(d)) return getLeaveTypeCode(p, d);
             return "WORK";
         }
 
         function getDayStatusTextByCode(code) {
-            if (code === "O") return "วันหยุด O";
-            if (code === "L") return "วันลา L";
+            if (code === "O") return "วันหยุด";
+            if (code === "SL") return "ลาป่วย (SL)";
+            if (code === "PL") return "ลากิจ (PL)";
+            if (code === "L") return "วันลา";
             return "วันทำงาน";
         }
 
         window.selectDayConfirmStatus = function(status) {
             const input = document.getElementById("day-confirm-status");
+            const leaveTypeInput = document.getElementById("day-confirm-leave-type");
             if (input) input.value = status;
+            if (status !== "L" && leaveTypeInput) leaveTypeInput.value = "";
 
             const btns = {
                 WORK: document.getElementById("day-status-work"),
@@ -3020,10 +3063,35 @@ window.changeShift = async function(id, val) {
 
             const nextText = document.getElementById("day-confirm-next-status");
             if (nextText) nextText.innerText = getDayStatusTextByCode(status);
+
+            if (status === "L") {
+                openLeaveTypeModal();
+            }
+        };
+
+        window.openLeaveTypeModal = function() {
+            const modal = document.getElementById("leave-type-modal");
+            if (modal) modal.classList.remove("hidden");
+        };
+
+        window.closeLeaveTypeModal = function() {
+            const modal = document.getElementById("leave-type-modal");
+            if (modal) modal.classList.add("hidden");
+        };
+
+        window.selectLeaveType = function(type) {
+            const leaveTypeInput = document.getElementById("day-confirm-leave-type");
+            if (leaveTypeInput) leaveTypeInput.value = type;
+            const nextText = document.getElementById("day-confirm-next-status");
+            if (nextText) nextText.innerText = getDayStatusTextByCode(type);
+            closeLeaveTypeModal();
         };
 
 window.closeDayConfirmModal = function() {
             window.pendingDayToggle = null;
+            const leaveTypeInput = document.getElementById("day-confirm-leave-type");
+            if (leaveTypeInput) leaveTypeInput.value = "";
+            closeLeaveTypeModal();
             const modal = document.getElementById("day-confirm-modal");
             if (modal) modal.classList.add("hidden");
         };
@@ -3042,17 +3110,26 @@ window.closeDayConfirmModal = function() {
             }
 
             const selectedStatus = document.getElementById("day-confirm-status")?.value || "WORK";
+            const selectedLeaveType = document.getElementById("day-confirm-leave-type")?.value || "";
+
+            if (selectedStatus === "L" && !["SL", "PL"].includes(selectedLeaveType)) {
+                openLeaveTypeModal();
+                return;
+            }
 
             if (!p.offs) p.offs = [];
             if (!p.leaves) p.leaves = [];
+            if (!p.leaveTypes || typeof p.leaveTypes !== "object") p.leaveTypes = {};
 
             p.offs = p.offs.filter(x => x !== d);
             p.leaves = p.leaves.filter(x => x !== d);
+            delete p.leaveTypes[String(d)];
 
             if (selectedStatus === "O") {
                 p.offs.push(d);
             } else if (selectedStatus === "L") {
                 p.leaves.push(d);
+                p.leaveTypes[String(d)] = selectedLeaveType;
             }
 
             p.offs.sort((a,b)=>a-b);
@@ -3088,7 +3165,17 @@ window.toggleDayOff = function(id, d) {
             const modal = document.getElementById("day-confirm-modal");
             if (modal) modal.classList.remove("hidden");
 
-            selectDayConfirmStatus(currentCode);
+            if (["SL", "PL"].includes(currentCode)) {
+                const statusInput = document.getElementById("day-confirm-status");
+                const leaveTypeInput = document.getElementById("day-confirm-leave-type");
+                if (statusInput) statusInput.value = "L";
+                if (leaveTypeInput) leaveTypeInput.value = currentCode;
+                selectDayConfirmStatus("L");
+                const nextText = document.getElementById("day-confirm-next-status");
+                if (nextText) nextText.innerText = getDayStatusTextByCode(currentCode);
+            } else {
+                selectDayConfirmStatus(currentCode);
+            }
         };
 
         window.editName = function(id, el) {
