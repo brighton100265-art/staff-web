@@ -5989,10 +5989,19 @@ async function fetchAndUpdateLeaves() {
             if (!staff || !leaveDay) return;
 
             if (!Array.isArray(staff.leaves)) staff.leaves = [];
+            if (!staff.leaveTypes || typeof staff.leaveTypes !== 'object') {
+                staff.leaveTypes = {};
+            }
 
             if (!staff.leaves.includes(leaveDay)) {
                 staff.leaves.push(leaveDay);
             }
+
+            staff.leaveTypes[String(leaveDay)] = 'SL';
+
+            try {
+                if (typeof commitData === 'function') commitData();
+            } catch(err) {}
         });
 
         if (typeof renderTable === 'function') {
@@ -6003,7 +6012,7 @@ async function fetchAndUpdateLeaves() {
             } catch(e){}
         }
 
-        console.log('Leave sync:', empCode, leaveDay);
+        console.log('Leave sync completed');
     } catch (e) {
         console.error('Update failed', e);
     }
