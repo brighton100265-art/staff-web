@@ -696,6 +696,13 @@
         .wfh-leave-check{accent-color:#a855f7}
         .wfh-col-status,.wfh-col-leave,.wfh-col-check,.wfh-col-checker,.wfh-col-time{text-align:center!important;white-space:nowrap}
 
+
+        /* v6.1 WFH persistence + resign count fix */
+        .wfh-present-check,.wfh-leave-check{width:16px;height:16px;cursor:pointer;display:inline-block}
+        .wfh-present-check{accent-color:#10b981}
+        .wfh-leave-check{accent-color:#a855f7}
+        .wfh-col-status,.wfh-col-leave,.wfh-col-check,.wfh-col-checker,.wfh-col-time{text-align:center!important;white-space:nowrap}
+
 </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen antialiased selection:bg-indigo-500/30">
@@ -3941,18 +3948,21 @@ window.generateWFHOffReport = function() {
         }
 
         function isAttendanceVerifiedStable(id, key = getWFHCheckKeyStable()) {
-            const rec = getAttendanceRecordStable(id, key);
+            const rec = getWFHAttendanceRecord(id, getWFHInlineDay());
             return !!(rec && rec.checked !== false);
         }
 
         function getAttendanceCheckerStable(id, key = getWFHCheckKeyStable()) {
-            return getAttendanceRecordStable(id, key)?.checkedBy || "-";
+            const rec = getWFHAttendanceRecord(id, getWFHInlineDay());
+            return rec?.checkedBy || rec?.checker || "-";
         }
 
         function getAttendanceTimeStable(id, key = getWFHCheckKeyStable()) {
-            const rec = getAttendanceRecordStable(id, key);
-            if (!rec || !rec.checkedAt) return "-";
-            const t = new Date(rec.checkedAt);
+            const rec = getWFHAttendanceRecord(id, getWFHInlineDay());
+            const raw = rec?.checkedAt || rec?.time || rec?.checkedTime || "";
+            if (!raw) return "-";
+            if (/^\d{1,2}:\d{2}$/.test(String(raw))) return raw;
+            const t = new Date(raw);
             if (Number.isNaN(t.getTime())) return "-";
             return `${pad2(t.getHours())}:${pad2(t.getMinutes())}`;
         }
@@ -3974,33 +3984,37 @@ window.generateWFHOffReport = function() {
         }
 
         window.toggleAttendanceVerified = async function(id, checked, checkboxEl) {
-            if (!isAdminUser()) {
+            if (typeof isAdminUser === "function" && !isAdminUser()) {
                 alert("ตรวจสอบได้เฉพาะ Admin");
                 if (checkboxEl) checkboxEl.checked = !checked;
                 return;
             }
 
-            const key = getWFHCheckKeyStable();
-            const store = ensureAttendanceStoreStable(key);
-            const idKey = String(id);
             const now = new Date();
-            const checkerName = getCurrentAdminLabel();
+            const checkerName = typeof getCurrentAdminLabel === "function"
+                ? getCurrentAdminLabel()
+                : String(window.currentUser?.name || window.currentUser?.username || window.currentUser?.role || "ADMIN").toUpperCase();
 
             if (checked) {
-                store[idKey] = {
+                saveWFHAttendanceRecord(id, {
                     checked: true,
                     checkedBy: checkerName,
                     checkedAt: now.toISOString()
-                };
+                });
             } else {
-                delete store[idKey];
+                removeWFHAttendanceRecord(id);
             }
 
             const row = checkboxEl?.closest("tr");
             if (row) {
-                const cells = row.querySelectorAll("td");
-                const checkerCell = cells[cells.length - 2];
-                const timeCell = cells[cells.length - 1];
+                const statusCell = row.querySelector("[data-wfh-status-cell]");
+                const checkerCell = row.querySelector("[data-wfh-checker-cell]");
+                const timeCell = row.querySelector("[data-wfh-time-cell]");
+                if (statusCell) {
+                    statusCell.innerHTML = checked
+                        ? `<span class="inline-flex px-2 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 text-xs font-bold whitespace-nowrap">มาทำงาน</span>`
+                        : `<span class="inline-flex px-2 py-1 rounded-full bg-slate-500/15 text-slate-300 border border-slate-500/25 text-xs font-bold whitespace-nowrap">รอตรวจ</span>`;
+                }
                 if (checkerCell) checkerCell.textContent = checked ? checkerName : "-";
                 if (timeCell) timeCell.textContent = checked ? `${pad2(now.getHours())}:${pad2(now.getMinutes())}` : "-";
             }
@@ -4010,42 +4024,21 @@ window.generateWFHOffReport = function() {
             try {
                 if (checkboxEl) checkboxEl.disabled = true;
                 await commitData();
-
-                // กันข้อมูลถูกทับระหว่าง update
-                const storeAfter = ensureAttendanceStoreStable(key);
-                if (checked) {
-                    storeAfter[idKey] = storeAfter[idKey] || {
-                        checked: true,
-                        checkedBy: checkerName,
-                        checkedAt: now.toISOString()
-                    };
-                } else {
-                    delete storeAfter[idKey];
-                }
-
-                if (!document.getElementById("wfh-present-inline-panel")?.classList.contains("hidden")) {
-                    generateWFHPresentToday();
-                }
-                showToast(checked ? "ตรวจแล้ว" : "ยกเลิกตรวจแล้ว");
             } catch (err) {
                 console.error(err);
                 alert("บันทึกไม่สำเร็จ กรุณาลองใหม่");
                 if (checkboxEl) checkboxEl.checked = !checked;
-                generateWFHPresentToday();
             } finally {
                 if (checkboxEl) checkboxEl.disabled = false;
             }
         };
 
 
-        function getWFHInlineDay() {
-            return Number(document.getElementById("wfh-present-day")?.value || window.currentCheckDay || new Date().getDate());
-        }
+        
 
-        function isWFHLeaveInline(p, day) {
-            const v = String(typeof getStaffDayValueStrict === "function" ? getStaffDayValueStrict(p, day) : "").toUpperCase();
-            return ["L","PL","SL"].includes(v);
-        }
+
+        
+
 
         window.toggleWFHLeaveInline = async function(id, checked, checkboxEl) {
             const staff = (window.currentStaffList || []).find(p => String(p.id) === String(id) || String(p.code) === String(id));
@@ -4070,11 +4063,7 @@ window.generateWFHOffReport = function() {
 
             if (checked) {
                 if (typeof setStaffDayValueStrict === "function") setStaffDayValueStrict(staff, day, "L");
-
-                if (typeof getWFHCheckKeyStable === "function" && typeof ensureAttendanceStoreStable === "function") {
-                    const store = ensureAttendanceStoreStable(getWFHCheckKeyStable());
-                    delete store[String(id)];
-                }
+                removeWFHAttendanceRecord(id, day);
 
                 if (presentBox) presentBox.checked = false;
                 if (statusCell) statusCell.innerHTML = `<span class="inline-flex px-2 py-1 rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/25 text-xs font-bold whitespace-nowrap">ลา</span>`;
@@ -4085,7 +4074,7 @@ window.generateWFHOffReport = function() {
                 if (statusCell) statusCell.innerHTML = `<span class="inline-flex px-2 py-1 rounded-full bg-slate-500/15 text-slate-300 border border-slate-500/25 text-xs font-bold whitespace-nowrap">รอตรวจ</span>`;
             }
 
-            if (typeof refreshWFHSummaryOnly === "function") refreshWFHSummaryOnly();
+            refreshWFHSummaryOnly();
 
             try { if (typeof commitData === "function") await commitData(); } catch(e) { console.warn(e); }
             try { if (typeof renderTable === "function") renderTable(); } catch(e) { console.warn(e); }
@@ -4108,7 +4097,6 @@ window.generateWFHOffReport = function() {
             const day = getWFHInlineDay();
             const row = checkboxEl?.closest("tr");
             const leaveBox = row?.querySelector("input.wfh-leave-check");
-            const statusCell = row?.querySelector("[data-wfh-status-cell]");
 
             if (checked) {
                 if (leaveBox) leaveBox.checked = false;
@@ -4119,15 +4107,66 @@ window.generateWFHOffReport = function() {
                 await window.toggleAttendanceVerified(id, checked, checkboxEl);
             }
 
-            if (statusCell) {
-                statusCell.innerHTML = checked
-                    ? `<span class="inline-flex px-2 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 text-xs font-bold whitespace-nowrap">มาทำงาน</span>`
-                    : `<span class="inline-flex px-2 py-1 rounded-full bg-slate-500/15 text-slate-300 border border-slate-500/25 text-xs font-bold whitespace-nowrap">รอตรวจ</span>`;
-            }
-
-            if (typeof refreshWFHSummaryOnly === "function") refreshWFHSummaryOnly();
+            refreshWFHSummaryOnly();
             try { if (typeof renderTable === "function") renderTable(); } catch(e) { console.warn(e); }
         };
+
+
+        function makeWFHAttendanceKey(day = getWFHInlineDay()) {
+            const y = Number(window.currentYear || document.getElementById("year-select")?.value || document.getElementById("year")?.value || new Date().getFullYear());
+            const m = Number(window.currentMonth || document.getElementById("month-select")?.value || document.getElementById("month")?.value || (new Date().getMonth() + 1));
+            const d = Number(day || new Date().getDate());
+            return `${y}_${String(m).padStart(2,"0")}_${String(d).padStart(2,"0")}`;
+        }
+
+        function getWFHAttendanceStore(day = getWFHInlineDay()) {
+            if (!window.attendanceChecks || typeof window.attendanceChecks !== "object") window.attendanceChecks = {};
+            const key = makeWFHAttendanceKey(day);
+            if (!window.attendanceChecks[key] || typeof window.attendanceChecks[key] !== "object") window.attendanceChecks[key] = {};
+            return window.attendanceChecks[key];
+        }
+
+        function getWFHAttendanceRecord(id, day = getWFHInlineDay()) {
+            const store = getWFHAttendanceStore(day);
+            const rec = store[String(id)];
+            if (!rec) return null;
+            if (typeof rec === "boolean") return rec ? { checked:true, checkedBy:"ADMIN", checkedAt:"" } : null;
+            return rec;
+        }
+
+        function saveWFHAttendanceRecord(id, rec, day = getWFHInlineDay()) {
+            const store = getWFHAttendanceStore(day);
+            store[String(id)] = rec;
+            // sync กับ store เดิมของระบบ ถ้ามี เพื่อไม่ให้ฟังก์ชันเก่าดึงคนละที่หลัง F5
+            if (typeof ensureAttendanceStoreStable === "function") {
+                const oldStore = ensureAttendanceStoreStable(typeof getWFHCheckKeyStable === "function" ? getWFHCheckKeyStable() : makeWFHAttendanceKey(day));
+                oldStore[String(id)] = rec;
+            }
+        }
+
+        function removeWFHAttendanceRecord(id, day = getWFHInlineDay()) {
+            const store = getWFHAttendanceStore(day);
+            delete store[String(id)];
+            if (typeof ensureAttendanceStoreStable === "function") {
+                const oldStore = ensureAttendanceStoreStable(typeof getWFHCheckKeyStable === "function" ? getWFHCheckKeyStable() : makeWFHAttendanceKey(day));
+                delete oldStore[String(id)];
+            }
+        }
+
+        function getWFHInlineDay() {
+            const v =
+                document.getElementById("wfh-present-day")?.value ||
+                document.getElementById("wfh-search-day")?.value ||
+                document.getElementById("wfh-report-day")?.value ||
+                window.currentCheckDay ||
+                new Date().getDate();
+            return Number(v);
+        }
+
+        function isWFHLeaveInline(p, day = getWFHInlineDay()) {
+            const v = String(typeof getStaffDayValueStrict === "function" ? getStaffDayValueStrict(p, day) : "").toUpperCase();
+            return ["L","PL","SL"].includes(v);
+        }
 
 function renderWFHPresentInline(people, day) {
             const panel = document.getElementById("wfh-present-inline-panel");
@@ -4138,25 +4177,27 @@ function renderWFHPresentInline(people, day) {
 
             if (!panel || !tbody) return;
 
-            const checkKey = getWFHCheckKeyStable();
             window.currentCheckDay = Number(day);
+
+            // คนออกแล้วไม่ต้องนับ/ไม่ต้องแสดงในรายการ WFH มาทำงาน
+            const activePeople = (people || []).filter(p => !(typeof getResignedRecordByStaff === "function" && getResignedRecordByStaff(p)));
 
             panel.classList.remove("hidden");
             if (dateLabel) dateLabel.innerText = `กำลังดูข้อมูล : ${day}`;
-            if (countText) countText.innerText = `แสดง ${people.length} คน`;
+            if (countText) countText.innerText = `แสดง ${activePeople.length} คน`;
 
             const teamCounts = { WIN1: 0, WIN2: 0, WIN3: 0 };
-            people.forEach(p => {
+            activePeople.forEach(p => {
                 if (teamCounts[p.team] !== undefined) teamCounts[p.team]++;
             });
 
-            const checkedCount = people.filter(p => isAttendanceVerifiedStable(p.id, checkKey)).length;
+            const checkedCount = activePeople.filter(p => isAttendanceVerifiedStable(p.id)).length;
 
             if (summary) {
                 summary.innerHTML = `
                     <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
                         <div class="text-[11px] text-slate-500">รวมทั้งหมด</div>
-                        <div class="text-2xl font-black text-emerald-400">${people.length} คน</div>
+                        <div class="text-2xl font-black text-emerald-400">${activePeople.length} คน</div>
                     </div>
                     <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
                         <div class="text-[11px] text-slate-500">WIN1 / WIN2 / WIN3</div>
@@ -4164,11 +4205,11 @@ function renderWFHPresentInline(people, day) {
                     </div>
                     <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
                         <div class="text-[11px] text-slate-500">ตรวจแล้ว</div>
-                        <div class="text-sm font-bold text-slate-200">${checkedCount} / ${people.length} คน</div>
+                        <div class="text-sm font-bold text-slate-200">${checkedCount} / ${activePeople.length} คน</div>
                     </div>
                     <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
                         <div class="text-[11px] text-slate-500">ยังไม่ตรวจ</div>
-                        <div class="text-sm font-bold text-rose-400">${people.length - checkedCount} คน</div>
+                        <div class="text-sm font-bold text-rose-400">${activePeople.length - checkedCount} คน</div>
                     </div>
                 `;
             }
@@ -4193,36 +4234,33 @@ function renderWFHPresentInline(people, day) {
                 `;
             }
 
-            if (!people.length) {
+            if (!activePeople.length) {
                 tbody.innerHTML = `<tr><td colspan="13" class="px-4 py-8 text-center text-slate-500">ไม่พบพนักงาน WFH ที่มาทำงานตามวันที่เลือก</td></tr>`;
                 return;
             }
 
-            tbody.innerHTML = people.map((p, idx) => {
-                const checked = isAttendanceVerifiedStable(p.id, checkKey);
+            tbody.innerHTML = activePeople.map((p, idx) => {
+                const checked = isAttendanceVerifiedStable(p.id);
                 const admin = hasPermission("checkWFH");
                 const canLeave = typeof canEditStaffField === "function" ? canEditStaffField(p, "editDay") : admin;
                 const shiftClass = typeof getShiftClass === "function" ? getShiftClass(p.shift) : "shift-other";
-                const checker = getAttendanceCheckerStable(p.id, checkKey);
-                const checkedTime = getAttendanceTimeStable(p.id, checkKey);
-                const resigned = getResignedRecordByStaff(p);
-                const isLeave = !resigned && isWFHLeaveInline(p, Number(day));
+                const checker = getAttendanceCheckerStable(p.id);
+                const checkedTime = getAttendanceTimeStable(p.id);
+                const isLeave = isWFHLeaveInline(p, Number(day));
 
-                const statusHtml = resigned
-                    ? `<span class="status-resigned-pill">ออกแล้ว ${getResignDateText(resigned)}</span>`
-                    : isLeave
-                        ? `<span class="inline-flex px-2 py-1 rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/25 text-xs font-bold whitespace-nowrap">ลา</span>`
-                        : checked
-                            ? `<span class="inline-flex px-2 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 text-xs font-bold whitespace-nowrap">มาทำงาน</span>`
-                            : `<span class="inline-flex px-2 py-1 rounded-full bg-slate-500/15 text-slate-300 border border-slate-500/25 text-xs font-bold whitespace-nowrap">รอตรวจ</span>`;
+                const statusHtml = isLeave
+                    ? `<span class="inline-flex px-2 py-1 rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/25 text-xs font-bold whitespace-nowrap">ลา</span>`
+                    : checked
+                        ? `<span class="inline-flex px-2 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 text-xs font-bold whitespace-nowrap">มาทำงาน</span>`
+                        : `<span class="inline-flex px-2 py-1 rounded-full bg-slate-500/15 text-slate-300 border border-slate-500/25 text-xs font-bold whitespace-nowrap">รอตรวจ</span>`;
 
                 return `
-                    <tr class="hover:bg-slate-800/40 transition-all ${resigned ? "resigned-row" : ""}">
+                    <tr class="hover:bg-slate-800/40 transition-all">
                         <td class="px-4 py-3 text-slate-400">${idx + 1}</td>
                         <td class="px-4 py-3"><span class="px-2 py-1 rounded text-xs font-bold ${getTeamBadgeClass(p.team)}">${p.team}</span></td>
                         <td class="px-4 py-3"><span class="px-2 py-1 rounded bg-purple-500/15 text-purple-300 border border-purple-500/25 text-xs font-bold">${p.rank}</span></td>
                         <td class="px-4 py-3 font-mono text-slate-300">${p.code}</td>
-                        <td class="px-4 py-3 font-bold text-slate-100 ${resigned ? "resigned-name" : ""}">${p.name}</td>
+                        <td class="px-4 py-3 font-bold text-slate-100">${p.name}</td>
                         <td class="px-4 py-3"><span class="px-2 py-1 rounded border text-xs font-bold ${shiftClass}">${p.shift}</span></td>
                         <td class="px-4 py-3 text-slate-300">${getShiftLoginTime(p.shift)}</td>
                         <td class="px-4 py-3 text-slate-300">${getShiftBreakTime(p.shift)}</td>
@@ -4230,16 +4268,16 @@ function renderWFHPresentInline(people, day) {
                         <td class="px-4 py-3 text-center wfh-col-leave">
                             <input type="checkbox"
                                 ${isLeave ? "checked" : ""}
-                                ${canLeave && !resigned ? "" : "disabled"}
+                                ${canLeave ? "" : "disabled"}
                                 onchange="toggleWFHLeaveInline(${p.id}, this.checked, this)"
-                                class="wfh-leave-check ${canLeave && !resigned ? "cursor-pointer" : "cursor-not-allowed"}" autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" spellcheck="false">
+                                class="wfh-leave-check ${canLeave ? "cursor-pointer" : "cursor-not-allowed"}" autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" spellcheck="false">
                         </td>
                         <td class="px-4 py-3 text-center wfh-col-check">
                             <input type="checkbox"
                                 ${checked && !isLeave ? "checked" : ""}
-                                ${admin && !resigned ? "" : "disabled"}
+                                ${admin ? "" : "disabled"}
                                 onchange="toggleWFHPresentInline(${p.id}, this.checked, this)"
-                                class="wfh-present-check ${admin && !resigned ? "cursor-pointer" : "cursor-not-allowed"}" autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" spellcheck="false">
+                                class="wfh-present-check ${admin ? "cursor-pointer" : "cursor-not-allowed"}" autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" spellcheck="false">
                         </td>
                         <td class="px-4 py-3 text-center text-slate-300" data-wfh-checker-cell>${checked && !isLeave ? checker : "-"}</td>
                         <td class="px-4 py-3 text-center text-slate-300" data-wfh-time-cell>${checked && !isLeave ? checkedTime : "-"}</td>
