@@ -6007,10 +6007,15 @@ async function fetchAndUpdateLeaves() {
                 leaveCode = 'SL'; 
             }
             
+            // 🌟 ทลายกำแพง: เอาวันที่ลงสมุด leaves เพื่อให้ตารางมองเห็น
+            if (!staff.leaves.includes(leaveDay)) {
+                staff.leaves.push(leaveDay);
+            }
+            
+            // ใส่ประเภทการลา
             staff.leaveTypes[String(leaveDay)] = leaveCode;
         });
         
-        // 🌟 [อัปเดตใหม่] สั่งให้ "ตารางหลัก" รีเฟรชตัวเองเพื่อแสดงตัว PL/SL
         if (typeof updateDynamicUI === "function") {
             updateDynamicUI();
         }
