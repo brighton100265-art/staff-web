@@ -5998,6 +5998,12 @@ async function fetchAndUpdateLeaves() {
         console.error('Update failed', e);
     }
 }
+    setInterval(() => {
+    console.log("กำลังอัปเดตข้อมูลการลา...");
+    if (typeof fetchAndUpdateLeaves === "function") {
+        fetchAndUpdateLeaves();
+    }
+}, 60000);
         startCloudSync();
         updateDynamicUI();
         setTimeout(renderMonthlyStatusPanel, 1000);
