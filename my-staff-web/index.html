@@ -5977,7 +5977,6 @@ async function fetchAndUpdateLeaves() {
             
             let leaveDay = 0;
             if (fullDateStr) {
-                // 🌟 [ส่วนที่แก้ใหม่] สอนคอมพิวเตอร์ให้แปลรหัสลับ 46176 เป็นวันที่ 3
                 if (!isNaN(fullDateStr) && Number(fullDateStr) > 40000) {
                     const jsDate = new Date((Number(fullDateStr) - 25569) * 86400 * 1000);
                     leaveDay = jsDate.getDate();
@@ -6011,6 +6010,10 @@ async function fetchAndUpdateLeaves() {
             staff.leaveTypes[String(leaveDay)] = leaveCode;
         });
         
+        // 🌟 [อัปเดตใหม่] สั่งให้ "ตารางหลัก" รีเฟรชตัวเองเพื่อแสดงตัว PL/SL
+        if (typeof updateDynamicUI === "function") {
+            updateDynamicUI();
+        }
         if (typeof renderMonthlyStatusPanel === "function") {
             renderMonthlyStatusPanel();
         }
