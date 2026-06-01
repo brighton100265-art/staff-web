@@ -5972,11 +5972,21 @@ async function fetchAndUpdateLeaves() {
             const cols = row.split(',');
             
             const empCode = String(cols[2] || '').trim(); 
-            const fullDateStr = String(cols[5] || '').trim(); 
             const leaveTypeStr = String(cols[3] || '').trim(); 
+            const fullDateStr = String(cols[5] || '').trim(); 
             
-            const dateParts = fullDateStr.split('-');
-            const leaveDay = Number(dateParts[2] || 0);
+            let leaveDay = 0;
+            if (fullDateStr) {
+                const dateObj = new Date(fullDateStr);
+                if (!isNaN(dateObj)) {
+                    leaveDay = dateObj.getDate(); 
+                } else {
+                    const dateParts = fullDateStr.split('-');
+                    leaveDay = Number(dateParts[2] || 0);
+                }
+            }
+            
+            console.log("พนักงาน:", empCode, "ลากิจ/ป่วย:", leaveTypeStr, "วันที่ดิบ:", fullDateStr, "ดึงได้วันที่:", leaveDay);
             
             const staff = (window.currentStaffList || []).find(
                 p => String(p.code).trim() === empCode
@@ -5989,7 +5999,7 @@ async function fetchAndUpdateLeaves() {
             
             let leaveCode = 'PL'; 
             if (leaveTypeStr.includes('ลาป่วย')) {
-                leaveCode = 'SL';
+                leaveCode = 'SL'; 
             }
             
             staff.leaveTypes[String(leaveDay)] = leaveCode;
@@ -6005,11 +6015,11 @@ async function fetchAndUpdateLeaves() {
     }
 }
 
-        startCloudSync();
-        updateDynamicUI();
-        setTimeout(renderMonthlyStatusPanel, 1000);
+startCloudSync();
+updateDynamicUI();
+setTimeout(renderMonthlyStatusPanel, 1000);
 
-    setTimeout(fetchAndUpdateLeaves, 5000);
+setTimeout(fetchAndUpdateLeaves, 5000);
 setInterval(fetchAndUpdateLeaves, 60000);
     </script>
 </body>
