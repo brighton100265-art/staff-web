@@ -5997,60 +5997,9 @@ function extractDayFromDateStr(fullDateStr) {
 // ==========================================
 // 2. ระบบจัดการวันลา (PL / SL) 
 // ==========================================
-async function fetchAndUpdateLeaves() {
-    try {
-        const response = await fetch(
-            'https://docs.google.com/spreadsheets/d/e/2PACX-1vTQ8I6o22-nbdeWf1hd5m-7wSwDOtZBImLW-Jg5o0ROWqlPrmGLKuz4GteSgJTRIg7h1S_z2kgR61kE/pub?output=csv&t=' + new Date().getTime()
-        );
-        const data = await response.text();
-        const rows = data.trim().split('\n').slice(1);
-        let hasNewData = false; 
-        
-        rows.forEach(row => {
-            const cols = row.split(',');
-            const empCode = String(cols[2] || '').trim(); 
-            const leaveTypeStr = String(cols[3] || '').trim(); 
-            const fullDateStr = String(cols[5] || '').trim(); 
-            
-            const leaveDay = extractDayFromDateStr(fullDateStr);
-            const staff = (window.currentStaffList || []).find(p => String(p.code).trim() === empCode);
-            if (!staff || !leaveDay) return;
-            
-            if (!Array.isArray(staff.leaves)) staff.leaves = [];
-            if (!staff.leaveTypes) staff.leaveTypes = {};
-            
-            let leaveCode = 'PL'; 
-            if (leaveTypeStr.includes('ลาป่วย')) leaveCode = 'SL'; 
-            
-            if (!staff.leaves.includes(Number(leaveDay)) || staff.leaveTypes[String(leaveDay)] !== leaveCode) {
-                if (!staff.leaves.includes(Number(leaveDay))) staff.leaves.push(Number(leaveDay));
-                if (!staff.leaves.includes(String(leaveDay))) staff.leaves.push(String(leaveDay));
-                
-                staff.leaveTypes[String(leaveDay)] = leaveCode;
-                staff.leaveTypes[Number(leaveDay)] = leaveCode;
-                hasNewData = true; 
-            }
-        });
-        
-        if (hasNewData) {
-            console.log('🔄 อัปเดตวันลา (PL/SL) สำเร็จ...');
-            if (typeof renderTable === "function") renderTable();
-            else if (typeof updateDynamicUI === "function") updateDynamicUI();
-            
-            if (typeof renderMonthlyStatusPanel === "function") renderMonthlyStatusPanel();
-            if (typeof saveStaffData === "function") saveStaffData();
-        }
-    } catch (e) {
-        console.error('Leaves Update failed', e);
-    }
-}
-
-// ==========================================
-// 3. ระบบจัดการวันหยุด (ตัว O) - สมองซีกที่ 2
-// ==========================================
+// แก้ไขเฉพาะเนื้อหาข้างในฟังก์ชันเดิมที่มีอยู่แล้ว
 async function fetchAndUpdateOffs() {
     try {
-        // เช็คก่อนว่ามีรายการพนักงานหรือยัง
         if (!window.currentStaffList || window.currentStaffList.length === 0) return;
 
         const response = await fetch(
@@ -6062,21 +6011,22 @@ async function fetchAndUpdateOffs() {
         
         rows.forEach(row => {
             const cols = row.split(',');
-            if (cols.length < 12) return; // กัน Error ถ้า CSV ข้อมูลไม่ครบ
+            if (cols.length < 12) return;
             
             const empCode = String(cols[8] || '').trim();
             const reqType = String(cols[9] || '').trim();
             const newDateStr = String(cols[10] || '').trim();
             const oldDateStr = String(cols[11] || '').trim();
             
-            const targetDay = typeof extractDayFromDateStr === "function" ? extractDayFromDateStr(newDateStr) : null;
-            const oldDay = typeof extractDayFromDateStr === "function" ? extractDayFromDateStr(oldDateStr) : null;
+            // เรียกใช้ฟังก์ชันที่มีอยู่แล้วในระบบได้เลย
+            const targetDay = extractDayFromDateStr(newDateStr);
+            const oldDay = extractDayFromDateStr(oldDateStr);
             
             const staff = window.currentStaffList.find(p => String(p.code).trim() === empCode);
             if (!staff) return;
-            
             if (!Array.isArray(staff.offs)) staff.offs = [];
             
+            // ตรรกะเพิ่ม/ยกเลิก/ย้าย
             if (reqType.includes('เพิ่ม') && targetDay) {
                 if (!staff.offs.includes(targetDay)) { staff.offs.push(targetDay); hasNewOffData = true; }
             } else if (reqType.includes('ยกเลิก') && targetDay) {
@@ -6088,39 +6038,13 @@ async function fetchAndUpdateOffs() {
         });
         
         if (hasNewOffData) {
-            console.log('🔄 อัปเดตวันหยุด (O) สำเร็จ...');
+            console.log('🔄 อัปเดตวันหยุดสำเร็จ');
             if (typeof renderTable === "function") renderTable();
-            if (typeof renderMonthlyStatusPanel === "function") renderMonthlyStatusPanel();
             if (typeof saveStaffData === "function") saveStaffData();
         }
     } catch (e) {
         console.error('Offs Update failed', e);
     }
 }
-
-// เช็คก่อนเรียก startCloudSync (ถ้าไม่มีฟังก์ชันนี้ในระบบ ให้ลบออกหรือคอมเมนต์ไว้)
-if (typeof startCloudSync === "function") {
-    startCloudSync();
-}
-
-// รันส่วนจัดการ UI
-if (typeof updateDynamicUI === "function") updateDynamicUI();
-
-// เริ่ม sync ทีละขั้น
-setTimeout(() => {
-    fetchAndUpdateLeaves();
-    fetchAndUpdateOffs();
-}, 500);
-
-// สตาร์ทตัวตั้งเวลาหลัก
-function startLeaveSyncFast() {
-    setInterval(() => {
-        if (window.currentStaffList && window.currentStaffList.length > 0) {
-            fetchAndUpdateLeaves();
-            fetchAndUpdateOffs();
-        }
-    }, 60000); 
-}
-startLeaveSyncFast();
     </script>
 </body>
