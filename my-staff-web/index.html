@@ -5978,12 +5978,30 @@ function extractDayFromDateStr(fullDateStr) {
 // ==========================================
 // 2. ระบบจัดการวันลา (PL / SL) - โค้ดเดิมของคุณ
 // ==========================================
+// ==========================================
+// 1. ฟังก์ชันช่วยแปลงวันที่ (ใช้ร่วมกัน)
+// ==========================================
+function extractDayFromDateStr(fullDateStr) {
+    if (!fullDateStr) return 0;
+    if (!isNaN(fullDateStr) && Number(fullDateStr) > 40000) {
+        const jsDate = new Date((Number(fullDateStr) - 25569) * 86400 * 1000);
+        return jsDate.getDate();
+    } else {
+        const dateObj = new Date(fullDateStr);
+        if (!isNaN(dateObj)) return dateObj.getDate();
+        const dateParts = fullDateStr.split('-');
+        return Number(dateParts[2] || 0);
+    }
+}
+
+// ==========================================
+// 2. ระบบจัดการวันลา (PL / SL) 
+// ==========================================
 async function fetchAndUpdateLeaves() {
     try {
         const response = await fetch(
             'https://docs.google.com/spreadsheets/d/e/2PACX-1vTQ8I6o22-nbdeWf1hd5m-7wSwDOtZBImLW-Jg5o0ROWqlPrmGLKuz4GteSgJTRIg7h1S_z2kgR61kE/pub?output=csv&t=' + new Date().getTime()
         );
-        
         const data = await response.text();
         const rows = data.trim().split('\n').slice(1);
         let hasNewData = false; 
@@ -6015,7 +6033,7 @@ async function fetchAndUpdateLeaves() {
         });
         
         if (hasNewData) {
-            console.log('🔄 มีข้อมูลลาอัปเดตใหม่ กำลังบันทึกขึ้น Cloud...');
+            console.log('🔄 อัปเดตวันลา (PL/SL) สำเร็จ...');
             if (typeof renderTable === "function") renderTable();
             else if (typeof updateDynamicUI === "function") updateDynamicUI();
             
@@ -6028,14 +6046,14 @@ async function fetchAndUpdateLeaves() {
 }
 
 // ==========================================
-// 3. ระบบจัดการวันหยุด (เพิ่ม/ยกเลิก/ย้าย) - สมองซีกที่ 2 ใหม่ล่าสุด
+// 3. ระบบจัดการวันหยุด (ตัว O) - สมองซีกที่ 2
 // ==========================================
 async function fetchAndUpdateOffs() {
     try {
-        // 🚨 จุดที่ 1: ใส่ลิงก์ CSV ของฟอร์มวันหยุด ตรงนี้เลยครับ (อย่าลืมเก็บเครื่องหมาย ' ' ไว้นะ)
-        const csvUrl = 'ใส่ลิงก์_CSV_ฟอร์มวันหยุด_ตรงนี้'; 
-        
-        const response = await fetch(csvUrl + '&t=' + new Date().getTime());
+        // ใช้ลิงก์ CSV เดียวกันกับวันลาได้เลย เพราะอยู่ชีตเดียวกัน
+        const response = await fetch(
+            'https://docs.google.com/spreadsheets/d/e/2PACX-1vTQ8I6o22-nbdeWf1hd5m-7wSwDOtZBImLW-Jg5o0ROWqlPrmGLKuz4GteSgJTRIg7h1S_z2kgR61kE/pub?output=csv&t=' + new Date().getTime()
+        );
         const data = await response.text();
         const rows = data.trim().split('\n').slice(1);
         let hasNewOffData = false; 
@@ -6043,11 +6061,11 @@ async function fetchAndUpdateOffs() {
         rows.forEach(row => {
             const cols = row.split(',');
             
-            // 🚨 จุดที่ 2: เปลี่ยนเลข 2, 3, 4, 5 ให้ตรงกับคอลัมน์ใน Sheet (A=0, B=1, C=2, ...)
-            const empCode = String(cols[2] || '').trim();    // รหัสพนักงาน
-            const reqType = String(cols[3] || '').trim();    // ประเภท: เพิ่ม, ยกเลิก, ย้าย
-            const newDateStr = String(cols[4] || '').trim(); // วันที่ดำเนินการใหม่
-            const oldDateStr = String(cols[5] || '').trim(); // วันที่ดำเนินการเดิม
+            // 🌟 ตั้งค่าคอลัมน์ 8, 9, 10, 11 ตามตารางใหม่ของคุณเป๊ะๆ
+            const empCode = String(cols[8] || '').trim();    // คอลัมน์ I (รหัสพนักงาน)
+            const reqType = String(cols[9] || '').trim();    // คอลัมน์ J (เพิ่ม/ยกเลิก/ย้าย)
+            const newDateStr = String(cols[10] || '').trim(); // คอลัมน์ K (วันที่ใหม่)
+            const oldDateStr = String(cols[11] || '').trim(); // คอลัมน์ L (วันที่เดิม)
             
             const targetDay = extractDayFromDateStr(newDateStr);
             const oldDay = extractDayFromDateStr(oldDateStr);
@@ -6080,7 +6098,7 @@ async function fetchAndUpdateOffs() {
         });
         
         if (hasNewOffData) {
-            console.log('🔄 มีข้อมูลวันหยุดอัปเดตใหม่ กำลังบันทึกขึ้น Cloud...');
+            console.log('🔄 อัปเดตวันหยุด (O) สำเร็จ...');
             if (typeof renderTable === "function") renderTable();
             else if (typeof updateDynamicUI === "function") updateDynamicUI();
             
@@ -6097,13 +6115,9 @@ async function fetchAndUpdateOffs() {
 // ==========================================
 function startLeaveSyncFast() {
     if (window.currentStaffList && window.currentStaffList.length > 0) {
-        // ให้ดึงทั้งวันลา (Leaves) และวันหยุด (Offs) พร้อมกัน
         fetchAndUpdateLeaves(); 
-        if ('ใส่ลิงก์_CSV_ฟอร์มวันหยุด_ตรงนี้' !== 'ใส่ลิงก์_CSV_ฟอร์มวันหยุด_ตรงนี้') {
-             fetchAndUpdateOffs();   
-        }
+        fetchAndUpdateOffs();   
         
-        // วนลูปเช็คใหม่ทุก 1 นาที
         setInterval(() => {
             fetchAndUpdateLeaves();
             fetchAndUpdateOffs();
@@ -6116,9 +6130,10 @@ function startLeaveSyncFast() {
 startCloudSync();
 updateDynamicUI();
 setTimeout(fetchAndUpdateLeaves, 300);
+setTimeout(fetchAndUpdateOffs, 300);
 setTimeout(fetchAndUpdateLeaves, 2500);
+setTimeout(fetchAndUpdateOffs, 2500);
 
-// เริ่มทำงาน
 startLeaveSyncFast();
     </script>
 </body>
