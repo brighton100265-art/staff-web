@@ -5968,6 +5968,8 @@ async function fetchAndUpdateLeaves() {
         const data = await response.text();
         const rows = data.trim().split('\n').slice(1);
         
+        let hasNewData = false; // 🌟 ตัวเช็คว่ามีการดึงข้อมูลลาใหม่เข้ามาไหม
+        
         rows.forEach(row => {
             const cols = row.split(',');
             
@@ -5991,8 +5993,6 @@ async function fetchAndUpdateLeaves() {
                 }
             }
             
-            console.log("พนักงาน:", empCode, "ลากิจ/ป่วย:", leaveTypeStr, "วันที่ดิบ:", fullDateStr, "ดึงได้วันที่:", leaveDay);
-            
             const staff = (window.currentStaffList || []).find(
                 p => String(p.code).trim() === empCode
             );
@@ -6007,33 +6007,54 @@ async function fetchAndUpdateLeaves() {
                 leaveCode = 'SL'; 
             }
             
-            // 🌟 ทลายกำแพง: เอาวันที่ลงสมุด leaves เพื่อให้ตารางมองเห็น
-            if (!staff.leaves.includes(leaveDay)) {
-                staff.leaves.push(leaveDay);
+            // ตรวจสอบว่านี่คือข้อมูลการลาอันใหม่ที่ยังไม่มีบนเว็บใช่ไหม
+            if (!staff.leaves.includes(Number(leaveDay)) || staff.leaveTypes[String(leaveDay)] !== leaveCode) {
+                if (!staff.leaves.includes(Number(leaveDay))) staff.leaves.push(Number(leaveDay));
+                if (!staff.leaves.includes(String(leaveDay))) staff.leaves.push(String(leaveDay));
+                
+                staff.leaveTypes[String(leaveDay)] = leaveCode;
+                staff.leaveTypes[Number(leaveDay)] = leaveCode;
+                
+                hasNewData = true; // เจอข้อมูลใหม่ สั่งให้เตรียมเซฟ!
             }
-            
-            // ใส่ประเภทการลา
-            staff.leaveTypes[String(leaveDay)] = leaveCode;
         });
         
-        if (typeof updateDynamicUI === "function") {
+        if (typeof renderTable === "function") {
+            renderTable();
+        } else if (typeof updateDynamicUI === "function") {
             updateDynamicUI();
         }
+        
         if (typeof renderMonthlyStatusPanel === "function") {
             renderMonthlyStatusPanel();
         }
-        console.log('Leave sync completed');
+        
+        // 🌟 ✏️ จุดที่ต้องแก้: ระบบบันทึกอัตโนมัติ (Auto-Save)
+        if (hasNewData) {
+            console.log('🔄 มีข้อมูลลาอัปเดตใหม่ กำลังบันทึกขึ้น Cloud...');
+            
+            // ลบโค้ดตรงนี้ แล้วใส่ชื่อฟังก์ชันบันทึกของคุณได้เลย เช่น saveData(); หรือ syncToCloud();
+            if (typeof saveToCloud === "function") saveToCloud();
+            if (typeof saveData === "function") saveData();
+            if (typeof saveStaffData === "function") saveStaffData();
+        }
         
     } catch (e) {
         console.error('Update failed', e);
     }
 }
 
+function startLeaveSyncFast() {
+    if (window.currentStaffList && window.currentStaffList.length > 0) {
+        fetchAndUpdateLeaves(); 
+        setInterval(fetchAndUpdateLeaves, 60000); 
+    } else {
+        setTimeout(startLeaveSyncFast, 100); 
+    }
+}
+
 startCloudSync();
 updateDynamicUI();
-setTimeout(renderMonthlyStatusPanel, 1000);
-
-setTimeout(fetchAndUpdateLeaves, 5000);
-setInterval(fetchAndUpdateLeaves, 60000);
+startLeaveSyncFast();
     </script>
 </body>
