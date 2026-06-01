@@ -6001,5 +6001,8 @@ async function fetchAndUpdateLeaves() {
         startCloudSync();
         updateDynamicUI();
         setTimeout(renderMonthlyStatusPanel, 1000);
+
+    setTimeout(fetchAndUpdateLeaves, 5000);
+setInterval(fetchAndUpdateLeaves, 60000);
     </script>
 </body>
