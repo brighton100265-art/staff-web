@@ -5959,6 +5959,25 @@ function lockTableControlsByPermission() {
             renderMonthlyStatusPanel();
         }, 500);
 
+// ==========================================
+// 1. ฟังก์ชันช่วยแปลงวันที่ (ใช้ร่วมกัน)
+// ==========================================
+function extractDayFromDateStr(fullDateStr) {
+    if (!fullDateStr) return 0;
+    if (!isNaN(fullDateStr) && Number(fullDateStr) > 40000) {
+        const jsDate = new Date((Number(fullDateStr) - 25569) * 86400 * 1000);
+        return jsDate.getDate();
+    } else {
+        const dateObj = new Date(fullDateStr);
+        if (!isNaN(dateObj)) return dateObj.getDate();
+        const dateParts = fullDateStr.split('-');
+        return Number(dateParts[2] || 0);
+    }
+}
+
+// ==========================================
+// 2. ระบบจัดการวันลา (PL / SL) - โค้ดเดิมของคุณ
+// ==========================================
 async function fetchAndUpdateLeaves() {
     try {
         const response = await fetch(
@@ -5967,87 +5986,128 @@ async function fetchAndUpdateLeaves() {
         
         const data = await response.text();
         const rows = data.trim().split('\n').slice(1);
-        
-        let hasNewData = false; // 🌟 ตัวเช็คว่ามีการดึงข้อมูลลาใหม่เข้ามาไหม
+        let hasNewData = false; 
         
         rows.forEach(row => {
             const cols = row.split(',');
-            
             const empCode = String(cols[2] || '').trim(); 
             const leaveTypeStr = String(cols[3] || '').trim(); 
             const fullDateStr = String(cols[5] || '').trim(); 
             
-            let leaveDay = 0;
-            if (fullDateStr) {
-                if (!isNaN(fullDateStr) && Number(fullDateStr) > 40000) {
-                    const jsDate = new Date((Number(fullDateStr) - 25569) * 86400 * 1000);
-                    leaveDay = jsDate.getDate();
-                } else {
-                    const dateObj = new Date(fullDateStr);
-                    if (!isNaN(dateObj)) {
-                        leaveDay = dateObj.getDate(); 
-                    } else {
-                        const dateParts = fullDateStr.split('-');
-                        leaveDay = Number(dateParts[2] || 0);
-                    }
-                }
-            }
-            
-            const staff = (window.currentStaffList || []).find(
-                p => String(p.code).trim() === empCode
-            );
-            
+            const leaveDay = extractDayFromDateStr(fullDateStr);
+            const staff = (window.currentStaffList || []).find(p => String(p.code).trim() === empCode);
             if (!staff || !leaveDay) return;
             
             if (!Array.isArray(staff.leaves)) staff.leaves = [];
             if (!staff.leaveTypes) staff.leaveTypes = {};
             
             let leaveCode = 'PL'; 
-            if (leaveTypeStr.includes('ลาป่วย')) {
-                leaveCode = 'SL'; 
-            }
+            if (leaveTypeStr.includes('ลาป่วย')) leaveCode = 'SL'; 
             
-            // ตรวจสอบว่านี่คือข้อมูลการลาอันใหม่ที่ยังไม่มีบนเว็บใช่ไหม
             if (!staff.leaves.includes(Number(leaveDay)) || staff.leaveTypes[String(leaveDay)] !== leaveCode) {
                 if (!staff.leaves.includes(Number(leaveDay))) staff.leaves.push(Number(leaveDay));
                 if (!staff.leaves.includes(String(leaveDay))) staff.leaves.push(String(leaveDay));
                 
                 staff.leaveTypes[String(leaveDay)] = leaveCode;
                 staff.leaveTypes[Number(leaveDay)] = leaveCode;
-                
-                hasNewData = true; // เจอข้อมูลใหม่ สั่งให้เตรียมเซฟ!
+                hasNewData = true; 
             }
         });
         
-        if (typeof renderTable === "function") {
-            renderTable();
-        } else if (typeof updateDynamicUI === "function") {
-            updateDynamicUI();
-        }
-        
-        if (typeof renderMonthlyStatusPanel === "function") {
-            renderMonthlyStatusPanel();
-        }
-        
-        // 🌟 ✏️ จุดที่ต้องแก้: ระบบบันทึกอัตโนมัติ (Auto-Save)
         if (hasNewData) {
             console.log('🔄 มีข้อมูลลาอัปเดตใหม่ กำลังบันทึกขึ้น Cloud...');
+            if (typeof renderTable === "function") renderTable();
+            else if (typeof updateDynamicUI === "function") updateDynamicUI();
             
-            // ลบโค้ดตรงนี้ แล้วใส่ชื่อฟังก์ชันบันทึกของคุณได้เลย เช่น saveData(); หรือ syncToCloud();
-            if (typeof saveToCloud === "function") saveToCloud();
-            if (typeof saveData === "function") saveData();
+            if (typeof renderMonthlyStatusPanel === "function") renderMonthlyStatusPanel();
             if (typeof saveStaffData === "function") saveStaffData();
         }
-        
     } catch (e) {
-        console.error('Update failed', e);
+        console.error('Leaves Update failed', e);
     }
 }
 
+// ==========================================
+// 3. ระบบจัดการวันหยุด (เพิ่ม/ยกเลิก/ย้าย) - สมองซีกที่ 2 ใหม่ล่าสุด
+// ==========================================
+async function fetchAndUpdateOffs() {
+    try {
+        // 🚨 จุดที่ 1: ใส่ลิงก์ CSV ของฟอร์มวันหยุด ตรงนี้เลยครับ (อย่าลืมเก็บเครื่องหมาย ' ' ไว้นะ)
+        const csvUrl = 'ใส่ลิงก์_CSV_ฟอร์มวันหยุด_ตรงนี้'; 
+        
+        const response = await fetch(csvUrl + '&t=' + new Date().getTime());
+        const data = await response.text();
+        const rows = data.trim().split('\n').slice(1);
+        let hasNewOffData = false; 
+        
+        rows.forEach(row => {
+            const cols = row.split(',');
+            
+            // 🚨 จุดที่ 2: เปลี่ยนเลข 2, 3, 4, 5 ให้ตรงกับคอลัมน์ใน Sheet (A=0, B=1, C=2, ...)
+            const empCode = String(cols[2] || '').trim();    // รหัสพนักงาน
+            const reqType = String(cols[3] || '').trim();    // ประเภท: เพิ่ม, ยกเลิก, ย้าย
+            const newDateStr = String(cols[4] || '').trim(); // วันที่ดำเนินการใหม่
+            const oldDateStr = String(cols[5] || '').trim(); // วันที่ดำเนินการเดิม
+            
+            const targetDay = extractDayFromDateStr(newDateStr);
+            const oldDay = extractDayFromDateStr(oldDateStr);
+            
+            const staff = (window.currentStaffList || []).find(p => String(p.code).trim() === empCode);
+            if (!staff) return;
+            
+            if (!Array.isArray(staff.offs)) staff.offs = [];
+            
+            if (reqType.includes('เพิ่ม') && targetDay) {
+                if (!staff.offs.includes(targetDay)) {
+                    staff.offs.push(targetDay);
+                    hasNewOffData = true;
+                }
+            } else if (reqType.includes('ยกเลิก') && targetDay) {
+                if (staff.offs.includes(targetDay)) {
+                    staff.offs = staff.offs.filter(d => d !== targetDay);
+                    hasNewOffData = true;
+                }
+            } else if (reqType.includes('ย้าย') && targetDay && oldDay) {
+                if (staff.offs.includes(oldDay)) {
+                    staff.offs = staff.offs.filter(d => d !== oldDay);
+                    hasNewOffData = true;
+                }
+                if (!staff.offs.includes(targetDay)) {
+                    staff.offs.push(targetDay);
+                    hasNewOffData = true;
+                }
+            }
+        });
+        
+        if (hasNewOffData) {
+            console.log('🔄 มีข้อมูลวันหยุดอัปเดตใหม่ กำลังบันทึกขึ้น Cloud...');
+            if (typeof renderTable === "function") renderTable();
+            else if (typeof updateDynamicUI === "function") updateDynamicUI();
+            
+            if (typeof renderMonthlyStatusPanel === "function") renderMonthlyStatusPanel();
+            if (typeof saveStaffData === "function") saveStaffData();
+        }
+    } catch (e) {
+        console.error('Offs Update failed', e);
+    }
+}
+
+// ==========================================
+// 4. สตาร์ทเครื่องยนต์ทั้ง 2 ระบบ!
+// ==========================================
 function startLeaveSyncFast() {
     if (window.currentStaffList && window.currentStaffList.length > 0) {
+        // ให้ดึงทั้งวันลา (Leaves) และวันหยุด (Offs) พร้อมกัน
         fetchAndUpdateLeaves(); 
-        setInterval(fetchAndUpdateLeaves, 60000); 
+        if ('ใส่ลิงก์_CSV_ฟอร์มวันหยุด_ตรงนี้' !== 'ใส่ลิงก์_CSV_ฟอร์มวันหยุด_ตรงนี้') {
+             fetchAndUpdateOffs();   
+        }
+        
+        // วนลูปเช็คใหม่ทุก 1 นาที
+        setInterval(() => {
+            fetchAndUpdateLeaves();
+            fetchAndUpdateOffs();
+        }, 60000); 
     } else {
         setTimeout(startLeaveSyncFast, 100); 
     }
@@ -6055,6 +6115,10 @@ function startLeaveSyncFast() {
 
 startCloudSync();
 updateDynamicUI();
+setTimeout(fetchAndUpdateLeaves, 300);
+setTimeout(fetchAndUpdateLeaves, 2500);
+
+// เริ่มทำงาน
 startLeaveSyncFast();
     </script>
 </body>
