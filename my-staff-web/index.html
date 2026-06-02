@@ -6044,20 +6044,6 @@ function extractDayFromDateStr(fullDateStr) {
     return 0;
 }
 
-    // YYYY-MM-DD หรือ YYYY/MM/DD
-    let match = raw.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
-    if (match) return Number(match[3]) || 0;
-
-    // DD/MM/YYYY หรือ DD-MM-YYYY
-    match = raw.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
-    if (match) return Number(match[1]) || 0;
-
-    const dateObj = new Date(raw);
-    if (!Number.isNaN(dateObj.getTime())) return dateObj.getDate();
-
-    return 0;
-}
-
 function getOffRequestValue(cols, map, key) {
     return String(cols?.[map?.[key]] || "").trim();
 }
