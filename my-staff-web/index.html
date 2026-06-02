@@ -6328,10 +6328,13 @@ function bootScheduleApp() {
 
     if (!panel) return;
 
-    panel.classList.toggle("hidden");
+    panel.style.display =
+panel.style.display === "none"
+? "block"
+: "none";
 
-    const hidden =
-        panel.classList.contains("hidden");
+const hidden =
+panel.style.display === "none";
 
     btn.innerHTML =
         hidden
@@ -6356,7 +6359,7 @@ window.addEventListener("load", () => {
             "summaryCollapsed"
         ) === "true"
     ) {
-        panel?.classList.add("hidden");
+        panel.style.display = "none";
 
         if (btn) {
             btn.innerHTML =
