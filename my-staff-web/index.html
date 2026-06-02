@@ -6333,32 +6333,23 @@ function bootScheduleApp() {
     function toggleSummaryPanel() {
 
 const panel =
-document.getElementById(
-"dashboard-widgets"
-);
+document.getElementById("dashboard-widgets");
 
 const btn =
-document.getElementById(
-"toggle-summary-btn"
-);
+document.getElementById("toggle-summary-btn");
 
-if (!panel) return;
+if (!panel || !btn) {
+console.log("not found");
+return;
+}
 
 const hidden =
-panel.style.maxHeight === "0px";
+panel.style.display === "none";
 
-panel.style.maxHeight =
+panel.style.display =
 hidden
-? "5000px"
-: "0px";
-
-panel.style.opacity =
-hidden
-? "1"
-: "0";
-
-panel.style.overflow =
-"hidden";
+? "block"
+: "none";
 
 btn.innerHTML =
 hidden
