@@ -6102,8 +6102,13 @@ async function fetchAndUpdateOffs() {
 
         rows.forEach(row => {
             const cols = parseCSVLineSafe(row);
-            const { empCode, reqType, newDateStr, oldDateStr } = readOffRequestRow(cols);
-            if (!empCode || !reqType) return;
+            // 🚨 บังคับให้อ่านคอลัมน์ A, B, C, D ตามตารางใหม่ (0, 1, 2, 3)
+const empCode = String(cols[0] || '').trim();     // คอลัมน์ A (รหัสพนักงาน)
+const reqType = String(cols[1] || '').trim();     // คอลัมน์ B (ประเภท: เพิ่ม/ยกเลิก/ย้าย)
+const newDateStr = String(cols[2] || '').trim();  // คอลัมน์ C (วันที่ใหม่)
+const oldDateStr = String(cols[3] || '').trim();  // คอลัมน์ D (วันที่เดิม)
+
+if (!empCode || !reqType) return;
 
             const targetDay = extractDayFromDateStr(newDateStr);
             const oldDay = extractDayFromDateStr(oldDateStr);
