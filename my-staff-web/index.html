@@ -6101,42 +6101,36 @@ async function fetchAndUpdateOffs() {
         rows.forEach(row => {
             const cols = parseCSVLineSafe(row);
             
-            // 🚨 2. อ่านคอลัมน์ A, B, C, D ให้ตรงตาราง (0, 1, 2, 3)
-            const empCode = String(cols[0] || '').trim();
-            const reqType = String(cols[1] || '').trim();
-            const newDateStr = String(cols[2] || '').trim();
-            const oldDateStr = String(cols[3] || '').trim();
+            // 🚨 2. อ่านคอลัมน์จากตารางชีทลากิจ (C=2, D=3, F=5)
+const empCode = String(cols[2] || '').trim();    // คอลัมน์ C: รหัสพนักงาน
+const reqType = String(cols[3] || '').trim();    // คอลัมน์ D: ประเภท (เช่น ลากิจ)
+const newDateStr = String(cols[5] || '').trim(); // คอลัมน์ F: วันที่ลา
 
-            if (!empCode || !reqType) return;
+if (!empCode || !reqType) return;
 
-            const targetDay = extractDayFromDateStr(newDateStr);
-            const oldDay = extractDayFromDateStr(oldDateStr);
-            const type = normalizeOffRequestType(reqType);
+// ใช้ฟังก์ชันเดิมถอดรหัสวันที่ (รับมือ 46176 ได้แน่นอน)
+const targetDay = extractDayFromDateStr(newDateStr); 
 
-            const staff = (window.currentStaffList || []).find(p => String(p.code || "").trim() === String(empCode).trim());
-            if (!staff) return;
+const staff = (window.currentStaffList || []).find(p => String(p.code || "").trim() === String(empCode).trim());
+if (!staff) return;
 
-            if (!Array.isArray(staff.offs)) staff.offs = [];
-            if (!Array.isArray(staff.leaves)) staff.leaves = [];
-            if (!staff.leaveTypes || typeof staff.leaveTypes !== "object") staff.leaveTypes = {};
+if (!Array.isArray(staff.offs)) staff.offs = [];
+if (!Array.isArray(staff.leaves)) staff.leaves = [];
+if (!staff.leaveTypes || typeof staff.leaveTypes !== "object") staff.leaveTypes = {};
 
-            const beforeOffs = JSON.stringify(sortUniqueNumberArray(staff.offs));
-            const beforeLeaves = JSON.stringify(sortUniqueNumberArray(staff.leaves));
-
-            if ((type.includes("เพิ่ม") || type.includes("add")) && targetDay) {
-                staff.offs.push(targetDay);
-                staff.leaves = staff.leaves.filter(d => Number(d) !== Number(targetDay));
-                delete staff.leaveTypes[String(targetDay)];
-            }
-            else if ((type.includes("ยกเลิก") || type.includes("cancel") || type.includes("remove")) && targetDay) {
-                staff.offs = staff.offs.filter(d => Number(d) !== Number(targetDay));
-            }
-            else if ((type.includes("ย้าย") || type.includes("move") || type.includes("change")) && targetDay && oldDay) {
-                staff.offs = staff.offs.filter(d => Number(d) !== Number(oldDay));
-                staff.offs.push(targetDay);
-                staff.leaves = staff.leaves.filter(d => Number(d) !== Number(targetDay));
-                delete staff.leaveTypes[String(targetDay)];
-            }
+// 🌟 เพิ่มเงื่อนไขสำหรับ "การลา" โดยเฉพาะ
+if (reqType.includes("ลา") || reqType.includes("leave")) {
+    if (targetDay) {
+        // 1. เพิ่มวันลาเข้าไปในระบบ
+        staff.leaves.push(targetDay);
+        
+        // 2. เคลียร์วันหยุดออก (กันพนักงานมีทั้ง O และ L ในวันเดียวกัน)
+        staff.offs = staff.offs.filter(d => Number(d) !== Number(targetDay));
+        
+        // 3. บันทึกประเภทการลา (เพื่อให้หน้าเว็บแสดง ลากิจ/ลาป่วย ถูกต้อง)
+        staff.leaveTypes[String(targetDay)] = reqType;
+    }
+}
 
             staff.offs = sortUniqueNumberArray(staff.offs);
             staff.leaves = sortUniqueNumberArray(staff.leaves);
