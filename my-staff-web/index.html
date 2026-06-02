@@ -6088,7 +6088,7 @@ async function fetchAndUpdateOffs() {
         if (!Array.isArray(window.currentStaffList) || window.currentStaffList.length === 0) return;
 
         // 🚨 1. นำลิงก์ CSV ของตารางวันหยุดมาใส่ในเครื่องหมายคำพูดแทนข้อความภาษาไทย
-        const csvUrl = "ใส่ลิงก์_CSV_หน้าตารางวันหยุด_ตรงนี้";
+        const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTEfo9k8IWGAo6DW6Hvoe8N043CrgXMtTHcp2vTQiz0fmibLq4pzn-5T6bf5yu0S9O5IWC0xja5INag/pub?output=csv";
 
         const separator = csvUrl.includes("?") ? "&" : "?";
         const response = await fetch(`${csvUrl}${separator}t=${Date.now()}`, { cache: "no-store" });
