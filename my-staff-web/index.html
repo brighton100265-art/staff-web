@@ -729,31 +729,40 @@
         <div id="toast" class="fixed top-5 right-5 z-50 transform translate-y-[-100px] opacity-0 transition-all duration-300 bg-emerald-900 border border-emerald-500 text-emerald-200 px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3">
             <span id="toast-text">สำเร็จ!</span>
         </div>
-        
-        <div
-id="dashboard-widgets-wrap"
-class="space-y-4"
->
+
+</div>
+
+<div id="dashboard-widgets-wrap">
 
 <div
-onclick="toggleSummaryPanel()"
-class="flex justify-end mb-2 cursor-pointer"
->
-
-<div
-id="toggle-summary-btn"
 class="
-px-4
+flex
+justify-center
+relative
+z-10
+mb-[-18px]
+"
+>
+
+<button
+id="toggle-summary-btn"
+type="button"
+onclick="toggleSummaryPanel()"
+
+class="
+px-8
 py-2
 rounded-t-xl
-bg-indigo-600
-hover:bg-indigo-700
+bg-slate-800
+border
+border-slate-700
+text-white
 font-bold
 ">
 
 ▲ ซ่อนสรุป
 
-</div>
+</button>
 
 </div>
 
