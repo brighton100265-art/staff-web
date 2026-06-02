@@ -6017,16 +6017,32 @@ function parseCSVLineSafe(line) {
     return out;
 }
 
-// ฟังก์ชันแปลงวันที่ดิบ เช่น 2026-06-02, 02/06/2026 หรือ Excel serial 46176 ให้เป็นเลขวันที่ เช่น 2
+// ฟังก์ชันแปลงวันที่ดิบ (อัปเกรด: กำจัดลูกน้ำและทศนิยมให้สิ้นซาก)
 function extractDayFromDateStr(fullDateStr) {
-    const raw = String(fullDateStr || "").trim();
+    // ลบลูกน้ำออกก่อนเป็นอันดับแรก
+    const raw = String(fullDateStr || "").trim().replace(/,/g, '');
     if (!raw) return 0;
 
     const numeric = Number(raw);
     if (Number.isFinite(numeric) && numeric > 40000) {
-        const jsDate = new Date((numeric - 25569) * 86400 * 1000);
+        // ใช้ Math.floor เพื่อปัดเศษทศนิยม .00 ทิ้งไปเลย ป้องกันการคำนวณวันคลาดเคลื่อน
+        const jsDate = new Date((Math.floor(numeric) - 25569) * 86400 * 1000);
         return Number.isNaN(jsDate.getTime()) ? 0 : jsDate.getUTCDate();
     }
+
+    // รองรับ YYYY-MM-DD หรือ YYYY/MM/DD
+    let match = raw.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+    if (match) return Number(match[3]) || 0;
+
+    // รองรับ DD/MM/YYYY หรือ DD-MM-YYYY
+    match = raw.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+    if (match) return Number(match[1]) || 0;
+
+    const dateObj = new Date(raw);
+    if (!Number.isNaN(dateObj.getTime())) return dateObj.getDate();
+
+    return 0;
+}
 
     // YYYY-MM-DD หรือ YYYY/MM/DD
     let match = raw.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
