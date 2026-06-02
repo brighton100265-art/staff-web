@@ -6319,10 +6319,10 @@ document.getElementById("toggle-summary-btn");
 
 if (!panel || !btn) return;
 
-panel.classList.toggle("hidden");
+panel.hidden = !panel.hidden;
 
 btn.textContent =
-panel.classList.contains("hidden")
+panel.hidden
 ? "▼ แสดงสรุป"
 : "▲ ซ่อนสรุป";
 
