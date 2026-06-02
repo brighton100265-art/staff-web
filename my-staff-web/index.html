@@ -730,6 +730,16 @@
             <span id="toast-text">สำเร็จ!</span>
         </div>
 
+        <div class="flex justify-end mb-3">
+    <button
+        id="toggle-summary-btn"
+        onclick="toggleSummaryPanel()"
+        class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-sm font-bold">
+
+        ▲ ซ่อนสรุป
+    </button>
+</div>
+        
         <div class="space-y-4" id="dashboard-widgets">
             <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex items-center justify-between shadow-md">
                 <div>
@@ -6290,6 +6300,52 @@ function bootScheduleApp() {
         .catch(err => console.error("Boot failed", err));
 }
 
+    function toggleSummaryPanel() {
+    const panel =
+        document.getElementById("dashboard-widgets");
+
+    const btn =
+        document.getElementById("toggle-summary-btn");
+
+    if (!panel) return;
+
+    panel.classList.toggle("hidden");
+
+    const hidden =
+        panel.classList.contains("hidden");
+
+    btn.innerHTML =
+        hidden
+        ? "▼ แสดงสรุป"
+        : "▲ ซ่อนสรุป";
+
+    localStorage.setItem(
+        "summaryCollapsed",
+        hidden
+    );
+}
+
+window.addEventListener("load", () => {
+    const panel =
+        document.getElementById("dashboard-widgets");
+
+    const btn =
+        document.getElementById("toggle-summary-btn");
+
+    if (
+        localStorage.getItem(
+            "summaryCollapsed"
+        ) === "true"
+    ) {
+        panel?.classList.add("hidden");
+
+        if (btn) {
+            btn.innerHTML =
+                "▼ แสดงสรุป";
+        }
+    }
+});
+    
 if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", bootScheduleApp, { once: true });
 } else {
