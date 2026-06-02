@@ -6082,15 +6082,13 @@ function sortUniqueNumberArray(arr) {
 }
 
 // ระบบจัดการวันหยุด (Offs) จาก CSV
+// ระบบจัดการวันหยุด (Offs) จาก CSV
 async function fetchAndUpdateOffs() {
     try {
         if (!Array.isArray(window.currentStaffList) || window.currentStaffList.length === 0) return;
 
-        const csvUrl = String(OFFS_CSV_CONFIG.url || "").trim();
-        if (!csvUrl || csvUrl.includes("ใส่_ลิงก์_CSV")) {
-            console.warn("ยังไม่ได้ตั้งค่า OFFS_CSV_CONFIG.url");
-            return;
-        }
+        // 🚨 1. นำลิงก์ CSV ของตารางวันหยุดมาใส่ในเครื่องหมายคำพูดแทนข้อความภาษาไทย
+        const csvUrl = "ใส่ลิงก์_CSV_หน้าตารางวันหยุด_ตรงนี้";
 
         const separator = csvUrl.includes("?") ? "&" : "?";
         const response = await fetch(`${csvUrl}${separator}t=${Date.now()}`, { cache: "no-store" });
@@ -6102,13 +6100,14 @@ async function fetchAndUpdateOffs() {
 
         rows.forEach(row => {
             const cols = parseCSVLineSafe(row);
-            // 🚨 บังคับให้อ่านคอลัมน์ A, B, C, D ตามตารางใหม่ (0, 1, 2, 3)
-const empCode = String(cols[0] || '').trim();     // คอลัมน์ A (รหัสพนักงาน)
-const reqType = String(cols[1] || '').trim();     // คอลัมน์ B (ประเภท: เพิ่ม/ยกเลิก/ย้าย)
-const newDateStr = String(cols[2] || '').trim();  // คอลัมน์ C (วันที่ใหม่)
-const oldDateStr = String(cols[3] || '').trim();  // คอลัมน์ D (วันที่เดิม)
+            
+            // 🚨 2. อ่านคอลัมน์ A, B, C, D ให้ตรงตาราง (0, 1, 2, 3)
+            const empCode = String(cols[0] || '').trim();
+            const reqType = String(cols[1] || '').trim();
+            const newDateStr = String(cols[2] || '').trim();
+            const oldDateStr = String(cols[3] || '').trim();
 
-if (!empCode || !reqType) return;
+            if (!empCode || !reqType) return;
 
             const targetDay = extractDayFromDateStr(newDateStr);
             const oldDay = extractDayFromDateStr(oldDateStr);
@@ -6124,17 +6123,14 @@ if (!empCode || !reqType) return;
             const beforeOffs = JSON.stringify(sortUniqueNumberArray(staff.offs));
             const beforeLeaves = JSON.stringify(sortUniqueNumberArray(staff.leaves));
 
-            // เพิ่มวันหยุด: ใส่ O และลบ SL/PL วันเดียวกันออก เพื่อไม่ให้ชนกัน
             if ((type.includes("เพิ่ม") || type.includes("add")) && targetDay) {
                 staff.offs.push(targetDay);
                 staff.leaves = staff.leaves.filter(d => Number(d) !== Number(targetDay));
                 delete staff.leaveTypes[String(targetDay)];
             }
-            // ยกเลิกวันหยุด: ลบ O วันนั้นออก
             else if ((type.includes("ยกเลิก") || type.includes("cancel") || type.includes("remove")) && targetDay) {
                 staff.offs = staff.offs.filter(d => Number(d) !== Number(targetDay));
             }
-            // ย้ายวันหยุด: ลบวันเก่า แล้วเพิ่มวันใหม่
             else if ((type.includes("ย้าย") || type.includes("move") || type.includes("change")) && targetDay && oldDay) {
                 staff.offs = staff.offs.filter(d => Number(d) !== Number(oldDay));
                 staff.offs.push(targetDay);
@@ -6165,7 +6161,6 @@ if (!empCode || !reqType) return;
         console.error("Offs Update failed", e);
     }
 }
-
 window.extractDayFromDateStr = extractDayFromDateStr;
 window.fetchAndUpdateOffs = fetchAndUpdateOffs;
 
