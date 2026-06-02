@@ -6081,13 +6081,14 @@ function sortUniqueNumberArray(arr) {
     return [...new Set((Array.isArray(arr) ? arr : []).map(Number).filter(n => Number.isInteger(n) && n >= 1 && n <= 31))].sort((a, b) => a - b);
 }
 
-// ระบบจัดการวันหยุด (Offs) จาก CSV
-// ระบบจัดการวันหยุด (Offs) จาก CSV
+// ==========================================
+// 1. ระบบจัดการวันหยุด (Offs) - ดึงจากชีทวันหยุดปกติ
+// ==========================================
 async function fetchAndUpdateOffs() {
     try {
         if (!Array.isArray(window.currentStaffList) || window.currentStaffList.length === 0) return;
 
-        // 🚨 1. นำลิงก์ CSV ของตารางวันหยุดมาใส่ในเครื่องหมายคำพูดแทนข้อความภาษาไทย
+        // ลิงก์ CSV ของตารางวันหยุด (Offs)
         const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTEfo9k8IWGAo6DW6Hvoe8N043CrgXMtTHcp2vTQiz0fmibLq4pzn-5T6bf5yu0S9O5IWC0xja5INag/pub?output=csv";
 
         const separator = csvUrl.includes("?") ? "&" : "?";
@@ -6099,79 +6100,181 @@ async function fetchAndUpdateOffs() {
         let hasNewOffData = false;
 
         rows.forEach(row => {
-            const cols = parseCSVLineSafe(row);
+            const cols = typeof parseCSVLineSafe === "function" ? parseCSVLineSafe(row) : row.split(',');
             
-            // 🚨 2. อ่านคอลัมน์จากตารางชีทลากิจ (C=2, D=3, F=5)
-const empCode = String(cols[2] || '').trim();    // คอลัมน์ C: รหัสพนักงาน
-const reqType = String(cols[3] || '').trim();    // คอลัมน์ D: ประเภท (เช่น ลากิจ)
-const newDateStr = String(cols[5] || '').trim(); // คอลัมน์ F: วันที่ลา
+            // อ่านคอลัมน์ตารางวันหยุด: A(0)=รหัส, B(1)=ประเภท, C(2)=วันใหม่, D(3)=วันเก่า
+            const empCode = String(cols[0] || '').trim();
+            const reqType = String(cols[1] || '').trim();
+            const newDateStr = String(cols[2] || '').trim();
+            const oldDateStr = String(cols[3] || '').trim();
 
-if (!empCode || !reqType) return;
+            if (!empCode || !reqType) return;
 
-// ใช้ฟังก์ชันเดิมถอดรหัสวันที่ (รับมือ 46176 ได้แน่นอน)
-const targetDay = extractDayFromDateStr(newDateStr); 
+            const targetDay = typeof extractDayFromDateStr === "function" ? extractDayFromDateStr(newDateStr) : NaN;
+            const oldDay = typeof extractDayFromDateStr === "function" ? extractDayFromDateStr(oldDateStr) : NaN;
+            const type = typeof normalizeOffRequestType === "function" ? normalizeOffRequestType(reqType) : reqType.toLowerCase();
 
-const staff = (window.currentStaffList || []).find(p => String(p.code || "").trim() === String(empCode).trim());
-if (!staff) return;
+            const staff = window.currentStaffList.find(p => String(p.code || "").trim() === String(empCode));
+            if (!staff) return;
 
-if (!Array.isArray(staff.offs)) staff.offs = [];
-if (!Array.isArray(staff.leaves)) staff.leaves = [];
-if (!staff.leaveTypes || typeof staff.leaveTypes !== "object") staff.leaveTypes = {};
+            if (!Array.isArray(staff.offs)) staff.offs = [];
+            if (!Array.isArray(staff.leaves)) staff.leaves = [];
+            if (!staff.leaveTypes || typeof staff.leaveTypes !== "object") staff.leaveTypes = {};
 
-// 🌟 เพิ่มเงื่อนไขสำหรับ "การลา" โดยเฉพาะ
-if (reqType.includes("ลา") || reqType.includes("leave")) {
-    if (targetDay) {
-        // 1. เพิ่มวันลาเข้าไปในระบบ
-        staff.leaves.push(targetDay);
-        
-        // 2. เคลียร์วันหยุดออก (กันพนักงานมีทั้ง O และ L ในวันเดียวกัน)
-        staff.offs = staff.offs.filter(d => Number(d) !== Number(targetDay));
-        
-        // 3. บันทึกประเภทการลา (เพื่อให้หน้าเว็บแสดง ลากิจ/ลาป่วย ถูกต้อง)
-        staff.leaveTypes[String(targetDay)] = reqType;
-    }
-}
+            // บันทึกสถานะก่อนอัปเดตเพื่อเช็คความเปลี่ยนแปลง
+            const beforeOffs = JSON.stringify(staff.offs);
+            const beforeLeaves = JSON.stringify(staff.leaves);
 
-            staff.offs = sortUniqueNumberArray(staff.offs);
-            staff.leaves = sortUniqueNumberArray(staff.leaves);
+            if ((type.includes("เพิ่ม") || type.includes("add")) && targetDay) {
+                staff.offs.push(targetDay);
+                staff.leaves = staff.leaves.filter(d => Number(d) !== Number(targetDay));
+                delete staff.leaveTypes[String(targetDay)];
+            } 
+            else if ((type.includes("ยกเลิก") || type.includes("cancel") || type.includes("remove")) && targetDay) {
+                staff.offs = staff.offs.filter(d => Number(d) !== Number(targetDay));
+            } 
+            else if ((type.includes("ย้าย") || type.includes("move") || type.includes("change")) && targetDay && oldDay) {
+                staff.offs = staff.offs.filter(d => Number(d) !== Number(oldDay));
+                staff.offs.push(targetDay);
+                staff.leaves = staff.leaves.filter(d => Number(d) !== Number(targetDay));
+                delete staff.leaveTypes[String(targetDay)];
+            }
 
-            const afterOffs = JSON.stringify(staff.offs);
-            const afterLeaves = JSON.stringify(staff.leaves);
-            if (beforeOffs !== afterOffs || beforeLeaves !== afterLeaves) hasNewOffData = true;
+            if (typeof sortUniqueNumberArray === 'function') {
+                staff.offs = sortUniqueNumberArray(staff.offs);
+                staff.leaves = sortUniqueNumberArray(staff.leaves);
+            }
+
+            if (beforeOffs !== JSON.stringify(staff.offs) || beforeLeaves !== JSON.stringify(staff.leaves)) {
+                hasNewOffData = true;
+            }
         });
 
         if (hasNewOffData) {
-            console.log("🔄 อัปเดตข้อมูลวันหยุดจาก CSV สำเร็จ กำลังบันทึก...");
+            console.log("🔄 อัปเดตข้อมูลวันหยุดจาก CSV สำเร็จ");
             if (typeof updateDynamicUI === "function") updateDynamicUI();
             else if (typeof renderTable === "function") renderTable();
-
             if (typeof commitData === "function") await commitData();
-            else {
-                if (typeof saveStaffData === "function") saveStaffData();
-                if (typeof saveToCloud === "function") saveToCloud();
-            }
         }
     } catch (e) {
         console.error("Offs Update failed", e);
     }
 }
-window.extractDayFromDateStr = extractDayFromDateStr;
-window.fetchAndUpdateOffs = fetchAndUpdateOffs;
 
-function startOffsAutoSync() {
-    if (window.__offsAutoSyncStarted) return;
-    window.__offsAutoSyncStarted = true;
-    setTimeout(fetchAndUpdateOffs, 2500);
-    setInterval(fetchAndUpdateOffs, OFFS_CSV_CONFIG.intervalMs || 60000);
+// ==========================================
+// 2. ระบบจัดการลากิจ (Leaves) - แยกออกมาชัดเจน ไม่ทับซ้อน
+// ==========================================
+async function fetchAndUpdateLeaves() {
+    try {
+        if (!Array.isArray(window.currentStaffList) || window.currentStaffList.length === 0) return;
+
+        // 🚨 นำลิงก์ CSV ของตาราง "ลากิจ" มาใส่แทนที่ข้อความข้างล่างนี้ครับ
+        const csvUrl = "ใส่ลิงก์_CSV_ระบบลากิจ_ตรงนี้"; 
+        if (csvUrl === "ใส่ลิงก์_CSV_ระบบลากิจ_ตรงนี้") return; 
+
+        const separator = csvUrl.includes("?") ? "&" : "?";
+        const response = await fetch(`${csvUrl}${separator}t=${Date.now()}`, { cache: "no-store" });
+        if (!response.ok) throw new Error(`CSV HTTP ${response.status}`);
+
+        const data = await response.text();
+        const rows = data.trim().split(/\r?\n/).slice(1);
+        let hasNewLeaveData = false;
+
+        rows.forEach(row => {
+            const cols = typeof parseCSVLineSafe === "function" ? parseCSVLineSafe(row) : row.split(',');
+            
+            // อ่านคอลัมน์ชีทลา: C(2)=รหัสพนักงาน, D(3)=ประเภทการลา, F(5)=วันที่ลา
+            const empCode = String(cols[2] || '').trim();
+            const reqType = String(cols[3] || '').trim();
+            const dateRaw = String(cols[5] || '').trim();
+
+            if (!empCode || !reqType) return;
+
+            // ถอดรหัสวันที่ครอบจักรวาล (รับมือเลขสตรีม 46176 ของเมื่อคืน)
+            let targetDay = NaN;
+            if (dateRaw.includes('-')) {
+                targetDay = parseInt(dateRaw.split('-')[2], 10);
+            } else if (dateRaw.includes('/')) {
+                targetDay = parseInt(dateRaw.split('/')[0], 10);
+            } else if (!isNaN(dateRaw) && Number(dateRaw) > 40000) {
+                const excelEpoch = new Date(1899, 11, 30).getTime();
+                const realDate = new Date(excelEpoch + (Number(dateRaw) * 86400000));
+                targetDay = realDate.getDate(); 
+            } else if (typeof extractDayFromDateStr === "function") {
+                targetDay = extractDayFromDateStr(dateRaw);
+            }
+
+            const staff = window.currentStaffList.find(p => String(p.code || "").trim() === String(empCode));
+            if (!staff || isNaN(targetDay)) return;
+
+            if (!Array.isArray(staff.offs)) staff.offs = [];
+            if (!Array.isArray(staff.leaves)) staff.leaves = [];
+            if (!staff.leaveTypes) staff.leaveTypes = {};
+
+            const beforeOffs = JSON.stringify(staff.offs);
+            const beforeLeaves = JSON.stringify(staff.leaves);
+
+            // บันทึกสถานะลากิจลงระบบหน้าเว็บ
+            if (reqType.includes("ลา") || reqType.includes("leave")) {
+                if (!staff.leaves.includes(targetDay)) {
+                    staff.leaves.push(targetDay);
+                }
+                // ลบตัว O ออกถ้าวันซ้อนกัน
+                staff.offs = staff.offs.filter(d => Number(d) !== Number(targetDay));
+                staff.leaveTypes[String(targetDay)] = reqType;
+            }
+
+            if (typeof sortUniqueNumberArray === 'function') {
+                staff.offs = sortUniqueNumberArray(staff.offs);
+                staff.leaves = sortUniqueNumberArray(staff.leaves);
+            }
+
+            if (beforeOffs !== JSON.stringify(staff.offs) || beforeLeaves !== JSON.stringify(staff.leaves)) {
+                hasNewLeaveData = true;
+            }
+        });
+
+        if (hasNewLeaveData) {
+            console.log("🔄 อัปเดตข้อมูลลากิจจาก CSV สำเร็จ");
+            if (typeof updateDynamicUI === "function") updateDynamicUI();
+            else if (typeof renderTable === "function") renderTable();
+            if (typeof commitData === "function") await commitData();
+        }
+    } catch (e) {
+        console.error("Leaves Update failed", e);
+    }
 }
 
-window.startOffsAutoSync = startOffsAutoSync;
+window.fetchAndUpdateOffs = fetchAndUpdateOffs;
+window.fetchAndUpdateLeaves = fetchAndUpdateLeaves;
 
-// Boot fix: start the app after all functions are ready
+// ==========================================
+// 3. ตั้งเวลาสั่งรันอัตโนมัติคู่ขนาน (Auto Sync)
+// ==========================================
+function startAutoSync() {
+    if (window.__autoSyncStarted) return;
+    window.__autoSyncStarted = true;
+    
+    setTimeout(() => {
+        fetchAndUpdateOffs();
+        fetchAndUpdateLeaves();
+    }, 2500);
+    
+    const interval = (typeof OFFS_CSV_CONFIG !== 'undefined' && OFFS_CSV_CONFIG.intervalMs) ? OFFS_CSV_CONFIG.intervalMs : 60000;
+    setInterval(() => {
+        fetchAndUpdateOffs();
+        fetchAndUpdateLeaves();
+    }, interval);
+}
+window.startOffsAutoSync = startAutoSync; 
+
+// ==========================================
+// 4. บูตแอปพลิเคชัน (Boot App)
+// ==========================================
 function bootScheduleApp() {
-    Promise.resolve(startCloudSync())
+    Promise.resolve(typeof startCloudSync === 'function' ? startCloudSync() : null)
         .then(() => {
-            if (typeof startOffsAutoSync === "function") startOffsAutoSync();
+            if (typeof startAutoSync === "function") startAutoSync();
         })
         .catch(err => console.error("Boot failed", err));
 }
