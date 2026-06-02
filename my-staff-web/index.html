@@ -732,43 +732,20 @@
 
 </div>
 
-<div id="dashboard-widgets-wrap">
-
-<div
-id="dashboard-widgets"
-class="
-relative
-rounded-[28px]
-"
->
+<div class="flex justify-center mb-3">
 
 <button
 id="toggle-summary-btn"
-type="button"
 onclick="toggleSummaryPanel()"
-
-class="
-absolute
-left-1/2
--top-4
--translate-x-1/2
-z-50
-
-px-8
-py-2
-
-rounded-full
-
-bg-indigo-600
-hover:bg-indigo-700
-
-text-white
-font-bold
-">
+class="px-6 py-2 rounded-xl bg-indigo-600">
 
 ▲ ซ่อนสรุป
 
 </button>
+
+</div>
+
+<div id="dashboard-widgets">
     
             <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex items-center justify-between shadow-md">
                 <div>
@@ -6338,23 +6315,14 @@ document.getElementById("dashboard-widgets");
 const btn =
 document.getElementById("toggle-summary-btn");
 
-if (!panel || !btn) {
-console.log("not found");
-return;
-}
+if (!panel || !btn) return;
 
-const hidden =
-panel.style.display === "none";
+panel.classList.toggle("hidden");
 
-panel.style.display =
-hidden
-? "block"
-: "none";
-
-btn.innerHTML =
-hidden
-? "▲ ซ่อนสรุป"
-: "▼ แสดงสรุป";
+btn.textContent =
+panel.classList.contains("hidden")
+? "▼ แสดงสรุป"
+: "▲ ซ่อนสรุป";
 
 }
     
