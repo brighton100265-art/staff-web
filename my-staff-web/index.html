@@ -6169,8 +6169,7 @@ async function fetchAndUpdateLeaves() {
         if (!Array.isArray(window.currentStaffList) || window.currentStaffList.length === 0) return;
 
         // 🚨 นำลิงก์ CSV ของตาราง "ลากิจ" มาใส่แทนที่ข้อความข้างล่างนี้ครับ
-        const csvUrl = "ใส่ลิงก์_CSV_ระบบลากิจ_ตรงนี้"; 
-        if (csvUrl === "ใส่ลิงก์_CSV_ระบบลากิจ_ตรงนี้") return; 
+        const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTQ8I6o22-nbdeWf1hd5m-7wSwDOtZBImLW-Jg5o0ROWqlPrmGLKuz4GteSgJTRIg7h1S_z2kgR61kE/pub?output=csv"; 
 
         const separator = csvUrl.includes("?") ? "&" : "?";
         const response = await fetch(`${csvUrl}${separator}t=${Date.now()}`, { cache: "no-store" });
