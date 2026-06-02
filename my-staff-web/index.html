@@ -5959,92 +5959,233 @@ function lockTableControlsByPermission() {
             renderMonthlyStatusPanel();
         }, 500);
 
-// ==========================================
-// 1. ฟังก์ชันช่วยแปลงวันที่ (ใช้ร่วมกัน)
-// ==========================================
-function extractDayFromDateStr(fullDateStr) {
-    if (!fullDateStr) return 0;
-    if (!isNaN(fullDateStr) && Number(fullDateStr) > 40000) {
-        const jsDate = new Date((Number(fullDateStr) - 25569) * 86400 * 1000);
-        return jsDate.getDate();
-    } else {
-        const dateObj = new Date(fullDateStr);
-        if (!isNaN(dateObj)) return dateObj.getDate();
-        const dateParts = fullDateStr.split('-');
-        return Number(dateParts[2] || 0);
-    }
-}
 
 // ==========================================
-// 2. ระบบจัดการวันลา (PL / SL) - โค้ดเดิมของคุณ
+// Google Form / CSV Off Sync: ระบบดึงคำขอเปลี่ยนวันหยุดจาก CSV แล้วอัปเดตตาราง
 // ==========================================
-// ==========================================
-// 1. ฟังก์ชันช่วยแปลงวันที่ (ใช้ร่วมกัน)
-// ==========================================
-function extractDayFromDateStr(fullDateStr) {
-    if (!fullDateStr) return 0;
-    if (!isNaN(fullDateStr) && Number(fullDateStr) > 40000) {
-        const jsDate = new Date((Number(fullDateStr) - 25569) * 86400 * 1000);
-        return jsDate.getDate();
-    } else {
-        const dateObj = new Date(fullDateStr);
-        if (!isNaN(dateObj)) return dateObj.getDate();
-        const dateParts = fullDateStr.split('-');
-        return Number(dateParts[2] || 0);
+const OFFS_CSV_CONFIG = {
+    // ใช้ลิงก์ CSV เดิมที่มีในระบบไว้ก่อน ถ้าจะเปลี่ยนฟอร์ม ให้เปลี่ยนเฉพาะ URL นี้
+    url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTQ8I6o22-nbdeWf1hd5m-7wSwDOtZBImLW-Jg5o0ROWqlPrmGLKuz4GteSgJTRIg7h1S_z2kgR61kE/pub?output=csv",
+
+    // คอลัมน์หลักของฟอร์มปัจจุบัน: I/J/K/L = 8/9/10/11
+    columns: {
+        empCode: 8,
+        reqType: 9,
+        newDate: 10,
+        oldDate: 11
+    },
+
+    // เผื่อใช้ฟอร์มชุดใหม่ตามตัวอย่าง: C/D/E/F = 2/3/4/5
+    fallbackColumns: {
+        empCode: 2,
+        reqType: 3,
+        newDate: 4,
+        oldDate: 5
+    },
+
+    // ป้องกันยิงถี่เกินไป
+    intervalMs: 60000
+};
+
+// ฟังก์ชันแยก CSV แบบรองรับค่าที่มี comma อยู่ในเครื่องหมายคำพูด
+function parseCSVLineSafe(line) {
+    const out = [];
+    let current = "";
+    let inQuotes = false;
+
+    for (let i = 0; i < String(line || "").length; i++) {
+        const ch = line[i];
+        const next = line[i + 1];
+
+        if (ch === '"' && inQuotes && next === '"') {
+            current += '"';
+            i++;
+            continue;
+        }
+        if (ch === '"') {
+            inQuotes = !inQuotes;
+            continue;
+        }
+        if (ch === "," && !inQuotes) {
+            out.push(current.trim());
+            current = "";
+            continue;
+        }
+        current += ch;
     }
+    out.push(current.trim());
+    return out;
 }
 
-// ==========================================
-// 2. ระบบจัดการวันลา (PL / SL) 
-// ==========================================
-// แก้ไขเฉพาะเนื้อหาข้างในฟังก์ชันเดิมที่มีอยู่แล้ว
+// ฟังก์ชันแปลงวันที่ดิบ เช่น 2026-06-02, 02/06/2026 หรือ Excel serial 46176 ให้เป็นเลขวันที่ เช่น 2
+function extractDayFromDateStr(fullDateStr) {
+    const raw = String(fullDateStr || "").trim();
+    if (!raw) return 0;
+
+    const numeric = Number(raw);
+    if (Number.isFinite(numeric) && numeric > 40000) {
+        const jsDate = new Date((numeric - 25569) * 86400 * 1000);
+        return Number.isNaN(jsDate.getTime()) ? 0 : jsDate.getUTCDate();
+    }
+
+    // YYYY-MM-DD หรือ YYYY/MM/DD
+    let match = raw.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+    if (match) return Number(match[3]) || 0;
+
+    // DD/MM/YYYY หรือ DD-MM-YYYY
+    match = raw.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+    if (match) return Number(match[1]) || 0;
+
+    const dateObj = new Date(raw);
+    if (!Number.isNaN(dateObj.getTime())) return dateObj.getDate();
+
+    return 0;
+}
+
+function getOffRequestValue(cols, map, key) {
+    return String(cols?.[map?.[key]] || "").trim();
+}
+
+function readOffRequestRow(cols) {
+    const primary = OFFS_CSV_CONFIG.columns;
+    const fallback = OFFS_CSV_CONFIG.fallbackColumns;
+
+    let item = {
+        empCode: getOffRequestValue(cols, primary, "empCode"),
+        reqType: getOffRequestValue(cols, primary, "reqType"),
+        newDateStr: getOffRequestValue(cols, primary, "newDate"),
+        oldDateStr: getOffRequestValue(cols, primary, "oldDate")
+    };
+
+    // ถ้าคอลัมน์หลักอ่านแล้วไม่ครบ ให้ลองคอลัมน์สำรองตามโค้ดตัวอย่างที่ส่งมา
+    const foundPrimaryStaff = (window.currentStaffList || []).some(p => String(p.code || "").trim() === item.empCode);
+    if (!item.empCode || !item.reqType || !foundPrimaryStaff) {
+        const alt = {
+            empCode: getOffRequestValue(cols, fallback, "empCode"),
+            reqType: getOffRequestValue(cols, fallback, "reqType"),
+            newDateStr: getOffRequestValue(cols, fallback, "newDate"),
+            oldDateStr: getOffRequestValue(cols, fallback, "oldDate")
+        };
+        const foundFallbackStaff = (window.currentStaffList || []).some(p => String(p.code || "").trim() === alt.empCode);
+        if (alt.empCode && alt.reqType && foundFallbackStaff) item = alt;
+    }
+
+    return item;
+}
+
+function normalizeOffRequestType(text) {
+    return String(text || "").trim().toLowerCase();
+}
+
+function sortUniqueNumberArray(arr) {
+    return [...new Set((Array.isArray(arr) ? arr : []).map(Number).filter(n => Number.isInteger(n) && n >= 1 && n <= 31))].sort((a, b) => a - b);
+}
+
+// ระบบจัดการวันหยุด (Offs) จาก CSV
 async function fetchAndUpdateOffs() {
     try {
-        if (!window.currentStaffList || window.currentStaffList.length === 0) return;
+        if (!Array.isArray(window.currentStaffList) || window.currentStaffList.length === 0) return;
 
-        const response = await fetch(
-            'https://docs.google.com/spreadsheets/d/e/2PACX-1vTQ8I6o22-nbdeWf1hd5m-7wSwDOtZBImLW-Jg5o0ROWqlPrmGLKuz4GteSgJTRIg7h1S_z2kgR61kE/pub?output=csv&t=' + new Date().getTime()
-        );
+        const csvUrl = String(OFFS_CSV_CONFIG.url || "").trim();
+        if (!csvUrl || csvUrl.includes("ใส่_ลิงก์_CSV")) {
+            console.warn("ยังไม่ได้ตั้งค่า OFFS_CSV_CONFIG.url");
+            return;
+        }
+
+        const separator = csvUrl.includes("?") ? "&" : "?";
+        const response = await fetch(`${csvUrl}${separator}t=${Date.now()}`, { cache: "no-store" });
+        if (!response.ok) throw new Error(`CSV HTTP ${response.status}`);
+
         const data = await response.text();
-        const rows = data.trim().split('\n').slice(1);
-        let hasNewOffData = false; 
-        
+        const rows = data.trim().split(/\r?\n/).slice(1);
+        let hasNewOffData = false;
+
         rows.forEach(row => {
-            const cols = row.split(',');
-            if (cols.length < 12) return;
-            
-            const empCode = String(cols[8] || '').trim();
-            const reqType = String(cols[9] || '').trim();
-            const newDateStr = String(cols[10] || '').trim();
-            const oldDateStr = String(cols[11] || '').trim();
-            
-            // เรียกใช้ฟังก์ชันที่มีอยู่แล้วในระบบได้เลย
+            const cols = parseCSVLineSafe(row);
+            const { empCode, reqType, newDateStr, oldDateStr } = readOffRequestRow(cols);
+            if (!empCode || !reqType) return;
+
             const targetDay = extractDayFromDateStr(newDateStr);
             const oldDay = extractDayFromDateStr(oldDateStr);
-            
-            const staff = window.currentStaffList.find(p => String(p.code).trim() === empCode);
+            const type = normalizeOffRequestType(reqType);
+
+            const staff = (window.currentStaffList || []).find(p => String(p.code || "").trim() === String(empCode).trim());
             if (!staff) return;
+
             if (!Array.isArray(staff.offs)) staff.offs = [];
-            
-            // ตรรกะเพิ่ม/ยกเลิก/ย้าย
-            if (reqType.includes('เพิ่ม') && targetDay) {
-                if (!staff.offs.includes(targetDay)) { staff.offs.push(targetDay); hasNewOffData = true; }
-            } else if (reqType.includes('ยกเลิก') && targetDay) {
-                if (staff.offs.includes(targetDay)) { staff.offs = staff.offs.filter(d => d !== targetDay); hasNewOffData = true; }
-            } else if (reqType.includes('ย้าย') && targetDay && oldDay) {
-                if (staff.offs.includes(oldDay)) { staff.offs = staff.offs.filter(d => d !== oldDay); hasNewOffData = true; }
-                if (!staff.offs.includes(targetDay)) { staff.offs.push(targetDay); hasNewOffData = true; }
+            if (!Array.isArray(staff.leaves)) staff.leaves = [];
+            if (!staff.leaveTypes || typeof staff.leaveTypes !== "object") staff.leaveTypes = {};
+
+            const beforeOffs = JSON.stringify(sortUniqueNumberArray(staff.offs));
+            const beforeLeaves = JSON.stringify(sortUniqueNumberArray(staff.leaves));
+
+            // เพิ่มวันหยุด: ใส่ O และลบ SL/PL วันเดียวกันออก เพื่อไม่ให้ชนกัน
+            if ((type.includes("เพิ่ม") || type.includes("add")) && targetDay) {
+                staff.offs.push(targetDay);
+                staff.leaves = staff.leaves.filter(d => Number(d) !== Number(targetDay));
+                delete staff.leaveTypes[String(targetDay)];
             }
+            // ยกเลิกวันหยุด: ลบ O วันนั้นออก
+            else if ((type.includes("ยกเลิก") || type.includes("cancel") || type.includes("remove")) && targetDay) {
+                staff.offs = staff.offs.filter(d => Number(d) !== Number(targetDay));
+            }
+            // ย้ายวันหยุด: ลบวันเก่า แล้วเพิ่มวันใหม่
+            else if ((type.includes("ย้าย") || type.includes("move") || type.includes("change")) && targetDay && oldDay) {
+                staff.offs = staff.offs.filter(d => Number(d) !== Number(oldDay));
+                staff.offs.push(targetDay);
+                staff.leaves = staff.leaves.filter(d => Number(d) !== Number(targetDay));
+                delete staff.leaveTypes[String(targetDay)];
+            }
+
+            staff.offs = sortUniqueNumberArray(staff.offs);
+            staff.leaves = sortUniqueNumberArray(staff.leaves);
+
+            const afterOffs = JSON.stringify(staff.offs);
+            const afterLeaves = JSON.stringify(staff.leaves);
+            if (beforeOffs !== afterOffs || beforeLeaves !== afterLeaves) hasNewOffData = true;
         });
-        
+
         if (hasNewOffData) {
-            console.log('🔄 อัปเดตวันหยุดสำเร็จ');
-            if (typeof renderTable === "function") renderTable();
-            if (typeof saveStaffData === "function") saveStaffData();
+            console.log("🔄 อัปเดตข้อมูลวันหยุดจาก CSV สำเร็จ กำลังบันทึก...");
+            if (typeof updateDynamicUI === "function") updateDynamicUI();
+            else if (typeof renderTable === "function") renderTable();
+
+            if (typeof commitData === "function") await commitData();
+            else {
+                if (typeof saveStaffData === "function") saveStaffData();
+                if (typeof saveToCloud === "function") saveToCloud();
+            }
         }
     } catch (e) {
-        console.error('Offs Update failed', e);
+        console.error("Offs Update failed", e);
     }
 }
-    </script>
+
+window.extractDayFromDateStr = extractDayFromDateStr;
+window.fetchAndUpdateOffs = fetchAndUpdateOffs;
+
+function startOffsAutoSync() {
+    if (window.__offsAutoSyncStarted) return;
+    window.__offsAutoSyncStarted = true;
+    setTimeout(fetchAndUpdateOffs, 2500);
+    setInterval(fetchAndUpdateOffs, OFFS_CSV_CONFIG.intervalMs || 60000);
+}
+
+window.startOffsAutoSync = startOffsAutoSync;
+
+// Boot fix: start the app after all functions are ready
+function bootScheduleApp() {
+    Promise.resolve(startCloudSync())
+        .then(() => {
+            if (typeof startOffsAutoSync === "function") startOffsAutoSync();
+        })
+        .catch(err => console.error("Boot failed", err));
+}
+
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bootScheduleApp, { once: true });
+} else {
+    bootScheduleApp();
+}
+</script>
 </body>
