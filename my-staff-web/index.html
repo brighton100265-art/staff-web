@@ -730,25 +730,7 @@
             <span id="toast-text">สำเร็จ!</span>
         </div>
 
-</div>
-
-<div class="flex justify-center mb-[-22px] relative z-50">
-
-<button
-id="toggle-summary-btn"
-type="button"
-onclick="alert('click'); toggleSummaryPanel();"
-style="position:relative;z-index:99999;pointer-events:auto;"
-class="px-6 py-2 rounded-xl bg-indigo-600 cursor-pointer">
-
-▲ ซ่อนสรุป
-
-</button>
-
-</div>
-
-<div id="dashboard-widgets">
-    
+        <div class="space-y-4" id="dashboard-widgets">
             <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex items-center justify-between shadow-md">
                 <div>
                     <p class="text-xs text-slate-400 uppercase tracking-wider font-semibold">พนักงานทั้งหมด</p>
@@ -862,7 +844,6 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                 <textarea id="wfh-report-output" readonly placeholder="กดสร้างรายงานเพื่อแสดงรายชื่อ WFH ที่หยุด..." class="w-full h-36 bg-slate-950 border border-slate-800 focus:border-purple-500 text-slate-200 px-3 py-2 rounded-xl text-xs outline-none resize-y placeholder:text-slate-600"></textarea>
             </div>
         </div>
-            </div>
 
         <div id="wfh-present-inline-panel" class="w-full bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden hidden mb-6">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 px-5 py-4 border-b border-slate-800">
@@ -6309,25 +6290,6 @@ function bootScheduleApp() {
         .catch(err => console.error("Boot failed", err));
 }
 
-    function toggleSummaryPanel() {
-
-const panel =
-document.getElementById("dashboard-widgets");
-
-const btn =
-document.getElementById("toggle-summary-btn");
-
-if (!panel || !btn) return;
-
-panel.hidden = !panel.hidden;
-
-btn.textContent =
-panel.hidden
-? "▼ แสดงสรุป"
-: "▲ ซ่อนสรุป";
-
-}
-    
 if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", bootScheduleApp, { once: true });
 } else {
