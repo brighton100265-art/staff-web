@@ -6331,45 +6331,41 @@ function bootScheduleApp() {
 }
 
     function toggleSummaryPanel() {
-    const panel =
-        document.getElementById("dashboard-widgets");
 
-    const btn =
-        document.getElementById("toggle-summary-btn");
+const panel =
+document.getElementById(
+"dashboard-widgets"
+);
 
-    if (!panel) return;
+const btn =
+document.getElementById(
+"toggle-summary-btn"
+);
 
-    panel.style.display =
-panel.style.display === "none"
-? "block"
-: "none";
+if (!panel) return;
 
 const hidden =
-panel.style.display === "none";
+panel.style.maxHeight === "0px";
 
-    btn.innerHTML =
-        hidden
-        ? "▼ แสดงสรุป"
-        : "▲ ซ่อนสรุป";
+panel.style.maxHeight =
+hidden
+? "5000px"
+: "0px";
 
-    localStorage.setItem(
-        "summaryCollapsed",
-        hidden
-    );
+panel.style.opacity =
+hidden
+? "1"
+: "0";
+
+panel.style.overflow =
+"hidden";
+
+btn.innerHTML =
+hidden
+? "▲ ซ่อนสรุป"
+: "▼ แสดงสรุป";
+
 }
-
-window.addEventListener("load", () => {
-    const panel =
-        document.getElementById("dashboard-widgets");
-
-    const btn =
-        document.getElementById("toggle-summary-btn");
-
-    localStorage.removeItem(
-"summaryCollapsed"
-);
-    }
-});
     
 if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", bootScheduleApp, { once: true });
