@@ -6220,7 +6220,17 @@ async function fetchAndUpdateLeaves() {
                 }
                 // ลบตัว O ออกถ้าวันซ้อนกัน
                 staff.offs = staff.offs.filter(d => Number(d) !== Number(targetDay));
-                staff.leaveTypes[String(targetDay)] = reqType;
+                
+                // ✨ แปลงคำว่า "ลากิจ" เป็น "PL" และ "ลาป่วย" เป็น "SL" ให้ตรงกับสัญลักษณ์เว็บ
+                let statusCode = "L"; // ค่าเริ่มต้น
+                if (reqType.includes("ลากิจ")) {
+                    statusCode = "PL";
+                } else if (reqType.includes("ลาป่วย")) {
+                    statusCode = "SL";
+                }
+                
+                // ส่งอักษรย่อไปให้หน้าเว็บวาดตาราง
+                staff.leaveTypes[String(targetDay)] = statusCode;
             }
 
             if (typeof sortUniqueNumberArray === 'function') {
