@@ -736,8 +736,10 @@
 
 <button
 id="toggle-summary-btn"
-onclick="toggleSummaryPanel()"
-class="px-6 py-2 rounded-xl bg-indigo-600">
+type="button"
+onclick="event.stopPropagation(); toggleSummaryPanel();"
+style="position:relative;z-index:99999;pointer-events:auto;"
+class="px-6 py-2 rounded-xl bg-indigo-600 cursor-pointer">
 
 ▲ ซ่อนสรุป
 
