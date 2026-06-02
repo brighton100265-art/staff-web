@@ -6365,17 +6365,9 @@ window.addEventListener("load", () => {
     const btn =
         document.getElementById("toggle-summary-btn");
 
-    if (
-        localStorage.getItem(
-            "summaryCollapsed"
-        ) === "true"
-    ) {
-        panel.style.display = "none";
-
-        if (btn) {
-            btn.innerHTML =
-                "▼ แสดงสรุป";
-        }
+    localStorage.removeItem(
+"summaryCollapsed"
+);
     }
 });
     
