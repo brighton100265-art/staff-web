@@ -3857,7 +3857,7 @@ window.generateWFHOffReport = function() {
                     if (names.length) {
                         const shiftPeople = (shiftMap[label] || []);
                         shiftPeople
-                            .map(name => presentPeople.find(p => p.name === name))
+                            .map(name => wfhOffPeople.find(p => p.name === name))
                             .filter(Boolean)
                             .sort((a,b)=>String(a.name).localeCompare(String(b.name), "en"))
                             .forEach(p => {
