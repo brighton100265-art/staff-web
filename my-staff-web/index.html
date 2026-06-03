@@ -3855,7 +3855,7 @@ window.generateWFHOffReport = function() {
                     lines.push(label);
 
                     if (names.length) {
-                        const shiftPeople = (shiftMap[label] || []);
+                        const shiftPeople = (shiftMap[shiftLabel] || []);
                         shiftPeople
                             .map(name => presentPeople.find(p => p.name === name))
                             .filter(Boolean)
@@ -4421,16 +4421,19 @@ window.generateWFHPresentToday = function() {
                     shiftMap[shiftLabel].push(p.name);
                 });
 
-                shiftLabels.forEach(label => {
-    lines.push(label);
-    const names = (shiftMap[label] || []).sort((a,b)=>String(a).localeCompare(String(b), "en"));
-    if (names.length) {
-        names.forEach(name => lines.push(`- ${name}`));
-    } else {
-        lines.push(onlyUnchecked ? "- ไม่มีพนักงาน WFH ที่ยังไม่ตรวจ" : "- ไม่มีพนักงาน WFH มาทำงาน");
-    }
-    lines.push("");
-});
+                shiftLabels.forEach(shiftLabel => {
+                    lines.push(shiftLabel);
+                    const names = (shiftMap[shiftLabel] || []).sort((a,b)=>String(a).localeCompare(String(b), "en"));
+                    if (names.length) {
+                        names.forEach(name => lines.push(`- ${name}`));
+                    } else {
+                        lines.push(onlyUnchecked ? "• ไม่มีพนักงาน WFH ที่ยังไม่ตรวจ" : "• ไม่มีพนักงาน WFH มาทำงาน");
+                    }
+                    lines.push("");
+                });
+
+                lines.push("");
+            });
 
             if (out) out.value = lines.join("\n").replace(/\n{4,}/g, "\n\n\n").trim();
 
