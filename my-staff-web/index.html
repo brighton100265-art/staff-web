@@ -4618,21 +4618,30 @@ window.generateWFHPresentToday = function() {
         };
 
         window.cancelResignedEmployee = async function(code) {
-            if (!hasPermission("cancelResign")) {
-                alert("ไม่มีสิทธิ์ใช้งานเมนูนี้");
-                return;
-            }
+    code = String(code || "").trim();
 
-            if (!isAdminUser()) return alert("ยกเลิกสถานะออกได้เฉพาะ Admin");
-            const rec = window.resignedRecords?.[String(code)];
-            if (!rec) return;
-            if (!confirm(`ยืนยันยกเลิกสถานะออกของ ${rec.name} (${rec.code})?`)) return;
+    // Admin ผ่านทันที / คนอื่นต้องมีสิทธิ์ cancelResign
+    if (!isAdminUser() && !hasPermission("cancelResign")) {
+        alert("ไม่มีสิทธิ์ใช้งานเมนูนี้");
+        return;
+    }
 
-            delete window.resignedRecords[String(code)];
-            await commitData();
-            updateDynamicUI();
-            showToast("ยกเลิกสถานะพนักงานออกแล้ว");
-        };
+    const rec = window.resignedRecords?.[code];
+    if (!rec) {
+        alert("ไม่พบข้อมูลพนักงานที่ออกแล้ว");
+        return;
+    }
+
+    if (!confirm(`ยืนยันยกเลิกสถานะออกของ ${rec.name} (${rec.code})?`)) return;
+
+    delete window.resignedRecords[code];
+
+    await commitData();
+    renderResignedHistory();
+    updateDynamicUI();
+
+    showToast("ยกเลิกสถานะพนักงานออกแล้ว");
+};
 
         function renderResignedHistory() {
             const body = document.getElementById("resigned-history-body");
