@@ -4620,13 +4620,14 @@ window.generateWFHPresentToday = function() {
         window.cancelResignedEmployee = async function(code) {
     code = String(code || "").trim();
 
-    // Admin ผ่านทันที / คนอื่นต้องมีสิทธิ์ cancelResign
-    if (!isAdminUser() && !hasPermission("cancelResign")) {
-        alert("ไม่มีสิทธิ์ใช้งานเมนูนี้");
+    if (!isAdminUser()) {
+        alert("ยกเลิกสถานะออกได้เฉพาะ Admin");
         return;
     }
 
-    const rec = window.resignedRecords?.[code];
+    if (!window.resignedRecords) window.resignedRecords = {};
+
+    const rec = window.resignedRecords[code];
     if (!rec) {
         alert("ไม่พบข้อมูลพนักงานที่ออกแล้ว");
         return;
@@ -4636,9 +4637,12 @@ window.generateWFHPresentToday = function() {
 
     delete window.resignedRecords[code];
 
+    saveLocalBackup();
     await commitData();
+
     renderResignedHistory();
-    updateDynamicUI();
+    renderTable();
+    updateStats();
 
     showToast("ยกเลิกสถานะพนักงานออกแล้ว");
 };
