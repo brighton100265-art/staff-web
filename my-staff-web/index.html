@@ -92,6 +92,22 @@
             font-weight: 800;
         }
 
+        .started-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+            border-radius: 999px;
+            border: 1px solid rgba(52, 211, 153, 0.42);
+            background: rgba(6, 95, 70, 0.34);
+            color: #bbf7d0;
+            padding: 3px 8px;
+            font-size: 10px;
+            font-weight: 900;
+            margin-top: 4px;
+            width: fit-content;
+        }
+
         .day-tooltip {
             position: fixed;
             background: rgba(15, 23, 42, .98);
@@ -2226,6 +2242,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
         window.currentUser = JSON.parse(sessionStorage.getItem("schedule_current_user") || "null");
         window.deletedShiftCodes = [];
         window.resignedRecords = {};
+        window.startedRecords = {};
 
         const monthNamesTH = ["", "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
         const todayForSchedule = new Date();
@@ -2327,11 +2344,15 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
             localStorage.setItem(`shift_${getScheduleDocId()}`, JSON.stringify(window.shiftTimes));
             localStorage.setItem(`deletedShiftCodes_${getScheduleDocId()}`, JSON.stringify(window.deletedShiftCodes || []));
             localStorage.setItem(`resigned_${getScheduleDocId()}`, JSON.stringify(window.resignedRecords || {}));
+            localStorage.setItem(`started_${getScheduleDocId()}`, JSON.stringify(window.startedRecords || {}));
             localStorage.setItem(`attendance_${getScheduleDocId()}`, JSON.stringify(window.attendanceChecks || {}));
         }
         function loadLocalBackup() {
             const s1 = localStorage.getItem(`staff_${getScheduleDocId()}`);
             const s2 = localStorage.getItem(`shift_${getScheduleDocId()}`);
+            const s3 = localStorage.getItem(`started_${getScheduleDocId()}`);
+            const s4 = localStorage.getItem(`resigned_${getScheduleDocId()}`);
+            const s5 = localStorage.getItem(`attendance_${getScheduleDocId()}`);
             if (s1) {
                 const parsed = ensureStaffShape(JSON.parse(s1));
                 if (parsed.length) window.currentStaffList = parsed;
@@ -2339,6 +2360,18 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
             if (s2) {
                 const parsedShift = JSON.parse(s2);
                 if (parsedShift && Object.keys(parsedShift).length) window.shiftTimes = parsedShift;
+            }
+            if (s3) {
+                const parsedStarted = JSON.parse(s3);
+                if (parsedStarted && typeof parsedStarted === "object") window.startedRecords = parsedStarted;
+            }
+            if (s4) {
+                const parsedResigned = JSON.parse(s4);
+                if (parsedResigned && typeof parsedResigned === "object") window.resignedRecords = parsedResigned;
+            }
+            if (s5) {
+                const parsedAttendance = JSON.parse(s5);
+                if (parsedAttendance && typeof parsedAttendance === "object") window.attendanceChecks = parsedAttendance;
             }
         }
 
@@ -2478,6 +2511,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                 if (data.rolePermissions) { window.customRolePermissions = data.rolePermissions; saveRolePermissionsLocal(); }
                 window.attendanceChecks = data.attendanceChecks && typeof data.attendanceChecks === "object" ? data.attendanceChecks : {};
                 window.resignedRecords = data.resignedRecords && typeof data.resignedRecords === "object" ? data.resignedRecords : {};
+                window.startedRecords = data.startedRecords && typeof data.startedRecords === "object" ? data.startedRecords : {};
 
                 ensureStaffPositions();
                 saveLocalBackup();
@@ -2519,6 +2553,9 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                         deletedShiftCodes: window.deletedShiftCodes || [],
                         rolePermissions: window.customRolePermissions || getRolePermissions(),
                          deletedShiftCodes: window.deletedShiftCodes || [],
+                attendanceChecks: window.attendanceChecks || {},
+                resignedRecords: window.resignedRecords || {},
+                startedRecords: window.startedRecords || {},
                 month: window.selectedMonth,
                 year: window.selectedYear,
                 migratedFromLegacy: migrated,
@@ -2553,6 +2590,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                 applyDeletedShiftFilter();
                 window.attendanceChecks = data.attendanceChecks && typeof data.attendanceChecks === "object" ? data.attendanceChecks : (window.attendanceChecks || {});
                 window.resignedRecords = data.resignedRecords && typeof data.resignedRecords === "object" ? data.resignedRecords : (window.resignedRecords || {});
+                window.startedRecords = data.startedRecords && typeof data.startedRecords === "object" ? data.startedRecords : (window.startedRecords || {});
                 }
 
                 ensureStaffPositions();
@@ -2606,6 +2644,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                         deletedShiftCodes: window.deletedShiftCodes || [],
                         attendanceChecks: window.attendanceChecks || {},
                         resignedRecords: window.resignedRecords || {},
+                        startedRecords: window.startedRecords || {},
                         month: window.selectedMonth,
                         year: window.selectedYear,
                         updatedAt: serverTimestamp()
@@ -2618,6 +2657,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                         deletedShiftCodes: window.deletedShiftCodes || [],
                         attendanceChecks: window.attendanceChecks || {},
                         resignedRecords: window.resignedRecords || {},
+                        startedRecords: window.startedRecords || {},
                         month: window.selectedMonth,
                         year: window.selectedYear,
                         currentDocId: cloudDocId,
@@ -2877,6 +2917,27 @@ window.previewDeleteEmployeeByCode = function() {
         }
 
         
+
+        function getStartedRecordByStaff(p) {
+            return window.startedRecords ? window.startedRecords[String(p.code)] : null;
+        }
+
+        function getStartedDateText(record) {
+            if (!record) return "";
+            return `${pad2(record.day)}/${pad2(record.month)}/${record.year}`;
+        }
+
+        function isStartedRecordThisMonth(record) {
+            if (!record) return false;
+            return Number(record.month) === Number(window.selectedMonth) && Number(record.year) === Number(window.selectedYear);
+        }
+
+        function getCurrentMonthSafeDay() {
+            const now = new Date();
+            const maxDay = new Date(Number(window.selectedYear), Number(window.selectedMonth), 0).getDate();
+            return Math.min(now.getDate(), maxDay);
+        }
+
         function getResignedRecordByStaff(p) {
             return window.resignedRecords ? window.resignedRecords[String(p.code)] : null;
         }
@@ -2914,6 +2975,8 @@ function renderTable() {
 
                 const resigned = getResignedRecordByStaff(p);
                 const isResigned = !!resigned;
+                const started = getStartedRecordByStaff(p);
+                const isStartedThisMonth = isStartedRecordThisMonth(started);
                 if (isResigned && hideResigned) return;
 
                 const groupKey = `${p.team}-${p.rank}`;
@@ -2942,7 +3005,8 @@ function renderTable() {
                 const resignedDisabled = isResigned ? "disabled" : disabled;
                 const sOpts = getSortedShiftKeys().map(s => `<option value="${s}" ${p.shift === s ? "selected" : ""}>${s}</option>`).join("");
 
-                const nameHtml = `${p.name}${isResigned ? `<div class="text-[10px] text-rose-300 mt-1">ออกแล้ว ${getResignDateText(resigned)}</div>` : ""}`;
+                const startedBadgeHtml = isStartedThisMonth ? `<div class="started-badge">เริ่มงาน ${getStartedDateText(started)}</div>` : "";
+                const nameHtml = `${p.name}${startedBadgeHtml}${isResigned ? `<div class="text-[10px] text-rose-300 mt-1">ออกแล้ว ${getResignDateText(resigned)}</div>` : ""}`;
                 const workTypeHtml = isResigned
                     ? `<span class="status-resigned-pill">ออกแล้ว ${getResignDateText(resigned)}</span>`
                     : `<select ${!canEditTeam(p.team) ? "disabled" : ""} onchange="changeWorkType(${p.id}, this.value)" class="border px-2 py-0.5 rounded-full text-[10px] font-semibold outline-none ${p.type === "WFH" ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" : "bg-indigo-500/15 text-indigo-400 border-indigo-500/30"} disabled:opacity-50 disabled:cursor-not-allowed">
@@ -3386,7 +3450,21 @@ window.toggleDayOff = function(id, d) {
             if (!canEditTeam(team)) return alert("บัญชีนี้ไม่มีสิทธิ์เพิ่มพนักงานทีมนี้");
             if (!name || !code) return alert("กรุณากรอกชื่อและรหัสพนักงาน");
             if (findEmployeeByCode(code)) return alert("รหัสพนักงานนี้มีอยู่แล้ว");
-            window.currentStaffList.push({ id: Date.now(), team, rank, name, code, type, shift, offs: [], leaves: [] });
+            const newId = Date.now();
+            window.currentStaffList.push({ id: newId, team, rank, name, code, type, shift, offs: [], leaves: [] });
+
+            if (!window.startedRecords || typeof window.startedRecords !== "object") window.startedRecords = {};
+            const now = new Date();
+            window.startedRecords[String(code).trim()] = {
+                code,
+                name,
+                day: getCurrentMonthSafeDay(),
+                month: Number(window.selectedMonth),
+                year: Number(window.selectedYear),
+                recordedBy: getCurrentAdminLabel(),
+                recordedAt: now.toISOString()
+            };
+
             await commitData();
             closeAddEmployeeModal();
             showToast("เพิ่มพนักงานสำเร็จ");
@@ -3412,6 +3490,7 @@ window.toggleDayOff = function(id, d) {
             if (!confirm(`ยืนยันลบ ${p.name} (${p.code}) ออกจากระบบ?`)) return;
 
             window.currentStaffList.splice(idx, 1);
+            if (window.startedRecords) delete window.startedRecords[String(p.code || "").trim()];
             await commitData();
             resetDeleteEmployeePreview();
             showToast("ลบพนักงานเรียบร้อย");
@@ -3454,6 +3533,9 @@ window.saveNewShift = async function() {
             if (!confirm("ยืนยันรีเซ็ตข้อมูลทั้งหมด?")) return;
             window.currentStaffList = JSON.parse(JSON.stringify(defaultStaff));
             window.shiftTimes = JSON.parse(JSON.stringify(defaultShiftTimes));
+            window.startedRecords = {};
+            window.resignedRecords = {};
+            window.attendanceChecks = {};
             await commitData();
         };
 
@@ -3516,8 +3598,12 @@ window.saveNewShift = async function() {
                 window.currentStaffList = window.currentStaffList.map(p => ({
                     ...p,
                     offs: [],
-                    leaves: []
+                    leaves: [],
+                    leaveTypes: {}
                 }));
+                window.startedRecords = {};
+                window.resignedRecords = {};
+                window.attendanceChecks = {};
 
                 await commitData();
                 showToast("คัดลอกจากเดือนก่อนเรียบร้อย");
@@ -4649,6 +4735,7 @@ window.generateWFHPresentToday = function() {
             deletedShiftCodes: window.deletedShiftCodes || [],
             attendanceChecks: window.attendanceChecks || {},
             resignedRecords: window.resignedRecords || {},
+            startedRecords: window.startedRecords || {},
             month: window.selectedMonth,
             year: window.selectedYear,
             updatedAt: serverTimestamp()
