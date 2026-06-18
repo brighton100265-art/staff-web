@@ -4638,7 +4638,29 @@ window.generateWFHPresentToday = function() {
     delete window.resignedRecords[code];
 
     saveLocalBackup();
-    await commitData();
+
+    if (isCloudMode && db) {
+        cloudDocId = getScheduleDocId();
+
+        const dataToSave = {
+            staffList: window.currentStaffList,
+            shiftTimes: window.shiftTimes,
+            rolePermissions: window.customRolePermissions || getRolePermissions(),
+            deletedShiftCodes: window.deletedShiftCodes || [],
+            attendanceChecks: window.attendanceChecks || {},
+            resignedRecords: window.resignedRecords || {},
+            month: window.selectedMonth,
+            year: window.selectedYear,
+            updatedAt: serverTimestamp()
+        };
+
+        await setDoc(doc(db, "schedule_db", cloudDocId), dataToSave, { merge: false });
+
+        await setDoc(doc(db, "schedule_db", "company_schedule_latest"), {
+            ...dataToSave,
+            currentDocId: cloudDocId
+        }, { merge: false });
+    }
 
     renderResignedHistory();
     renderTable();
