@@ -1193,12 +1193,52 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
             <div class="flex items-center justify-between px-6 py-4 border-b border-slate-800">
                 <div>
                     <h3 class="text-lg font-bold text-slate-100">🟢 ประวัติพนักงานเข้า</h3>
-                    <p class="text-xs text-slate-500">แสดงพนักงานที่เพิ่มเข้าระบบในเดือนที่เลือก พร้อมวันที่เริ่มงานและผู้บันทึก</p>
+                    <p class="text-xs text-slate-500">กรอกรหัสพนักงานเพื่อเพิ่ม/แก้ไขวันที่เริ่มงาน ระบบจะแสดงป้ายสีเขียวในช่องวันที่ทันที</p>
                 </div>
                 <button onclick="closeStartedModal()" class="text-slate-400 hover:text-slate-200">ปิด</button>
             </div>
 
-            <div class="p-5 overflow-y-auto max-h-[calc(90vh-76px)]">
+            <div class="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-4 p-5 overflow-y-auto max-h-[calc(90vh-76px)]">
+                <div class="bg-slate-950/40 border border-slate-800 rounded-2xl p-4 space-y-4">
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <label class="text-[10px] text-slate-500">วันเข้า</label>
+                            <select id="started-day" class="w-full bg-slate-950 border border-slate-800 text-slate-200 px-2 py-2 rounded-xl text-xs"></select>
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-slate-500">เดือน</label>
+                            <select id="started-month" onchange="setStartedFormDateFromRecord({day:Number(document.getElementById('started-day')?.value||1),month:Number(this.value),year:Number(document.getElementById('started-year')?.value||window.selectedYear)})" class="w-full bg-slate-950 border border-slate-800 text-slate-200 px-2 py-2 rounded-xl text-xs">
+                                <option value="1">ม.ค.</option><option value="2">ก.พ.</option><option value="3">มี.ค.</option><option value="4">เม.ย.</option>
+                                <option value="5">พ.ค.</option><option value="6">มิ.ย.</option><option value="7">ก.ค.</option><option value="8">ส.ค.</option>
+                                <option value="9">ก.ย.</option><option value="10">ต.ค.</option><option value="11">พ.ย.</option><option value="12">ธ.ค.</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-slate-500">ปี</label>
+                            <select id="started-year" onchange="setStartedFormDateFromRecord({day:Number(document.getElementById('started-day')?.value||1),month:Number(document.getElementById('started-month')?.value||window.selectedMonth),year:Number(this.value)})" class="w-full bg-slate-950 border border-slate-800 text-slate-200 px-2 py-2 rounded-xl text-xs"></select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="text-[10px] text-slate-500">รหัสพนักงาน</label>
+                        <input id="started-code" type="text" oninput="previewStartedEmployee()" autocomplete="new-password" placeholder="กรอกรหัสพนักงาน เช่น 251223602" class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 text-slate-200 px-3 py-2 rounded-xl text-sm outline-none" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" spellcheck="false">
+                    </div>
+
+                    <div id="started-preview" class="hidden bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-200"></div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="saveStartedEmployee()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold rounded-xl">
+                            บันทึกเข้า
+                        </button>
+                        <button onclick="clearStartedForm()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-sm font-bold rounded-xl">
+                            ล้าง
+                        </button>
+                    </div>
+                    <div class="text-[11px] text-slate-500 leading-5">
+                        ใช้สำหรับพนักงานที่เพิ่มไว้ก่อนหน้านี้แล้ว แต่ยังไม่ได้บันทึกวันเริ่มงาน
+                    </div>
+                </div>
+
                 <div class="bg-slate-950/40 border border-slate-800 rounded-2xl overflow-hidden">
                     <div class="px-4 py-3 border-b border-slate-800 flex items-center justify-between gap-3">
                         <h4 class="text-sm font-bold text-slate-100">ประวัติพนักงานที่เข้าแล้ว</h4>
@@ -4871,6 +4911,135 @@ window.generateWFHPresentToday = function() {
         }
 
 
+        function initStartedDateControls() {
+            const daySel = document.getElementById("started-day");
+            const monthSel = document.getElementById("started-month");
+            const yearSel = document.getElementById("started-year");
+            if (!daySel || !monthSel || !yearSel) return;
+
+            const maxDay = new Date(Number(window.selectedYear), Number(window.selectedMonth), 0).getDate();
+            const currentValue = Number(daySel.value || getCurrentMonthSafeDay());
+            daySel.innerHTML = "";
+            for (let d = 1; d <= maxDay; d++) {
+                daySel.innerHTML += `<option value="${d}">${d}</option>`;
+            }
+            daySel.value = String(Math.min(currentValue, maxDay));
+
+            yearSel.innerHTML = "";
+            const currentYear = new Date().getFullYear();
+            for (let y = currentYear - 2; y <= currentYear + 3; y++) {
+                yearSel.innerHTML += `<option value="${y}">${y}</option>`;
+            }
+
+            monthSel.value = String(window.selectedMonth);
+            yearSel.value = String(window.selectedYear);
+        }
+
+        function setStartedFormDateFromRecord(record) {
+            initStartedDateControls();
+            if (!record) return;
+            const d = document.getElementById("started-day");
+            const m = document.getElementById("started-month");
+            const y = document.getElementById("started-year");
+            if (m) m.value = String(record.month || window.selectedMonth);
+            if (y) y.value = String(record.year || window.selectedYear);
+            if (d) {
+                const maxDay = new Date(Number(y?.value || window.selectedYear), Number(m?.value || window.selectedMonth), 0).getDate();
+                d.innerHTML = "";
+                for (let day = 1; day <= maxDay; day++) d.innerHTML += `<option value="${day}">${day}</option>`;
+                d.value = String(Math.min(Number(record.day || getCurrentMonthSafeDay()), maxDay));
+            }
+        }
+
+        window.clearStartedForm = function() {
+            const code = document.getElementById("started-code");
+            const preview = document.getElementById("started-preview");
+            if (code) code.value = "";
+            if (preview) {
+                preview.classList.add("hidden");
+                preview.innerHTML = "";
+            }
+            initStartedDateControls();
+        };
+
+        window.previewStartedEmployee = function() {
+            const code = String(document.getElementById("started-code")?.value || "").trim();
+            const preview = document.getElementById("started-preview");
+            if (!preview) return;
+
+            preview.classList.add("hidden");
+            preview.innerHTML = "";
+            if (!code) return;
+
+            const p = findEmployeeByCode(code);
+            if (!p) {
+                preview.classList.remove("hidden");
+                preview.innerHTML = `<div class="text-rose-300">ไม่พบรหัสพนักงานนี้ในระบบ</div>`;
+                return;
+            }
+
+            if (!canViewTeam(p.team)) {
+                preview.classList.remove("hidden");
+                preview.innerHTML = `<div class="text-rose-300">บัญชีนี้ไม่มีสิทธิ์ดูพนักงานทีมนี้</div>`;
+                return;
+            }
+
+            const old = getStartedRecordByStaff(p);
+            if (old) setStartedFormDateFromRecord(old);
+
+            preview.classList.remove("hidden");
+            preview.innerHTML = `
+                <div class="text-slate-400">พบพนักงาน</div>
+                <div class="bg-emerald-950/15 border border-emerald-500/25 rounded-xl p-3 mt-2">
+                    <div class="text-base font-bold text-slate-100">${p.name}</div>
+                    <div class="text-slate-300 mt-1">รหัส: <b>${p.code}</b></div>
+                    <div class="text-slate-400 mt-1">${p.team} | ${p.rank} ${getRankLabel(p.rank)} | ${p.type} | ${p.shift}</div>
+                    ${old ? `<div class="text-emerald-300 mt-2">มีวันเริ่มงานเดิม: ${getStartedDateText(old)}</div>` : `<div class="text-amber-300 mt-2">ยังไม่มีวันเริ่มงาน สามารถบันทึกเพิ่มได้</div>`}
+                </div>
+            `;
+        };
+
+        window.saveStartedEmployee = async function() {
+            if (!hasPermission("addEmployee") && !isAdminUser()) {
+                alert("ไม่มีสิทธิ์ใช้งานเมนูนี้");
+                return;
+            }
+
+            const day = Number(document.getElementById("started-day")?.value);
+            const month = Number(document.getElementById("started-month")?.value);
+            const year = Number(document.getElementById("started-year")?.value);
+            const code = String(document.getElementById("started-code")?.value || "").trim();
+
+            if (!day || !month || !year) return alert("กรุณาเลือกวันเดือนปีที่เริ่มงาน");
+            if (!code) return alert("กรุณากรอกรหัสพนักงาน");
+
+            const p = findEmployeeByCode(code);
+            if (!p) return alert("ไม่พบรหัสพนักงานนี้ในระบบ");
+            if (!canEditTeam(p.team) && !isAdminUser()) return alert("บัญชีนี้ไม่มีสิทธิ์บันทึกพนักงานทีมนี้");
+
+            if (!confirm(`ยืนยันบันทึกวันเริ่มงาน\n${p.name} (${p.code})\nวันที่เข้า ${pad2(day)}/${pad2(month)}/${year}?`)) return;
+
+            if (!window.startedRecords || typeof window.startedRecords !== "object") window.startedRecords = {};
+            window.startedRecords[String(p.code).trim()] = {
+                code: String(p.code || "").trim(),
+                name: p.name,
+                team: p.team,
+                rank: p.rank,
+                type: p.type,
+                shift: p.shift,
+                day,
+                month,
+                year,
+                recordedBy: getCurrentAdminLabel(),
+                recordedAt: new Date().toISOString()
+            };
+
+            await commitData();
+            renderStartedHistory();
+            previewStartedEmployee();
+            showToast("บันทึกวันเริ่มงานแล้ว");
+        };
+
         function renderStartedHistory() {
             const body = document.getElementById("started-history-body");
             const label = document.getElementById("started-history-month-label");
@@ -4912,6 +5081,7 @@ window.generateWFHPresentToday = function() {
 
         window.openStartedModal = function() {
             if (!window.currentUser) return alert("กรุณาเข้าสู่ระบบก่อน");
+            initStartedDateControls();
             renderStartedHistory();
             const modal = document.getElementById("started-modal");
             if (modal) modal.classList.remove("hidden");
