@@ -972,9 +972,14 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                 <input id="hide-resigned-toggle" type="checkbox" onchange="updateDynamicUI()" class="accent-rose-500">
                 ซ่อนพนักงานที่ออกแล้ว
             </label>
-            <button onclick="openResignedModal()" class="px-4 py-2 rounded-xl bg-rose-600/10 hover:bg-rose-600/20 text-rose-400 border border-rose-500/40 font-semibold text-xs transition-all">
-                ⛔ ประวัติพนักงานออก
-            </button>
+            <div class="flex items-center gap-2">
+                <button onclick="openStartedModal()" class="px-4 py-2 rounded-xl bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-400 border border-emerald-500/40 font-semibold text-xs transition-all">
+                    🟢 ประวัติพนักงานเข้า
+                </button>
+                <button onclick="openResignedModal()" class="px-4 py-2 rounded-xl bg-rose-600/10 hover:bg-rose-600/20 text-rose-400 border border-rose-500/40 font-semibold text-xs transition-all">
+                    ⛔ ประวัติพนักงานออก
+                </button>
+            </div>
         </div>
 
         <div class="overflow-x-auto">
@@ -1181,6 +1186,45 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
         </div>
     </div>
 
+
+
+    <div id="started-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-[999999] hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-800">
+                <div>
+                    <h3 class="text-lg font-bold text-slate-100">🟢 ประวัติพนักงานเข้า</h3>
+                    <p class="text-xs text-slate-500">แสดงพนักงานที่เพิ่มเข้าระบบในเดือนที่เลือก พร้อมวันที่เริ่มงานและผู้บันทึก</p>
+                </div>
+                <button onclick="closeStartedModal()" class="text-slate-400 hover:text-slate-200">ปิด</button>
+            </div>
+
+            <div class="p-5 overflow-y-auto max-h-[calc(90vh-76px)]">
+                <div class="bg-slate-950/40 border border-slate-800 rounded-2xl overflow-hidden">
+                    <div class="px-4 py-3 border-b border-slate-800 flex items-center justify-between gap-3">
+                        <h4 class="text-sm font-bold text-slate-100">ประวัติพนักงานที่เข้าแล้ว</h4>
+                        <span id="started-history-month-label" class="text-[11px] text-emerald-300"></span>
+                    </div>
+                    <div class="overflow-x-auto max-h-[520px] overflow-y-auto">
+                        <table class="w-full text-sm">
+                            <thead class="bg-slate-950 text-slate-400 text-xs">
+                                <tr>
+                                    <th class="px-4 py-3 text-left">ลำดับ</th>
+                                    <th class="px-4 py-3 text-left">รหัส</th>
+                                    <th class="px-4 py-3 text-left">ชื่อ</th>
+                                    <th class="px-4 py-3 text-left">ทีม</th>
+                                    <th class="px-4 py-3 text-left">กะ</th>
+                                    <th class="px-4 py-3 text-left">วันที่เข้า</th>
+                                    <th class="px-4 py-3 text-left">ผู้บันทึก</th>
+                                    <th class="px-4 py-3 text-left">เวลา</th>
+                                </tr>
+                            </thead>
+                            <tbody id="started-history-body" class="divide-y divide-slate-800"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
 
     <div id="resigned-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-[999999] hidden">
@@ -2912,6 +2956,7 @@ window.previewDeleteEmployeeByCode = function() {
         function updateDynamicUI() {
             applyDeletedShiftFilter();
             renderResignedHistory();
+            renderStartedHistory();
             updateMonthUI();
             updateShiftSelects();
             refreshCurrentUserFromStaff();
@@ -3483,6 +3528,10 @@ window.toggleDayOff = function(id, d) {
             window.startedRecords[String(code).trim()] = {
                 code,
                 name,
+                team,
+                rank,
+                type,
+                shift,
                 day: getCurrentMonthSafeDay(),
                 month: Number(window.selectedMonth),
                 year: Number(window.selectedYear),
@@ -3618,6 +3667,9 @@ window.saveNewShift = async function() {
                 const prevData = prevSnap.data();
                 window.currentStaffList = ensureStaffShape(prevData.staffList || defaultStaff);
                 window.shiftTimes = prevData.shiftTimes && Object.keys(prevData.shiftTimes).length ? prevData.shiftTimes : JSON.parse(JSON.stringify(defaultShiftTimes));
+                window.startedRecords = {};
+                window.resignedRecords = {};
+                window.attendanceChecks = {};
 
                 // คัดลอกเฉพาะรายชื่อ/กะ/ยศ แต่ล้างวันหยุดและวันลา เพื่อเริ่มเดือนใหม่
                 window.currentStaffList = window.currentStaffList.map(p => ({
@@ -4817,6 +4869,58 @@ window.generateWFHPresentToday = function() {
         
             applyLanguage();
         }
+
+
+        function renderStartedHistory() {
+            const body = document.getElementById("started-history-body");
+            const label = document.getElementById("started-history-month-label");
+            if (label) label.innerText = `${monthNamesTH[window.selectedMonth]} ${window.selectedYear}`;
+            if (!body) return;
+
+            const records = Object.values(window.startedRecords || {})
+                .filter(r => Number(r.month) === Number(window.selectedMonth) && Number(r.year) === Number(window.selectedYear))
+                .sort((a, b) => {
+                    const da = new Date(a.year, a.month - 1, a.day).getTime();
+                    const db = new Date(b.year, b.month - 1, b.day).getTime();
+                    return db - da || String(a.name).localeCompare(String(b.name), "en");
+                });
+
+            if (!records.length) {
+                body.innerHTML = `<tr><td colspan="8" class="px-4 py-6 text-center text-slate-500">ยังไม่มีประวัติพนักงานเข้าในเดือนนี้</td></tr>`;
+                return;
+            }
+
+            body.innerHTML = records.map((r, idx) => {
+                const t = r.recordedAt ? new Date(r.recordedAt) : null;
+                const timeText = t ? `${pad2(t.getHours())}:${pad2(t.getMinutes())}` : "-";
+                return `
+                    <tr class="hover:bg-slate-800/40">
+                        <td class="px-4 py-3 text-slate-400">${idx + 1}</td>
+                        <td class="px-4 py-3 font-mono text-slate-300">${r.code || "-"}</td>
+                        <td class="px-4 py-3 font-bold text-slate-100">${r.name || "-"}</td>
+                        <td class="px-4 py-3 text-slate-300">${r.team || "-"}</td>
+                        <td class="px-4 py-3 text-slate-300">${r.shift || "-"}</td>
+                        <td class="px-4 py-3 text-emerald-300">${getStartedDateText(r)}</td>
+                        <td class="px-4 py-3 text-slate-300">${r.recordedBy || "-"}</td>
+                        <td class="px-4 py-3 text-slate-300">${timeText}</td>
+                    </tr>
+                `;
+            }).join("");
+
+            applyLanguage();
+        }
+
+        window.openStartedModal = function() {
+            if (!window.currentUser) return alert("กรุณาเข้าสู่ระบบก่อน");
+            renderStartedHistory();
+            const modal = document.getElementById("started-modal");
+            if (modal) modal.classList.remove("hidden");
+        };
+
+        window.closeStartedModal = function() {
+            const modal = document.getElementById("started-modal");
+            if (modal) modal.classList.add("hidden");
+        };
 
 
         window.openResignedModal = function() {
