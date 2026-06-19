@@ -2426,6 +2426,16 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
         window.selectedMonth = Number(localStorage.getItem("selected_schedule_month") || (todayForSchedule.getMonth() + 1));
         window.selectedYear = Number(localStorage.getItem("selected_schedule_year") || todayForSchedule.getFullYear());
 
+        // กันเคส localStorage เก็บค่าเดือน/ปีเสีย เช่น ปีเป็นค่าว่าง ทำให้หน้าเว็บขึ้น -- และ Cloud โหลดผิด doc
+        if (!Number.isInteger(window.selectedMonth) || window.selectedMonth < 1 || window.selectedMonth > 12) {
+            window.selectedMonth = todayForSchedule.getMonth() + 1;
+            localStorage.setItem("selected_schedule_month", String(window.selectedMonth));
+        }
+        if (!Number.isInteger(window.selectedYear) || window.selectedYear < 2020 || window.selectedYear > 2100) {
+            window.selectedYear = todayForSchedule.getFullYear();
+            localStorage.setItem("selected_schedule_year", String(window.selectedYear));
+        }
+
         function pad2(n) {
             return String(n).padStart(2, "0");
         }
@@ -2801,6 +2811,16 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                 db = getFirestore(app);
                 isCloudMode = true;
                 setSyncStatus("loading", "กำลังเชื่อมต่อคลาวด์...");
+
+                // แสดงข้อมูลสำรอง/ค่าเริ่มต้นทันทีระหว่างรอ Cloud เพื่อลดอาการหน้าเว็บค้างเป็น --
+                try {
+                    loadLocalBackup();
+                    ensureStaffPositions();
+                    updateDynamicUI();
+                } catch (fallbackRenderErr) {
+                    console.warn("Initial fallback render skipped", fallbackRenderErr);
+                }
+
                 await signInAnonymously(auth);
                 await loadScheduleFromCloudOrCreate();
                 setSyncStatus("online", "ออนไลน์: ซิงค์ออโต้");
@@ -6942,11 +6962,35 @@ window.startOffsAutoSync = startAutoSync;
 // 4. บูตแอปพลิเคชัน (Boot App)
 // ==========================================
 function bootScheduleApp() {
+    // กันกรณี Cloud/Firebase โหลดช้า ให้หน้าเว็บยังเปิดข้อมูลพื้นฐานได้ก่อน
+    const bootFallbackTimer = setTimeout(() => {
+        try {
+            const stat = document.getElementById("stat-total");
+            const isStillBlank = !stat || String(stat.textContent || "").includes("--");
+            if (isStillBlank) {
+                loadLocalBackup();
+                ensureStaffPositions();
+                updateDynamicUI();
+                setSyncStatus("local", "Cloud ช้า: แสดงข้อมูลสำรองก่อน");
+            }
+        } catch (e) { console.warn("Boot fallback skipped", e); }
+    }, 4500);
+
     Promise.resolve(typeof startCloudSync === 'function' ? startCloudSync() : null)
         .then(() => {
+            clearTimeout(bootFallbackTimer);
             if (typeof startAutoSync === "function") startAutoSync();
         })
-        .catch(err => console.error("Boot failed", err));
+        .catch(err => {
+            clearTimeout(bootFallbackTimer);
+            console.error("Boot failed", err);
+            try {
+                loadLocalBackup();
+                ensureStaffPositions();
+                updateDynamicUI();
+                setSyncStatus("local", "โหลด Cloud ไม่สำเร็จ: ใช้ข้อมูลสำรอง");
+            } catch (e) {}
+        });
 }
 
 if (document.readyState === "loading") {
