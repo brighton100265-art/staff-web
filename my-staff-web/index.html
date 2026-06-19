@@ -661,48 +661,24 @@
 
 
         /* Activity Log Drawer */
-        .activity-log-drawer {
-            position: fixed;
-            inset: 0;
-            z-index: 999999;
-            display: none;
-            background: rgba(2, 6, 23, .62);
-            backdrop-filter: blur(8px);
-        }
-        .activity-log-drawer.active { display: flex; justify-content: flex-end; }
-        .activity-log-panel {
-            width: min(560px, 100vw);
+        .activity-drawer-panel {
+            width: min(520px, calc(100vw - 24px));
             height: 100vh;
-            background: rgba(15, 23, 42, .98);
-            border-left: 1px solid rgba(51, 65, 85, .95);
-            box-shadow: -24px 0 70px rgba(0,0,0,.50);
-            display: flex;
-            flex-direction: column;
-            animation: activitySlideIn .18s ease-out;
+            background: rgba(15,23,42,.98);
+            border-left: 1px solid rgba(51,65,85,.95);
+            box-shadow: -24px 0 70px rgba(0,0,0,.55);
         }
-        @keyframes activitySlideIn { from { transform: translateX(28px); opacity: .6; } to { transform: translateX(0); opacity: 1; } }
         .activity-log-item {
             border: 1px solid rgba(51,65,85,.75);
             background: rgba(2,6,23,.45);
-            border-radius: 16px;
+            border-radius: 14px;
             padding: 12px;
-            margin-bottom: 10px;
         }
-        .activity-log-item:hover { border-color: rgba(99,102,241,.55); background: rgba(30,41,59,.42); }
-        .activity-log-type {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 4px 8px;
-            border-radius: 999px;
-            font-size: 11px;
-            font-weight: 900;
-            border: 1px solid rgba(99,102,241,.35);
-            background: rgba(99,102,241,.14);
-            color: #c4b5fd;
+        .activity-log-badge {
+            display:inline-flex; align-items:center; gap:5px; white-space:nowrap;
+            padding:4px 8px; border-radius:999px; font-size:10px; font-weight:900;
+            color:#c4b5fd; background:rgba(99,102,241,.14); border:1px solid rgba(129,140,248,.35);
         }
-        .activity-log-muted { color: #94a3b8; font-size: 11px; }
-        .activity-log-detail { color: #e2e8f0; font-size: 13px; line-height: 1.65; margin-top: 8px; white-space: pre-wrap; }
 
 </style>
 </head>
@@ -799,7 +775,7 @@
                 <button onclick="forceSaveCloud()" class="admin-only px-4 py-2 bg-emerald-950/40 hover:bg-emerald-900/40 text-emerald-400 border border-emerald-900/30 font-medium text-sm rounded-xl transition-all">บันทึก Cloud</button>
                 <button onclick="reloadFromCloud()" class="admin-only px-4 py-2 bg-sky-950/40 hover:bg-sky-900/40 text-sky-400 border border-sky-900/30 font-medium text-sm rounded-xl transition-all">รีโหลด</button>
                 <button onclick="exportData()" class="admin-only px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium text-sm rounded-xl transition-all">Export</button>
-                <button onclick="openActivityLog()" data-permission="activityLog" class="px-4 py-2 bg-violet-950/40 hover:bg-violet-900/50 text-violet-300 border border-violet-500/30 font-medium text-sm rounded-xl transition-all">📜 ประวัติ</button>
+                <button onclick="openActivityModal()" data-permission-key="viewActivityLog" class="px-4 py-2 bg-purple-950/40 hover:bg-purple-900/40 text-purple-300 border border-purple-500/30 font-medium text-sm rounded-xl transition-all">📜 ประวัติ</button>
                 <button onclick="resetToDefault()" class="admin-only px-4 py-2 bg-rose-950/40 hover:bg-rose-900/40 text-rose-400 border border-rose-900/30 font-medium text-sm rounded-xl transition-all">รีเซ็ต</button>
             </div>
         </header>
@@ -1413,32 +1389,37 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
     </div>
 
 
-    <div id="activity-log-drawer" class="activity-log-drawer" onclick="if(event.target.id==='activity-log-drawer') closeActivityLog()">
-        <div class="activity-log-panel">
-            <div class="px-5 py-4 border-b border-slate-800 flex items-start justify-between gap-4">
+    <div id="activity-log-modal" class="hidden fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-[999999]" onclick="if(event.target.id==='activity-log-modal') closeActivityModal()">
+        <div class="activity-drawer-panel ml-auto flex flex-col">
+            <div class="px-5 py-4 border-b border-slate-800 flex items-start justify-between gap-3">
                 <div>
                     <h3 class="text-lg font-black text-slate-100">📜 ประวัติการแก้ไข</h3>
-                    <p id="activity-log-subtitle" class="text-xs text-slate-500 mt-1">แสดงรายการแก้ไขล่าสุดของเดือนนี้</p>
+                    <p class="text-xs text-slate-500 mt-1">ดูว่าใครแก้ข้อมูลอะไร และแก้เมื่อไหร่</p>
                 </div>
-                <button type="button" onclick="closeActivityLog()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-bold">ปิด</button>
+                <button onclick="closeActivityModal()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-bold">ปิด</button>
             </div>
-            <div class="p-4 border-b border-slate-800 grid grid-cols-1 md:grid-cols-2 gap-2">
-                <input id="activity-log-search" oninput="renderActivityLog()" class="bg-slate-950 border border-slate-800 focus:border-violet-500 text-slate-200 px-3 py-2 rounded-xl text-xs outline-none" placeholder="ค้นหา ชื่อ / รหัส / ผู้แก้ / รายละเอียด..." autocomplete="off" spellcheck="false">
-                <select id="activity-log-filter" onchange="renderActivityLog()" class="bg-slate-950 border border-slate-800 focus:border-violet-500 text-slate-200 px-3 py-2 rounded-xl text-xs outline-none">
-                    <option value="ALL">ทั้งหมด</option>
-                    <option value="SHIFT">แก้กะ</option>
-                    <option value="DAY">แก้วันหยุด/วันลา</option>
-                    <option value="EMPLOYEE">เพิ่ม/ลบพนักงาน</option>
-                    <option value="RANK">แก้ยศ</option>
-                    <option value="WORKTYPE">แก้ลักษณะงาน</option>
-                    <option value="SYSTEM">ระบบ</option>
-                </select>
+            <div class="p-4 border-b border-slate-800 space-y-3">
+                <input id="activity-search" oninput="renderActivityLogs()" placeholder="ค้นหาชื่อ / รหัส / ผู้แก้ / รายละเอียด..." class="w-full bg-slate-950 border border-slate-800 focus:border-purple-500 text-slate-200 px-3 py-2 rounded-xl text-xs outline-none placeholder:text-slate-600" autocomplete="off" spellcheck="false">
+                <div class="grid grid-cols-2 gap-2">
+                    <select id="activity-type-filter" onchange="renderActivityLogs()" class="bg-slate-950 border border-slate-800 text-slate-200 px-3 py-2 rounded-xl text-xs outline-none">
+                        <option value="ALL">ทุกประเภท</option>
+                        <option value="shift">แก้กะ</option>
+                        <option value="day">แก้วันหยุด/วันลา</option>
+                        <option value="employee">พนักงาน</option>
+                        <option value="rank">ยศ</option>
+                        <option value="workType">Office/WFH</option>
+                        <option value="system">ระบบ</option>
+                    </select>
+                    <select id="activity-user-filter" onchange="renderActivityLogs()" class="bg-slate-950 border border-slate-800 text-slate-200 px-3 py-2 rounded-xl text-xs outline-none">
+                        <option value="ALL">ทุกผู้ใช้งาน</option>
+                    </select>
+                </div>
             </div>
-            <div class="px-4 py-2 border-b border-slate-800 flex items-center justify-between gap-2 text-[11px] text-slate-500">
+            <div id="activity-log-list" class="flex-1 overflow-y-auto p-4 space-y-3"></div>
+            <div class="px-5 py-3 border-t border-slate-800 text-[11px] text-slate-500 flex items-center justify-between gap-3">
                 <span id="activity-log-count">0 รายการ</span>
-                <button type="button" onclick="copyActivityLogText()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-bold">คัดลอก</button>
+                <button onclick="copyActivityLogs()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-bold">คัดลอก</button>
             </div>
-            <div id="activity-log-list" class="flex-1 overflow-y-auto p-4"></div>
         </div>
     </div>
 
@@ -2426,16 +2407,6 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
         window.selectedMonth = Number(localStorage.getItem("selected_schedule_month") || (todayForSchedule.getMonth() + 1));
         window.selectedYear = Number(localStorage.getItem("selected_schedule_year") || todayForSchedule.getFullYear());
 
-        // กันเคส localStorage เก็บค่าเดือน/ปีเสีย เช่น ปีเป็นค่าว่าง ทำให้หน้าเว็บขึ้น -- และ Cloud โหลดผิด doc
-        if (!Number.isInteger(window.selectedMonth) || window.selectedMonth < 1 || window.selectedMonth > 12) {
-            window.selectedMonth = todayForSchedule.getMonth() + 1;
-            localStorage.setItem("selected_schedule_month", String(window.selectedMonth));
-        }
-        if (!Number.isInteger(window.selectedYear) || window.selectedYear < 2020 || window.selectedYear > 2100) {
-            window.selectedYear = todayForSchedule.getFullYear();
-            localStorage.setItem("selected_schedule_year", String(window.selectedYear));
-        }
-
         function pad2(n) {
             return String(n).padStart(2, "0");
         }
@@ -2563,8 +2534,8 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                 if (parsedAttendance && typeof parsedAttendance === "object") window.attendanceChecks = parsedAttendance;
             }
             if (s6) {
-                const parsedLogs = JSON.parse(s6);
-                if (Array.isArray(parsedLogs)) window.activityLogs = parsedLogs.slice(0, 300);
+                const parsedActivityLogs = JSON.parse(s6);
+                if (Array.isArray(parsedActivityLogs)) window.activityLogs = parsedActivityLogs;
             }
         }
 
@@ -2705,7 +2676,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                 window.attendanceChecks = data.attendanceChecks && typeof data.attendanceChecks === "object" ? data.attendanceChecks : {};
                 window.resignedRecords = data.resignedRecords && typeof data.resignedRecords === "object" ? data.resignedRecords : {};
                 window.startedRecords = data.startedRecords && typeof data.startedRecords === "object" ? data.startedRecords : {};
-                window.activityLogs = Array.isArray(data.activityLogs) ? data.activityLogs.slice(0, 300) : [];
+                window.activityLogs = Array.isArray(data.activityLogs) ? data.activityLogs : [];
 
                 ensureStaffPositions();
                 saveLocalBackup();
@@ -2786,7 +2757,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                 window.attendanceChecks = data.attendanceChecks && typeof data.attendanceChecks === "object" ? data.attendanceChecks : (window.attendanceChecks || {});
                 window.resignedRecords = data.resignedRecords && typeof data.resignedRecords === "object" ? data.resignedRecords : (window.resignedRecords || {});
                 window.startedRecords = data.startedRecords && typeof data.startedRecords === "object" ? data.startedRecords : (window.startedRecords || {});
-                window.activityLogs = Array.isArray(data.activityLogs) ? data.activityLogs.slice(0, 300) : (window.activityLogs || []);
+                window.activityLogs = Array.isArray(data.activityLogs) ? data.activityLogs : (window.activityLogs || []);
                 }
 
                 ensureStaffPositions();
@@ -2811,16 +2782,6 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                 db = getFirestore(app);
                 isCloudMode = true;
                 setSyncStatus("loading", "กำลังเชื่อมต่อคลาวด์...");
-
-                // แสดงข้อมูลสำรอง/ค่าเริ่มต้นทันทีระหว่างรอ Cloud เพื่อลดอาการหน้าเว็บค้างเป็น --
-                try {
-                    loadLocalBackup();
-                    ensureStaffPositions();
-                    updateDynamicUI();
-                } catch (fallbackRenderErr) {
-                    console.warn("Initial fallback render skipped", fallbackRenderErr);
-                }
-
                 await signInAnonymously(auth);
                 await loadScheduleFromCloudOrCreate();
                 setSyncStatus("online", "ออนไลน์: ซิงค์ออโต้");
@@ -2851,6 +2812,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                         attendanceChecks: window.attendanceChecks || {},
                         resignedRecords: window.resignedRecords || {},
                         startedRecords: window.startedRecords || {},
+                activityLogs: window.activityLogs || [],
                         activityLogs: window.activityLogs || [],
                         month: window.selectedMonth,
                         year: window.selectedYear,
@@ -2865,6 +2827,7 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
                         attendanceChecks: window.attendanceChecks || {},
                         resignedRecords: window.resignedRecords || {},
                         startedRecords: window.startedRecords || {},
+                activityLogs: window.activityLogs || [],
                         activityLogs: window.activityLogs || [],
                         month: window.selectedMonth,
                         year: window.selectedYear,
@@ -2884,7 +2847,6 @@ BIRD 4 11 19 24" class="leader-only w-full h-24 bg-slate-950 border border-slate
             applyRolePermissions();
             lockTableControlsByPermission();
             fixWorkTypeLabels();
-            if (document.getElementById("activity-log-drawer")?.classList.contains("active")) renderActivityLog();
         }
 
 
@@ -3415,9 +3377,7 @@ function renderTable() {
             const p = window.currentStaffList.find(x => x.id === id);
             if (!p) return;
             if (!canEditTeam(p.team)) return alert("บัญชีนี้ไม่มีสิทธิ์แก้ไขข้อมูล");
-            const oldRank = p.rank;
             p.rank = val;
-            addActivityLog("RANK", "แก้ยศ", `${p.name} (${p.code}) : ${oldRank} → ${val}`, { staffName: p.name, staffCode: p.code });
             await commitData();
             showToast("อัปเดตยศเรียบร้อย");
         };
@@ -3443,7 +3403,6 @@ function renderTable() {
             }
 
             p.type = value;
-            addActivityLog("WORKTYPE", "แก้ลักษณะงาน", `${p.name} (${p.code}) : ${oldValue} → ${value}`, { staffName: p.name, staffCode: p.code });
             await commitData();
             showToast("อัปเดตลักษณะงานแล้ว");
         };
@@ -3456,9 +3415,7 @@ window.changeShift = async function(id, val) {
             const p = window.currentStaffList.find(x => x.id === id);
             if (!p) return;
             if (!canEditTeam(p.team)) return alert("บัญชีนี้ไม่มีสิทธิ์แก้ไขข้อมูล");
-            const oldShift = p.shift;
             p.shift = val;
-            addActivityLog("SHIFT", "แก้กะ", `${p.name} (${p.code}) : ${oldShift} → ${val}`, { staffName: p.name, staffCode: p.code });
             await commitData();
             showToast("อัปเดตกะเรียบร้อย");
         };
@@ -3583,8 +3540,6 @@ window.closeDayConfirmModal = function() {
             if (!p.leaves) p.leaves = [];
             if (!p.leaveTypes || typeof p.leaveTypes !== "object") p.leaveTypes = {};
 
-            const oldDayStatus = getDayStatusCode(p, d);
-
             p.offs = p.offs.filter(x => x !== d);
             p.leaves = p.leaves.filter(x => x !== d);
             delete p.leaveTypes[String(d)];
@@ -3598,9 +3553,6 @@ window.closeDayConfirmModal = function() {
 
             p.offs.sort((a,b)=>a-b);
             p.leaves.sort((a,b)=>a-b);
-
-            const newDayStatus = selectedStatus === "L" ? selectedLeaveType : selectedStatus;
-            addActivityLog("DAY", "แก้วันหยุด/วันลา", `${p.name} (${p.code}) วันที่ ${d}/${pad2(window.selectedMonth)}/${window.selectedYear} : ${getDayStatusTextByCode(oldDayStatus)} → ${getDayStatusTextByCode(newDayStatus)}`, { staffName: p.name, staffCode: p.code, day: d });
 
             closeDayConfirmModal();
             await commitData();
@@ -3656,9 +3608,7 @@ window.toggleDayOff = function(id, d) {
             inp.focus();
             const save = async () => {
                 const nw = normalizeCode(inp.value);
-                const oldName = p.name;
                 p.name = nw || old;
-                if (oldName !== p.name) addActivityLog("EMPLOYEE", "แก้ชื่อพนักงาน", `${oldName} (${p.code}) → ${p.name}`, { staffName: p.name, staffCode: p.code });
                 await commitData();
             };
             inp.onblur = save;
@@ -3700,7 +3650,6 @@ window.toggleDayOff = function(id, d) {
                 recordedAt: now.toISOString()
             };
 
-            addActivityLog("EMPLOYEE", "เพิ่มพนักงาน", `${team} ${name} (${code}) | ${rank} | ${type} | ${shift}`, { staffName: name, staffCode: code });
             await commitData();
             closeAddEmployeeModal();
             showToast("เพิ่มพนักงานสำเร็จ");
@@ -3725,7 +3674,6 @@ window.toggleDayOff = function(id, d) {
 
             if (!confirm(`ยืนยันลบ ${p.name} (${p.code}) ออกจากระบบ?`)) return;
 
-            addActivityLog("EMPLOYEE", "ลบพนักงาน", `${p.team} ${p.name} (${p.code}) | ${p.rank} | ${p.type} | ${p.shift}`, { staffName: p.name, staffCode: p.code });
             window.currentStaffList.splice(idx, 1);
             if (window.startedRecords) delete window.startedRecords[String(p.code || "").trim()];
             await commitData();
@@ -3752,9 +3700,7 @@ window.saveNewShift = async function() {
             const login = document.getElementById("new-shift-login").value.trim();
             const rest = document.getElementById("new-shift-rest").value.trim();
             if (!code || !login) return alert("กรุณากรอกรหัสกะและเวลาเข้างาน");
-            const oldShiftInfo = window.shiftTimes[code];
             window.shiftTimes[code] = { login, rest };
-            addActivityLog("SHIFT", oldShiftInfo ? "แก้ไขเวลากะ" : "เพิ่มกะ", `${code} | เข้า ${login} | พัก ${rest || "-"}`, { shiftCode: code });
             await commitData();
             updateShiftSelects();
             closeAddShiftModal();
@@ -3775,7 +3721,6 @@ window.saveNewShift = async function() {
             window.startedRecords = {};
             window.resignedRecords = {};
             window.attendanceChecks = {};
-            addActivityLog("SYSTEM", "รีเซ็ตข้อมูล", "รีเซ็ตข้อมูลทั้งหมดกลับค่าเริ่มต้น");
             await commitData();
         };
 
@@ -3848,7 +3793,6 @@ window.saveNewShift = async function() {
                 window.resignedRecords = {};
                 window.attendanceChecks = {};
 
-                addActivityLog("SYSTEM", "คัดลอกจากเดือนก่อน", `จาก ${monthNamesTH[prev.month]} ${prev.year} → ${monthNamesTH[window.selectedMonth]} ${window.selectedYear}`);
                 await commitData();
                 showToast("คัดลอกจากเดือนก่อนเรียบร้อย");
             } catch (e) {
@@ -3992,10 +3936,6 @@ window.saveNewShift = async function() {
             });
 
             if (success.length) {
-                addActivityLog("DAY", "นำเข้าวันหยุดแบบเร็ว", `นำเข้าวันหยุดสำเร็จ ${success.length} รายการ
-${success.slice(0, 12).join("
-")}${success.length > 12 ? "
-..." : ""}`);
                 await commitData();
             }
 
@@ -5305,116 +5245,6 @@ window.generateWFHPresentToday = function() {
             return normalizeTimeText(times.break || times.breakTime || times.rest || "");
         }
 
-
-        function getActivityTypeIcon(type) {
-            const map = { SHIFT: "🔄", DAY: "📅", EMPLOYEE: "👤", RANK: "🏷️", WORKTYPE: "🏢", SYSTEM: "⚙️" };
-            return map[type] || "📝";
-        }
-
-        function getActivityTimeText(iso) {
-            if (!iso) return "-";
-            const d = new Date(iso);
-            if (Number.isNaN(d.getTime())) return "-";
-            return `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}/${d.getFullYear()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
-        }
-
-        function addActivityLog(type, title, detail, extra = {}) {
-            if (!Array.isArray(window.activityLogs)) window.activityLogs = [];
-            const user = getCurrentAdminLabel();
-            const log = {
-                id: `${Date.now()}_${Math.random().toString(16).slice(2)}`,
-                type: String(type || "SYSTEM").toUpperCase(),
-                title: String(title || "แก้ไขข้อมูล"),
-                detail: String(detail || ""),
-                user,
-                userCode: window.currentUser?.code || "",
-                userTeam: window.currentUser?.team || "",
-                month: Number(window.selectedMonth),
-                year: Number(window.selectedYear),
-                createdAt: new Date().toISOString(),
-                ...extra
-            };
-            window.activityLogs.unshift(log);
-            window.activityLogs = window.activityLogs.slice(0, 300);
-        }
-
-        window.openActivityLog = function() {
-            if (!hasPermission("activityLog")) return alert("ไม่มีสิทธิ์ดูประวัติการแก้ไข");
-            const drawer = document.getElementById("activity-log-drawer");
-            if (!drawer) return;
-            drawer.classList.add("active");
-            renderActivityLog();
-        };
-
-        window.closeActivityLog = function() {
-            const drawer = document.getElementById("activity-log-drawer");
-            if (drawer) drawer.classList.remove("active");
-        };
-
-        window.renderActivityLog = function() {
-            const listEl = document.getElementById("activity-log-list");
-            const countEl = document.getElementById("activity-log-count");
-            const subtitleEl = document.getElementById("activity-log-subtitle");
-            if (!listEl) return;
-
-            const q = String(document.getElementById("activity-log-search")?.value || "").trim().toLowerCase();
-            const filter = String(document.getElementById("activity-log-filter")?.value || "ALL");
-            let logs = Array.isArray(window.activityLogs) ? [...window.activityLogs] : [];
-
-            if (filter !== "ALL") logs = logs.filter(x => String(x.type || "") === filter);
-            if (q) {
-                logs = logs.filter(x => [x.title, x.detail, x.user, x.userCode, x.userTeam, x.staffName, x.staffCode]
-                    .map(v => String(v || "").toLowerCase())
-                    .some(v => v.includes(q))
-                );
-            }
-
-            if (subtitleEl) subtitleEl.innerText = `เดือน ${monthNamesTH[window.selectedMonth]} ${window.selectedYear} | เก็บล่าสุด ${Math.min((window.activityLogs || []).length, 300)} รายการ`;
-            if (countEl) countEl.innerText = `${logs.length} รายการ`;
-
-            if (!logs.length) {
-                listEl.innerHTML = `<div class="text-center text-slate-500 py-12 text-sm">ยังไม่มีประวัติการแก้ไข</div>`;
-                return;
-            }
-
-            listEl.innerHTML = logs.map(log => `
-                <div class="activity-log-item">
-                    <div class="flex items-start justify-between gap-3">
-                        <span class="activity-log-type">${getActivityTypeIcon(log.type)} ${log.title || "แก้ไขข้อมูล"}</span>
-                        <span class="activity-log-muted whitespace-nowrap">${getActivityTimeText(log.createdAt)}</span>
-                    </div>
-                    <div class="activity-log-detail">${escapeHtml(log.detail || "-")}</div>
-                    <div class="mt-3 flex flex-wrap items-center gap-2 activity-log-muted">
-                        <span>👤 ${escapeHtml(log.user || "UNKNOWN")}</span>
-                        ${log.userTeam ? `<span>ทีม: ${escapeHtml(log.userTeam)}</span>` : ""}
-                    </div>
-                </div>
-            `).join("");
-        };
-
-        window.copyActivityLogText = function() {
-            if (!hasPermission("activityLog")) return alert("ไม่มีสิทธิ์ดูประวัติการแก้ไข");
-            const logs = Array.isArray(window.activityLogs) ? window.activityLogs : [];
-            if (!logs.length) return alert("ยังไม่มีประวัติให้คัดลอก");
-            const text = logs.map(log => `[${getActivityTimeText(log.createdAt)}] ${log.user || "UNKNOWN"} | ${log.title || "แก้ไขข้อมูล"}\n${log.detail || "-"}`).join("\n\n");
-            const ta = document.createElement("textarea");
-            ta.value = text;
-            document.body.appendChild(ta);
-            ta.select();
-            document.execCommand("copy");
-            ta.remove();
-            showToast("คัดลอกประวัติแล้ว");
-        };
-
-        function escapeHtml(v) {
-            return String(v || "")
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
-
         function getCurrentAdminLabel() {
             if (!window.currentUser) return "UNKNOWN";
             const code = String(window.currentUser.code || window.currentUser.name || "").trim();
@@ -5597,36 +5427,14 @@ window.generateWFHPresentToday = function() {
 
 
         const ROLE_PERMISSIONS = {
-            ADMIN: { addEmployee:true, deleteEmployee:true, addShift:true, deleteShift:true, editShift:true, editDay:true, editWorkType:true, editRank:true, resignEmployee:true, cancelResign:true, activityLog:true, exportData:true, resetSystem:true, saveCloud:true, checkWFH:true, managePermissions:true },
-            S4: { addEmployee:true, deleteEmployee:true, addShift:false, deleteShift:false, editShift:true, editDay:true, editWorkType:true, editRank:true, resignEmployee:false, cancelResign:false, activityLog:false, exportData:false, resetSystem:false, saveCloud:true, checkWFH:true, managePermissions:false },
-            STAFF: { addEmployee:false, deleteEmployee:false, addShift:false, deleteShift:false, editShift:false, editDay:false, editWorkType:false, editRank:false, resignEmployee:false, cancelResign:false, activityLog:false, exportData:false, resetSystem:false, saveCloud:false, checkWFH:false, managePermissions:false }
+            ADMIN: { addEmployee:true, deleteEmployee:true, addShift:true, deleteShift:true, editShift:true, editDay:true, editWorkType:true, editRank:true, resignEmployee:true, cancelResign:true, exportData:true, resetSystem:true, saveCloud:true, checkWFH:true, managePermissions:true, viewActivityLog:true },
+            S4: { addEmployee:true, deleteEmployee:true, addShift:false, deleteShift:false, editShift:true, editDay:true, editWorkType:true, editRank:true, resignEmployee:false, cancelResign:false, exportData:false, resetSystem:false, saveCloud:true, checkWFH:true, managePermissions:false, viewActivityLog:true },
+            STAFF: { addEmployee:false, deleteEmployee:false, addShift:false, deleteShift:false, editShift:false, editDay:false, editWorkType:false, editRank:false, resignEmployee:false, cancelResign:false, exportData:false, resetSystem:false, saveCloud:false, checkWFH:false, managePermissions:false, viewActivityLog:false }
         };
-
-        // จุดรวมเมนูสิทธิ์: ต่อไปถ้าเพิ่มฟีเจอร์ใหม่ ให้เพิ่ม key ที่นี่ + ใส่ data-permission="key" ที่ปุ่ม/เมนูนั้น
-        const PERMISSION_ITEMS = [
-            { label: "เพิ่ม/ลบพนักงาน", key: "addEmployee" },
-            { label: "ลบพนักงาน", key: "deleteEmployee" },
-            { label: "เพิ่มกะ", key: "addShift" },
-            { label: "ลบกะ", key: "deleteShift" },
-            { label: "เปลี่ยนกะ", key: "editShift" },
-            { label: "เปลี่ยนวันหยุด/วันลา", key: "editDay" },
-            { label: "เปลี่ยน Office/WFH", key: "editWorkType" },
-            { label: "เปลี่ยนยศ", key: "editRank" },
-            { label: "ตรวจ WFH", key: "checkWFH" },
-            { label: "บันทึกพนักงานออก", key: "resignEmployee" },
-            { label: "ยกเลิกพนักงานออก", key: "cancelResign" },
-            { label: "ประวัติการแก้ไข", key: "activityLog" },
-            { label: "Export", key: "exportData" },
-            { label: "รีเซ็ต", key: "resetSystem" },
-            { label: "บันทึก Cloud", key: "saveCloud" },
-            { label: "จัดการสิทธิ์", key: "managePermissions" }
-        ];
 
         
         const DEFAULT_ROLE_PERMISSIONS = JSON.parse(JSON.stringify(ROLE_PERMISSIONS));
         window.customRolePermissions = window.customRolePermissions || JSON.parse(localStorage.getItem("customRolePermissions") || "null") || JSON.parse(JSON.stringify(DEFAULT_ROLE_PERMISSIONS));
-        window.PERMISSION_ITEMS = PERMISSION_ITEMS;
-
 
         
         function loadRolePermissionsFromData(data) {
@@ -5635,6 +5443,7 @@ window.generateWFHPresentToday = function() {
                 window.customRolePermissions.ADMIN = window.customRolePermissions.ADMIN || {};
                 window.customRolePermissions.ADMIN.managePermissions = true;
                 window.customRolePermissions.ADMIN.saveCloud = true;
+                window.customRolePermissions.ADMIN.viewActivityLog = true;
                 saveRolePermissionsLocal();
             }
         }
@@ -5647,6 +5456,7 @@ function getRolePermissions() {
             });
             base.ADMIN.managePermissions = true;
             base.ADMIN.saveCloud = true;
+            base.ADMIN.viewActivityLog = true;
             return base;
         }
 
@@ -5673,6 +5483,7 @@ function getRolePermissions() {
             // กัน Admin ล็อกตัวเองจนจัดการต่อไม่ได้
             window.customRolePermissions.ADMIN.managePermissions = true;
             window.customRolePermissions.ADMIN.saveCloud = true;
+            window.customRolePermissions.ADMIN.viewActivityLog = true;
 
             saveRolePermissionsLocal();
 
@@ -5691,6 +5502,7 @@ function getRolePermissions() {
             }
             window.customRolePermissions.ADMIN.managePermissions = true;
             window.customRolePermissions.ADMIN.saveCloud = true;
+            window.customRolePermissions.ADMIN.viewActivityLog = true;
 
             saveRolePermissionsLocal();
 
@@ -6153,11 +5965,214 @@ function applyLanguage(){
             fixWorkTypeLabels();
         }
 
+
+
+        function getActivityIcon(type) {
+            const map = { shift:"🔁", day:"📅", employee:"👤", rank:"🎖️", workType:"🏠", system:"⚙️", resign:"⛔" };
+            return map[type] || "📝";
+        }
+
+        function normalizeActivityLog(log) {
+            return {
+                id: log.id || `${Date.now()}_${Math.random().toString(16).slice(2)}`,
+                at: log.at || new Date().toISOString(),
+                user: log.user || getCurrentAdminLabel(),
+                team: log.team || "-",
+                type: log.type || "system",
+                action: log.action || "แก้ไขข้อมูล",
+                detail: log.detail || "-"
+            };
+        }
+
+        function addActivityLog(type, action, detail, team = "-") {
+            if (!Array.isArray(window.activityLogs)) window.activityLogs = [];
+            const log = normalizeActivityLog({ type, action, detail, team });
+            window.activityLogs.unshift(log);
+            window.activityLogs = window.activityLogs.slice(0, 300);
+            saveLocalBackup();
+            return log;
+        }
+
+        function formatActivityTime(iso) {
+            const dt = new Date(iso || Date.now());
+            if (Number.isNaN(dt.getTime())) return "-";
+            return `${pad2(dt.getDate())}/${pad2(dt.getMonth()+1)}/${dt.getFullYear()} ${pad2(dt.getHours())}:${pad2(dt.getMinutes())}`;
+        }
+
+        function updateActivityUserFilter() {
+            const sel = document.getElementById("activity-user-filter");
+            if (!sel) return;
+            const old = sel.value || "ALL";
+            const users = [...new Set((window.activityLogs || []).map(x => x.user).filter(Boolean))].sort();
+            sel.innerHTML = `<option value="ALL">ทุกผู้ใช้งาน</option>` + users.map(u => `<option value="${String(u).replace(/"/g,'&quot;')}">${u}</option>`).join("");
+            sel.value = users.includes(old) ? old : "ALL";
+        }
+
+        window.renderActivityLogs = function() {
+            const box = document.getElementById("activity-log-list");
+            const countEl = document.getElementById("activity-log-count");
+            if (!box) return;
+            updateActivityUserFilter();
+            const q = String(document.getElementById("activity-search")?.value || "").trim().toLowerCase();
+            const type = document.getElementById("activity-type-filter")?.value || "ALL";
+            const user = document.getElementById("activity-user-filter")?.value || "ALL";
+            let logs = Array.isArray(window.activityLogs) ? window.activityLogs.map(normalizeActivityLog) : [];
+            logs = logs.filter(log => {
+                if (type !== "ALL" && log.type !== type) return false;
+                if (user !== "ALL" && log.user !== user) return false;
+                const hay = `${log.user} ${log.team} ${log.type} ${log.action} ${log.detail}`.toLowerCase();
+                return !q || hay.includes(q);
+            });
+            if (countEl) countEl.innerText = `${logs.length} รายการ`;
+            if (!logs.length) {
+                box.innerHTML = `<div class="text-center text-slate-500 text-sm py-12">ยังไม่มีประวัติการแก้ไข</div>`;
+                return;
+            }
+            box.innerHTML = logs.slice(0, 150).map(log => `
+                <div class="activity-log-item">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="activity-log-badge">${getActivityIcon(log.type)} ${log.action}</div>
+                        <div class="text-[11px] text-slate-500 whitespace-nowrap">${formatActivityTime(log.at)}</div>
+                    </div>
+                    <div class="mt-2 text-sm font-bold text-slate-100">${log.detail}</div>
+                    <div class="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
+                        <span>👤 ${log.user}</span>
+                        <span>•</span>
+                        <span>${log.team || "-"}</span>
+                    </div>
+                </div>
+            `).join("");
+        };
+
+        window.openActivityModal = function() {
+            if (!hasPermission("viewActivityLog")) return alert("ไม่มีสิทธิ์ดูประวัติการแก้ไข");
+            document.getElementById("activity-log-modal")?.classList.remove("hidden");
+            renderActivityLogs();
+        };
+
+        window.closeActivityModal = function() {
+            document.getElementById("activity-log-modal")?.classList.add("hidden");
+        };
+
+        window.copyActivityLogs = function() {
+            const logs = Array.isArray(window.activityLogs) ? window.activityLogs : [];
+            const text = logs.map(log => `[${formatActivityTime(log.at)}] ${log.user} | ${log.action} | ${log.detail}`).join("\n");
+            navigator.clipboard?.writeText(text).then(() => showToast("คัดลอกประวัติแล้ว")).catch(() => {
+                const ta = document.createElement("textarea");
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand("copy");
+                ta.remove();
+                showToast("คัดลอกประวัติแล้ว");
+            });
+        };
+
+        function installActivityLogWrappers() {
+            if (window.__activityLogWrappersInstalled) return;
+            window.__activityLogWrappersInstalled = true;
+
+            const wrapAsync = (name, maker) => {
+                const original = window[name];
+                if (typeof original !== "function") return;
+                window[name] = async function(...args) {
+                    const before = maker?.before ? maker.before(...args) : null;
+                    const result = await original.apply(this, args);
+                    try {
+                        const log = maker?.after ? maker.after(before, ...args) : null;
+                        if (log) {
+                            addActivityLog(log.type, log.action, log.detail, log.team);
+                            await commitData();
+                        }
+                    } catch (e) { console.warn("Activity log skipped", name, e); }
+                    return result;
+                };
+            };
+
+            wrapAsync("changeShift", {
+                before: (id) => ({ p: {...(window.currentStaffList.find(x=>x.id===id)||{})} }),
+                after: (b, id, val) => b?.p?.id && b.p.shift !== val ? { type:"shift", action:"แก้ไขกะ", detail:`${b.p.name} : ${b.p.shift} → ${val}`, team:b.p.team } : null
+            });
+            wrapAsync("changeRank", {
+                before: (id) => ({ p: {...(window.currentStaffList.find(x=>x.id===id)||{})} }),
+                after: (b, id, val) => b?.p?.id && b.p.rank !== val ? { type:"rank", action:"เปลี่ยนยศ", detail:`${b.p.name} : ${b.p.rank} → ${val}`, team:b.p.team } : null
+            });
+            wrapAsync("changeWorkType", {
+                before: (id) => ({ p: {...(window.currentStaffList.find(x=>x.id===id)||{})} }),
+                after: (b, id, val) => b?.p?.id && b.p.type !== val ? { type:"workType", action:"เปลี่ยน Office/WFH", detail:`${b.p.name} : ${b.p.type} → ${val}`, team:b.p.team } : null
+            });
+            wrapAsync("confirmToggleDayOff", {
+                before: () => {
+                    const pending = window.pendingDayToggle;
+                    const p = pending ? window.currentStaffList.find(x=>x.id===pending.id) : null;
+                    return p ? { p:{...p, offs:[...(p.offs||[])], leaves:[...(p.leaves||[])], leaveTypes:{...(p.leaveTypes||{})}}, d: pending.d, old:getDayStatusCode(p,pending.d) } : null;
+                },
+                after: (b) => {
+                    if (!b?.p) return null;
+                    const p = window.currentStaffList.find(x=>x.id===b.p.id);
+                    if (!p) return null;
+                    const now = getDayStatusCode(p,b.d);
+                    return b.old !== now ? { type:"day", action:"แก้วันหยุด/วันลา", detail:`${p.name} วันที่ ${b.d}/${pad2(window.selectedMonth)} : ${getDayStatusTextByCode(b.old)} → ${getDayStatusTextByCode(now)}`, team:p.team } : null;
+                }
+            });
+            wrapAsync("saveNewEmployee", {
+                before: () => ({ codes: new Set((window.currentStaffList||[]).map(p=>String(p.code))) }),
+                after: (b) => {
+                    const p = (window.currentStaffList||[]).find(x => !b.codes.has(String(x.code)));
+                    return p ? { type:"employee", action:"เพิ่มพนักงาน", detail:`${p.team} ${p.name} (${p.code})`, team:p.team } : null;
+                }
+            });
+            wrapAsync("deleteEmployee", {
+                before: () => {
+                    const id = Number(document.getElementById("delete-emp-id")?.value);
+                    const p = window.currentStaffList.find(x=>x.id===id);
+                    return p ? { p:{...p} } : null;
+                },
+                after: (b) => b?.p && !(window.currentStaffList||[]).some(x=>x.id===b.p.id) ? { type:"employee", action:"ลบพนักงาน", detail:`${b.p.team} ${b.p.name} (${b.p.code})`, team:b.p.team } : null
+            });
+            wrapAsync("saveNewShift", {
+                before: () => ({ keys: new Set(Object.keys(window.shiftTimes||{})), code: normalizeCode(document.getElementById("new-shift-code")?.value) }),
+                after: (b) => b?.code && !b.keys.has(b.code) && window.shiftTimes?.[b.code] ? { type:"system", action:"เพิ่มกะ", detail:`${b.code} (${window.shiftTimes[b.code].login || "-"})`, team:"ALL" } : null
+            });
+            wrapAsync("deleteShift", {
+                before: () => ({ code: String(document.getElementById("delete-shift-code")?.value || "") }),
+                after: (b) => b?.code && !window.shiftTimes?.[b.code] ? { type:"system", action:"ลบกะ", detail:`${b.code}`, team:"ALL" } : null
+            });
+            wrapAsync("saveResignedEmployee", {
+                before: () => ({ code: String(document.getElementById("resign-code")?.value || "").trim() }),
+                after: (b) => {
+                    const r = window.resignedRecords?.[String(b?.code||"")];
+                    return r ? { type:"resign", action:"บันทึกพนักงานออก", detail:`${r.name} (${r.code}) วันที่ออก ${pad2(r.day)}/${pad2(r.month)}/${r.year}`, team:"-" } : null;
+                }
+            });
+            wrapAsync("cancelResignedEmployee", {
+                before: (code) => ({ r: window.resignedRecords?.[String(code||"").trim()] }),
+                after: (b, code) => b?.r && !window.resignedRecords?.[String(code||"").trim()] ? { type:"resign", action:"ยกเลิกพนักงานออก", detail:`${b.r.name} (${b.r.code})`, team:"-" } : null
+            });
+            wrapAsync("resetToDefault", {
+                before: () => ({ len: (window.currentStaffList||[]).length }),
+                after: (b) => b ? { type:"system", action:"รีเซ็ตระบบ", detail:`รีเซ็ตข้อมูลตาราง (${b.len} รายการก่อนรีเซ็ต)`, team:"ALL" } : null
+            });
+        }
+
         function renderPermissionModal(){
-            const rows = (window.PERMISSION_ITEMS || PERMISSION_ITEMS || []).map(x => [x.label, x.key]);
+            const rows=[
+                ["เพิ่ม/ลบพนักงาน","addEmployee"],
+                ["เพิ่ม/ลบกะ","addShift"],
+                ["เปลี่ยนกะ","editShift"],
+                ["เปลี่ยนวันหยุด/วันลา","editDay"],
+                ["เปลี่ยน Office/WFH","editWorkType"],
+                ["เปลี่ยนยศ","editRank"],
+                ["ตรวจ WFH","checkWFH"],
+                ["บันทึกพนักงานออก","resignEmployee"],
+                ["Export","exportData"],
+                ["รีเซ็ต","resetSystem"],
+                ["จัดการสิทธิ์","managePermissions"],
+                ["ดูประวัติการแก้ไข","viewActivityLog"]
+            ];
             const perms = getRolePermissions();
             const make=(role)=>rows.map(([label,key])=>{
-                const disabled = role === "ADMIN" && (key === "managePermissions" || key === "saveCloud");
+                const disabled = role === "ADMIN" && (key === "managePermissions" || key === "saveCloud" || key === "viewActivityLog");
                 const checked = !!perms[role]?.[key];
                 return `
                     <label class="perm-toggle-row">
@@ -6213,10 +6228,9 @@ function applyLanguage(){
         function applyRolePermissions(){
             const role=getCurrentRoleKey();
 
-            // ซ่อน/แสดงเมนูหรือปุ่มที่กำหนด data-permission อัตโนมัติ
-            document.querySelectorAll("[data-permission]").forEach(el => {
-                const perm = el.getAttribute("data-permission");
-                if (perm) el.classList.toggle("permission-hidden", !hasPermission(perm));
+            document.querySelectorAll("[data-permission-key]").forEach(el=>{
+                const key = el.getAttribute("data-permission-key");
+                el.classList.toggle("permission-hidden", !!key && !hasPermission(key));
             });
 
             document.querySelectorAll("[data-admin-only]").forEach(el=>{
@@ -6239,7 +6253,7 @@ function applyLanguage(){
                     [["reset"], "resetSystem"],
                     [["saveToCloud"], "saveCloud"],
                     [["openPermissionModal"], "managePermissions"],
-                    [["openActivityLog", "copyActivityLogText"], "activityLog"]
+                    [["openActivityModal"], "viewActivityLog"]
                 ];
 
                 rules.forEach(([keys, perm])=>{
@@ -6962,35 +6976,11 @@ window.startOffsAutoSync = startAutoSync;
 // 4. บูตแอปพลิเคชัน (Boot App)
 // ==========================================
 function bootScheduleApp() {
-    // กันกรณี Cloud/Firebase โหลดช้า ให้หน้าเว็บยังเปิดข้อมูลพื้นฐานได้ก่อน
-    const bootFallbackTimer = setTimeout(() => {
-        try {
-            const stat = document.getElementById("stat-total");
-            const isStillBlank = !stat || String(stat.textContent || "").includes("--");
-            if (isStillBlank) {
-                loadLocalBackup();
-                ensureStaffPositions();
-                updateDynamicUI();
-                setSyncStatus("local", "Cloud ช้า: แสดงข้อมูลสำรองก่อน");
-            }
-        } catch (e) { console.warn("Boot fallback skipped", e); }
-    }, 4500);
-
     Promise.resolve(typeof startCloudSync === 'function' ? startCloudSync() : null)
         .then(() => {
-            clearTimeout(bootFallbackTimer);
             if (typeof startAutoSync === "function") startAutoSync();
         })
-        .catch(err => {
-            clearTimeout(bootFallbackTimer);
-            console.error("Boot failed", err);
-            try {
-                loadLocalBackup();
-                ensureStaffPositions();
-                updateDynamicUI();
-                setSyncStatus("local", "โหลด Cloud ไม่สำเร็จ: ใช้ข้อมูลสำรอง");
-            } catch (e) {}
-        });
+        .catch(err => console.error("Boot failed", err));
 }
 
 if (document.readyState === "loading") {
